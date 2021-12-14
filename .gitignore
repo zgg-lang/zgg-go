@@ -1,0 +1,12 @@
+*.py?
+*.sw?
+.*.sw?
+*.class
+.DS_Store
+tools
+__pycache__
+.antlr
+pkg
+bin
+
+parser/ZggLexer.g4

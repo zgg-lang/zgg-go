@@ -1,0 +1,154 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime/pprof"
+	"strings"
+	"time"
+
+	"github.com/zgg-lang/zgg-go/parser"
+	"github.com/zgg-lang/zgg-go/repl"
+	"github.com/zgg-lang/zgg-go/runtime"
+
+	_ "github.com/go-sql-driver/mysql"
+)
+
+var (
+	BUILD_TIME = "N/A"
+	BUILD_HASH = "N/A"
+)
+
+func runRepl(isDebug bool) {
+	repl.ReplLoop(repl.NewConsoleReplContext(isDebug, true), !isDebug)
+}
+
+func runFile(name string, inFile io.Reader, dir string, args []string, isDebug bool) {
+	srcBytes, err := ioutil.ReadAll(inFile)
+	if err != nil {
+		panic(err)
+	}
+	srcText := string(srcBytes)
+	t, errs := parser.ParseFromString(name, srcText, !isDebug)
+	if n := len(errs); n > 0 {
+		for i, e := range errs {
+			if i >= 5 {
+				fmt.Printf("%d more error(s) ...\n", n-i)
+				break
+			}
+			fmt.Println(e.String())
+		}
+	} else if t == nil {
+		fmt.Println("parse codes fail")
+	} else {
+		c := runtime.NewContext(true, isDebug, os.Getenv("CAN_EVAL") != "")
+		c.Path = dir
+		c.IsDebug = isDebug
+		c.Args = args
+		c.ImportFunc = parser.SimpleImport
+		func() {
+			defer func() {
+				if !isDebug {
+					e := recover()
+					if e == nil {
+						return
+					}
+					switch err := e.(type) {
+					case runtime.Exception:
+						fmt.Fprint(c.Stderr, err.MessageWithStack())
+					default:
+						fmt.Fprintln(c.Stderr, err)
+					}
+				}
+			}()
+			t.Eval(c)
+		}()
+	}
+}
+
+func updateZgg() int {
+	log := func(tag, s string, v ...interface{}) {
+		now := time.Now().Format("2006-01-02 15:04:05")
+		fmt.Printf(tag+"|"+now+"|"+s+"\n", v...)
+	}
+	installSciprtUrl := "https://www.zgg-lang.org/install/install.sh"
+	if s := os.Getenv("INSTALL_SH_URL"); s != "" {
+		installSciprtUrl = s
+	}
+	log("INF", "正在从%s加载ZGG一键安装脚本", installSciprtUrl)
+	resp, err := http.Get(installSciprtUrl)
+	if err != nil {
+		log("ERR", "一键安装脚本加载失败: %s", err)
+		return 1
+	}
+	log("INF", "一键安装脚本加载完成")
+	defer resp.Body.Close()
+	c := exec.Command("/bin/sh")
+	stdin, _ := c.StdinPipe()
+	stdout, _ := c.StdoutPipe()
+	defer stdout.Close()
+	stderr, _ := c.StderrPipe()
+	defer stderr.Close()
+	if err := c.Start(); err != nil {
+		log("ERR", "启动一键安装脚本失败: %s", err)
+		return 1
+	}
+	io.Copy(stdin, resp.Body)
+	stdin.Close()
+	go io.Copy(os.Stdout, stdout)
+	go io.Copy(os.Stderr, stderr)
+	if err := c.Wait(); err != nil {
+		log("ERR", "运行一键安装脚本失败: %s", err)
+		return 1
+	}
+	log("INF", "一键安装脚本执行完成")
+	return 0
+}
+
+func main() {
+	isDebug := os.Getenv("DEBUG") != ""
+	if isDebug {
+		fmt.Println("[INFO]Running in debug mode")
+		prf, _ := os.Create("/tmp/pprof_result.pprof")
+		defer prf.Close()
+		pprof.StartCPUProfile(prf)
+		defer func() {
+			pprof.StopCPUProfile()
+		}()
+	}
+	if len(os.Args) > 1 {
+		if len(os.Args) > 2 && os.Args[1] == "-c" {
+			code := strings.Join(os.Args[2:], " ")
+			runFile("", strings.NewReader(code), ".", []string{}, true)
+		} else if len(os.Args) > 2 && os.Args[1] == "-m" {
+			moduleName := os.Args[2]
+			filename := parser.GetModulePath(nil, moduleName)
+			if filename == "" {
+				return
+			}
+			if f, err := os.Open(filename); err == nil {
+				runFile(moduleName, f, filepath.Dir(filename), os.Args[3:], isDebug)
+			} else {
+				panic(err)
+			}
+		} else if os.Args[1] == "--update" {
+			os.Exit(updateZgg())
+		} else if os.Args[1] == "--info" {
+			fmt.Printf("BUILD_TIME : %s\nBUILD_HASH : %s\n", BUILD_TIME, BUILD_HASH)
+		} else if os.Args[1] == "stdin" {
+			runFile("input", os.Stdin, ".", os.Args[2:], isDebug)
+		} else if f, err := os.Open(os.Args[1]); err == nil {
+			defer f.Close()
+			runFile(os.Args[1], f, filepath.Dir(os.Args[1]), os.Args[2:], isDebug)
+		} else {
+			panic(err)
+		}
+	} else {
+		runRepl(isDebug)
+	}
+}
