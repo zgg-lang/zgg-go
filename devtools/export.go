@@ -221,7 +221,7 @@ func exportGoPkg(c *cli.Context) error {
 }
 
 func init() {
-	commands = append(commands, &cli.Command{
+	commands = append(commands, cli.Command{
 		Name:  "export",
 		Usage: "导出go模块符号",
 		Flags: []cli.Flag{

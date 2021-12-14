@@ -6,7 +6,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var commands []*cli.Command
+var commands []cli.Command
 
 func main() {
 	app := cli.NewApp()
