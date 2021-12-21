@@ -2,6 +2,8 @@ package builtin_libs
 
 import (
 	"bufio"
+	"errors"
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -52,10 +54,18 @@ func libFile(*Context) ValueObject {
 			return nil
 		}
 		defer file.Close()
-		scanner := bufio.NewScanner(file)
+		rd := bufio.NewReader(file)
 		rv := NewArray()
-		for scanner.Scan() {
-			rv.PushBack(NewStr(scanner.Text()))
+		for {
+			line, err := rd.ReadString('\n')
+			if err == nil {
+				rv.PushBack(NewStr(line))
+			} else if errors.Is(err, io.EOF) {
+				rv.PushBack(NewStr(line))
+				break
+			} else {
+				c.OnRuntimeError("read lines error %s", err)
+			}
 		}
 		return rv
 	}), nil)

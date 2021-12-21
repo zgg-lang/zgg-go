@@ -5,6 +5,9 @@ then
 	pkgs_file='scripts/gostd_pkgs.txt'
 fi
 
+LIBDIR=stdgolibs
+GO_ROOT=/usr/local/go
+
 export CGO_ENABLED=0
 
 export GOOS=linux
@@ -13,10 +16,11 @@ export GOARCH=amd64
 while read pkg mapping
 do
 	dstname="gen_$(echo ${pkg} | sed 's/\//__/g')_${GOOS}_${GOARCH}.go"
-	echo "Generating ${pkg} into stdgolibs/${dstname}......"
+	echo "Generating ${pkg} into ${LIBDIR}/${dstname}......"
 	bin/devtools export \
-		--root /usr/local/go \
-		--gotemplate stdgolibs/pkg.tpl \
+		--root ${GO_ROOT} \
+		--go ${GO_ROOT}/bin/go \
+		--gotemplate ${LIBDIR}/pkg.tpl \
 		--spectypes "${mapping}" \
 		${pkg} \
 		> stdgolibs/${dstname}
@@ -29,13 +33,14 @@ export GOARCH=amd64
 while read pkg mapping
 do
 	dstname="gen_$(echo ${pkg} | sed 's/\//__/g')_${GOOS}_${GOARCH}.go"
-	echo "Generating ${pkg} into src/zgg/stdgolibs/${dstname}......"
+	echo "Generating ${pkg} into ${LIBDIR}/${dstname}......"
 	bin/devtools export \
-		--root /usr/local/go \
-		--gotemplate src/zgg/stdgolibs/pkg.tpl \
+		--root ${GO_ROOT} \
+		--go ${GO_ROOT}/bin/go \
+		--gotemplate ${LIBDIR}/pkg.tpl \
 		--spectypes "${mapping}" \
 		${pkg} \
-		> src/zgg/stdgolibs/${dstname}
+		> ${LIBDIR}/${dstname}
 	echo "    ${dstname} done"
 done < ${pkgs_file}
 
@@ -45,12 +50,13 @@ export GOARCH=arm64
 while read pkg mapping
 do
 	dstname="gen_$(echo ${pkg} | sed 's/\//__/g')_${GOOS}_${GOARCH}.go"
-	echo "Generating ${pkg} into src/zgg/stdgolibs/${dstname}......"
+	echo "Generating ${pkg} into ${LIBDIR}/${dstname}......"
 	bin/devtools export \
-		--root /usr/local/go \
-		--gotemplate src/zgg/stdgolibs/pkg.tpl \
+		--root ${GO_ROOT} \
+		--go ${GO_ROOT}/bin/go \
+		--gotemplate ${LIBDIR}/pkg.tpl \
 		--spectypes "${mapping}" \
 		${pkg} \
-		> src/zgg/stdgolibs/${dstname}
+		> ${LIBDIR}/${dstname}
 	echo "    ${dstname} done"
 done < ${pkgs_file}

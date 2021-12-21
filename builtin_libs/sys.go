@@ -3,6 +3,7 @@ package builtin_libs
 import (
 	"encoding/json"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -219,3 +220,8 @@ var sysCommandClass = func() ValueType {
 		}).
 		Build()
 }()
+
+type sysIterFilesStackNode struct {
+	files []fs.FileInfo
+	cur   int
+}
