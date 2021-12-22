@@ -15,6 +15,7 @@ type Exception interface {
 	GetStack() []Stack
 	GetMessage() string
 	MessageWithStack() string
+	Error() string
 }
 
 type RuntimeError struct {
