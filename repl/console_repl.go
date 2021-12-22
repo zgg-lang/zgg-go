@@ -2,6 +2,7 @@ package repl
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/zgg-lang/zgg-go/parser"
 	"github.com/zgg-lang/zgg-go/runtime"
@@ -56,14 +57,22 @@ func (c *ConsoleReplContext) ReadCode(newCode bool, initCode string) (string, bo
 	}
 }
 
-func (ConsoleReplContext) WriteResult(result string) {
-	fmt.Println(result)
+func (ConsoleReplContext) write(msg string) {
+	tc := os.Getenv("ZGG_TEXT_STYLE")
+	if tc == "" {
+		tc = "36"
+	}
+	fmt.Printf("\033[%sm%s\033[0m\n", tc, msg)
 }
 
-func (ConsoleReplContext) OnEnter() {
-	fmt.Println("Welcome to Zgg REPL!")
+func (c ConsoleReplContext) WriteResult(result string) {
+	c.write(result)
 }
 
-func (ConsoleReplContext) OnExit() {
-	fmt.Println("\nBye!")
+func (c ConsoleReplContext) OnEnter() {
+	c.write("Welcome to Zgg REPL!")
+}
+
+func (c ConsoleReplContext) OnExit() {
+	c.write("\nBye!")
 }

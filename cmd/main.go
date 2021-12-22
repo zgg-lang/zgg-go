@@ -28,7 +28,7 @@ func runRepl(isDebug bool) {
 	repl.ReplLoop(repl.NewConsoleReplContext(isDebug, true), !isDebug)
 }
 
-func runFile(name string, inFile io.Reader, dir string, args []string, isDebug bool) {
+func runFile(name string, inFile io.Reader, stdout, stderr io.Writer, dir string, args []string, isDebug bool) {
 	srcBytes, err := ioutil.ReadAll(inFile)
 	if err != nil {
 		panic(err)
@@ -51,6 +51,8 @@ func runFile(name string, inFile io.Reader, dir string, args []string, isDebug b
 		c.IsDebug = isDebug
 		c.Args = args
 		c.ImportFunc = parser.SimpleImport
+		c.Stdout = stdout
+		c.Stderr = stderr
 		func() {
 			defer func() {
 				if !isDebug {
@@ -121,32 +123,71 @@ func main() {
 			pprof.StopCPUProfile()
 		}()
 	}
-	if len(os.Args) > 1 {
-		if len(os.Args) > 2 && os.Args[1] == "-c" {
-			code := strings.Join(os.Args[2:], " ")
-			runFile("", strings.NewReader(code), ".", []string{}, true)
-		} else if len(os.Args) > 2 && os.Args[1] == "-m" {
-			moduleName := os.Args[2]
-			filename := parser.GetModulePath(nil, moduleName)
-			if filename == "" {
-				return
+	numArgs := len(os.Args)
+	if numArgs > 1 {
+		switch os.Args[1] {
+		case "-c":
+			code := ""
+			if numArgs > 2 {
+				code = strings.Join(os.Args[2:], " ")
 			}
-			if f, err := os.Open(filename); err == nil {
-				runFile(moduleName, f, filepath.Dir(filename), os.Args[3:], isDebug)
+			runFile("", strings.NewReader(code), os.Stdout, os.Stderr, ".", []string{}, true)
+		case "-m":
+			if numArgs > 2 {
+				moduleName := os.Args[2]
+				filename := parser.GetModulePath(nil, moduleName)
+				if filename == "" {
+					return
+				}
+				if f, err := os.Open(filename); err == nil {
+					runFile(moduleName, f, os.Stdout, os.Stderr, filepath.Dir(filename), os.Args[3:], isDebug)
+				} else {
+					panic(err)
+				}
+			} else {
+				fmt.Printf("expected module name after -m\n")
+			}
+		case "--update":
+			os.Exit(updateZgg())
+		case "--info":
+			fmt.Printf("BUILD_TIME : %s\nBUILD_HASH : %s\n", BUILD_TIME, BUILD_HASH)
+		case "stdin":
+			runFile("input", os.Stdin, os.Stdout, os.Stderr, ".", os.Args[2:], isDebug)
+		case "--hub":
+			var (
+				addr   = ":40000"
+				secret = ""
+			)
+			switch numArgs {
+			case 4:
+				secret = os.Args[3]
+				fallthrough
+			case 3:
+				addr = os.Args[2]
+			}
+			fmt.Printf("Start serving on %s...\n", addr)
+			http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if secret != "" && secret != r.Header.Get("X-ZGG-SECRET") {
+					w.WriteHeader(http.StatusForbidden)
+					return
+				}
+				defer r.Body.Close()
+				var (
+					qs   = r.URL.Query()
+					args = qs["args"]
+				)
+				if args == nil {
+					args = []string{}
+				}
+				runFile("", r.Body, w, w, ".", args, false)
+			}))
+		default:
+			if f, err := os.Open(os.Args[1]); err == nil {
+				defer f.Close()
+				runFile(os.Args[1], f, os.Stdout, os.Stderr, filepath.Dir(os.Args[1]), os.Args[2:], isDebug)
 			} else {
 				panic(err)
 			}
-		} else if os.Args[1] == "--update" {
-			os.Exit(updateZgg())
-		} else if os.Args[1] == "--info" {
-			fmt.Printf("BUILD_TIME : %s\nBUILD_HASH : %s\n", BUILD_TIME, BUILD_HASH)
-		} else if os.Args[1] == "stdin" {
-			runFile("input", os.Stdin, ".", os.Args[2:], isDebug)
-		} else if f, err := os.Open(os.Args[1]); err == nil {
-			defer f.Close()
-			runFile(os.Args[1], f, filepath.Dir(os.Args[1]), os.Args[2:], isDebug)
-		} else {
-			panic(err)
 		}
 	} else {
 		runRepl(isDebug)
