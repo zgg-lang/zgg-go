@@ -12,8 +12,11 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/nsqio/go-nsq v1.1.0 // indirect
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852 // indirect
+	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/urfave/cli v1.22.5 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
+	github.com/ziipin-server/zplog v0.0.0-20180816075932-82160e4259b8 // indirect
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 )

@@ -8,7 +8,7 @@ __pycache__
 .antlr
 pkg
 bin
-
+tests
 parser/ZggLexer.g4
 
 fabfile.py

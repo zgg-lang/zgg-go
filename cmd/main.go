@@ -153,34 +153,8 @@ func main() {
 			fmt.Printf("BUILD_TIME : %s\nBUILD_HASH : %s\n", BUILD_TIME, BUILD_HASH)
 		case "stdin":
 			runFile("input", os.Stdin, os.Stdout, os.Stderr, ".", os.Args[2:], isDebug)
-		case "--hub":
-			var (
-				addr   = ":40000"
-				secret = ""
-			)
-			switch numArgs {
-			case 4:
-				secret = os.Args[3]
-				fallthrough
-			case 3:
-				addr = os.Args[2]
-			}
-			fmt.Printf("Start serving on %s...\n", addr)
-			http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if secret != "" && secret != r.Header.Get("X-ZGG-SECRET") {
-					w.WriteHeader(http.StatusForbidden)
-					return
-				}
-				defer r.Body.Close()
-				var (
-					qs   = r.URL.Query()
-					args = qs["args"]
-				)
-				if args == nil {
-					args = []string{}
-				}
-				runFile("", r.Body, w, w, ".", args, false)
-			}))
+		case "hub":
+			runHub(os.Args[2:])
 		default:
 			if f, err := os.Open(os.Args[1]); err == nil {
 				defer f.Close()
