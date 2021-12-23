@@ -74,7 +74,7 @@ func BenchmarkWithPrecompileAndReuseRunner(b *testing.B) {
 }
 
 func BenchmarkRunWithPool(b *testing.B) {
-	prog, _ := NewRunner().CompileCode("1+2+3+a")
+	prog, _ := CompileCode("1+2+3+a")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		RunCode(prog, Var{"a", Val(i)})

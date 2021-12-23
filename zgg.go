@@ -157,6 +157,18 @@ var runnerPool = sync.Pool{
 	},
 }
 
+func CompileCode(code interface{}) (ast.Node, error) {
+	runner := runnerPool.Get().(*Runner)
+	defer runnerPool.Put(runner)
+	return runner.CompileCode(code)
+}
+
+func CompileExpr(code interface{}) (ast.Node, error) {
+	runner := runnerPool.Get().(*Runner)
+	defer runnerPool.Put(runner)
+	return runner.CompileExpr(code)
+}
+
 func RunCode(code interface{}, opts ...ExecOption) (interface{}, error) {
 	runner := runnerPool.Get().(*Runner)
 	defer runnerPool.Put(runner)
