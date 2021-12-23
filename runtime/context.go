@@ -46,6 +46,18 @@ func newContextFrame(parent *contextFrame) *contextFrame {
 	return f
 }
 
+func (s *contextFrame) resetAsRoot() {
+	s.parent = nil
+	s.level = 0
+	s.loopLevel = 0
+	s.funcName = "<root>"
+	s.funcLevel = 0
+	s.variables = new(sync.Map)
+	s.filename = ""
+	s.lineNum = 0
+	s.defers = nil
+}
+
 func (s *contextFrame) findValue(name string) Value {
 	for stack := s; stack != nil; stack = stack.parent {
 		if value, valueFound := stack.variables.Load(name); valueFound {
@@ -102,6 +114,7 @@ type Context struct {
 	funcRootFrame   *contextFrame
 	rootFrame       *contextFrame
 	local           ValueObject
+	builtins        *sync.Map
 	CanEval         bool
 }
 
@@ -122,6 +135,7 @@ func NewContext(isMain bool, isDebug, canEval bool) *Context {
 		curFrame:        f,
 		funcRootFrame:   f,
 		rootFrame:       f,
+		builtins:        new(sync.Map),
 		local:           NewObject(),
 		CanEval:         canEval,
 	}
@@ -130,10 +144,30 @@ func NewContext(isMain bool, isDebug, canEval bool) *Context {
 	ctx.Stdout = os.Stdout
 	ctx.Stderr = os.Stderr
 	for name, value := range builtins {
-		ctx.SetLocalValue(name, value)
+		ctx.builtins.Store(name, value)
 	}
-	ctx.SetLocalValue("isMain", NewBool(isMain))
+	ctx.builtins.Store("isMain", NewBool(isMain))
 	return ctx
+}
+
+func (c *Context) Reset(resetVars ...bool) {
+	f := c.curFrame
+	f.resetAsRoot()
+	c.RetVal = Undefined()
+	c.Path = "."
+	c.Breaking = false
+	c.BreakingLabel = ""
+	c.Continuing = false
+	c.ContinuingLabel = ""
+	c.Returned = false
+	c.ExportValue = NewObject()
+	c.curFrame = f
+	c.funcRootFrame = f
+	c.rootFrame = f
+	c.local = NewObject()
+	c.Stdin = os.Stdin
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
 }
 
 func (c *Context) DebugLog(msg string, args ...interface{}) {
@@ -159,6 +193,10 @@ func (c *Context) FindValue(name string) (Value, bool) {
 	v := c.curFrame.findValue(name)
 	if v != nil {
 		return v, true
+	}
+	builtin, builtinFound := c.builtins.Load(name)
+	if builtinFound {
+		return builtin.(Value), true
 	}
 	switch name {
 	case "local":
