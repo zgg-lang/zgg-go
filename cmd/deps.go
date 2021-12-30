@@ -90,7 +90,7 @@ func depsParseRequirement(s string, verbose bool) (depsRequirement, error) {
 	parts := strings.SplitN(s, "@", 2)
 	url := parts[0]
 	tag := ""
-	if len(parts) > 0 {
+	if len(parts) > 1 {
 		tag = parts[1]
 	}
 	name := url
