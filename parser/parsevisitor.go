@@ -296,7 +296,7 @@ func GetModulePath(c *runtime.Context, name string) string {
 	}
 	roots := make([]string, 0, 32)
 	if wd, err := os.Getwd(); err == nil {
-		roots = append(roots, wd)
+		roots = append(roots, wd, filepath.Join(wd, "zgg_modules"))
 	}
 	if zggpath := os.Getenv("ZGGPATH"); zggpath != "" {
 		roots = append(roots, strings.Split(zggpath, ":")...)

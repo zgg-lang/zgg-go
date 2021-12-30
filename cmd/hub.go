@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -29,7 +28,7 @@ func runHub(args []string) {
 	flagset.StringVar(&addr, "addr", ":40000", "http listening address")
 	flagset.StringVar(&rsaRoot, "rsa", "", "rsa public keys' root")
 	flagset.StringVar(&secret, "secret", "", "secret")
-	flagset.Parse(os.Args[2:])
+	flagset.Parse(args)
 	if rsaRoot != "" {
 		hubAuthRequest = hubGetAuthByRSA(rsaRoot)
 	} else if secret != "" {

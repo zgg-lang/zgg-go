@@ -155,6 +155,8 @@ func main() {
 			runFile("input", os.Stdin, os.Stdout, os.Stderr, ".", os.Args[2:], isDebug)
 		case "hub":
 			runHub(os.Args[2:])
+		case "deps":
+			runDeps(os.Args[2:])
 		default:
 			if f, err := os.Open(os.Args[1]); err == nil {
 				defer f.Close()
