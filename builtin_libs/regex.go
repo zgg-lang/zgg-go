@@ -12,6 +12,9 @@ func regexStrRunes(s string, begin, end int) int64 {
 }
 
 func regexMakeMatchGroupArray(c *Context, s string, begin, end int) Value {
+	if begin < 0 || end < begin {
+		return NewArrayByValues(NewStr(""), NewInt(-1), NewInt(-1))
+	}
 	oBegin := regexStrRunes(s, 0, begin)
 	oEnd := oBegin + regexStrRunes(s, begin, end)
 	return NewArrayByValues(
@@ -22,12 +25,18 @@ func regexMakeMatchGroupArray(c *Context, s string, begin, end int) Value {
 }
 
 func regexMakeMatchGroupObject(c *Context, s string, begin, end int) Value {
-	oBegin := regexStrRunes(s, 0, begin)
-	oEnd := oBegin + regexStrRunes(s, begin, end)
 	rv := NewObject()
-	rv.SetMember("text", NewStr(s[begin:end]), c)
-	rv.SetMember("begin", NewInt(oBegin), c)
-	rv.SetMember("end", NewInt(oEnd), c)
+	if begin < 0 || end < begin {
+		rv.SetMember("text", NewStr(""), c)
+		rv.SetMember("begin", NewInt(-1), c)
+		rv.SetMember("end", NewInt(-1), c)
+	} else {
+		oBegin := regexStrRunes(s, 0, begin)
+		oEnd := oBegin + regexStrRunes(s, begin, end)
+		rv.SetMember("text", NewStr(s[begin:end]), c)
+		rv.SetMember("begin", NewInt(oBegin), c)
+		rv.SetMember("end", NewInt(oEnd), c)
+	}
 	return rv
 }
 
