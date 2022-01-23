@@ -294,12 +294,11 @@ func GetModulePath(c *runtime.Context, name string) string {
 		f, _ := tryModulePath(name)
 		return f
 	}
-	roots := make([]string, 0, 32)
-	if wd, err := os.Getwd(); err == nil {
-		roots = append(roots, wd, filepath.Join(wd, "zgg_modules"))
-	}
-	if zggpath := os.Getenv("ZGGPATH"); zggpath != "" {
-		roots = append(roots, strings.Split(zggpath, ":")...)
+	var roots []string
+	if c != nil {
+		roots = c.ImportPaths
+	} else {
+		roots = runtime.GetImportPaths()
 	}
 	for _, root := range roots {
 		testname := filepath.Join(root, name)

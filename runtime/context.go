@@ -97,6 +97,7 @@ type Context struct {
 	IsDebug         bool
 	debugLogger     *log.Logger
 	Path            string
+	ImportPaths     []string
 	Args            []string
 	RetVal          Value
 	Breaking        bool
@@ -118,6 +119,17 @@ type Context struct {
 	CanEval         bool
 }
 
+func GetImportPaths() []string {
+	importPaths := []string{"./zgg_modules"}
+	if wd, err := os.Getwd(); err == nil {
+		importPaths[0] = filepath.Join(wd, "zgg_modules")
+	}
+	if zggPath := os.Getenv("ZGGPATH"); zggPath != "" {
+		importPaths = append(importPaths, strings.Split(zggPath, ":")...)
+	}
+	return importPaths
+}
+
 func NewContext(isMain bool, isDebug, canEval bool) *Context {
 	f := newContextFrame(nil)
 	ctx := &Context{
@@ -126,6 +138,7 @@ func NewContext(isMain bool, isDebug, canEval bool) *Context {
 		IsDebug:         isDebug,
 		debugLogger:     log.New(os.Stderr, "DBG", log.Ldate|log.Lshortfile),
 		Path:            ".",
+		ImportPaths:     GetImportPaths(),
 		Breaking:        false,
 		BreakingLabel:   "",
 		Continuing:      false,
