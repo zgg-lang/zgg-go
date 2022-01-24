@@ -120,9 +120,10 @@ type Context struct {
 }
 
 func GetImportPaths() []string {
-	importPaths := []string{"./zgg_modules"}
+	importPaths := []string{".", "./zgg_modules"}
 	if wd, err := os.Getwd(); err == nil {
-		importPaths[0] = filepath.Join(wd, "zgg_modules")
+		importPaths[0] = wd
+		importPaths[1] = filepath.Join(wd, "zgg_modules")
 	}
 	if zggPath := os.Getenv("ZGGPATH"); zggPath != "" {
 		importPaths = append(importPaths, strings.Split(zggPath, ":")...)
