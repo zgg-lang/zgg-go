@@ -31,17 +31,16 @@ func libRandom(*Context) ValueObject {
 		return nil
 	}), nil)
 	lib.SetMember("choice", NewNativeFunction("choice", func(c *Context, this Value, args []Value) Value {
-		if len(args) != 1 {
-			c.OnRuntimeError("random.choice(arr): requires 1 argument")
-			return nil
-		}
-		arr := c.MustArray(args[1])
-		if arr.Len() < 1 {
+		var choices ValueArray
+		EnsureFuncParams(c, "random.choice", args,
+			ArgRuleRequired{"choices", TypeArray, &choices},
+		)
+		if choices.Len() < 1 {
 			c.OnRuntimeError("random.choice(arr): arr cannot be empty")
 			return nil
 		}
-		n := rand.Intn(arr.Len())
-		return arr.GetIndex(n, c)
+		n := rand.Intn(choices.Len())
+		return choices.GetIndex(n, c)
 	}), nil)
 	lib.SetMember("shuffle", NewNativeFunction("shuffle", func(c *Context, this Value, args []Value) Value {
 		var (
