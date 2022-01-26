@@ -44,7 +44,15 @@ func libTime(*Context) ValueObject {
 		var ts ValueInt
 		EnsureFuncParams(c, "time.fromUnix", args, ArgRuleRequired{"unixTimestamp", TypeInt, &ts})
 		return NewObjectAndInit(timeClass, c, NewInt(ts.Value()*1e9))
-	}), nil)
+	}, "timestamp"), nil)
+	lib.SetMember("fromGoTime", NewNativeFunction("fromGoTime", func(c *Context, this Value, args []Value) Value {
+		var gt GoValue
+		EnsureFuncParams(c, "time.fromGoTime", args, ArgRuleRequired{"time", TypeGoValue, &gt})
+		if _, ok := gt.ToGoValue().(time.Time); !ok {
+			c.OnRuntimeError("Not a time.Time!")
+		}
+		return NewObjectAndInit(timeClass, c, gt)
+	}, "time"), nil)
 	lib.SetMember("sleep", NewNativeFunction("time", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 1 {
 			c.OnRuntimeError("sleep: requires 1 argument")
@@ -61,15 +69,24 @@ func initTimeClass() {
 	layoutP := regexp.MustCompile("%.")
 	timeClass = NewClassBuilder("Time").
 		Constructor(func(c *Context, thisObj ValueObject, args []Value) {
-			var ts int64
+			// var ts int64
+			var _t time.Time
 			var as string
 			switch len(args) {
 			case 0:
-				ts = time.Now().UnixNano()
+				_t = time.Now()
 			case 1:
 				switch v := args[0].(type) {
 				case ValueInt:
-					ts = v.Value()
+					ts := v.Value()
+					_t = time.Unix(ts/1e9, ts%1e9)
+				case GoValue:
+					switch gv := v.ToGoValue().(type) {
+					case time.Time:
+						_t = gv
+					default:
+						c.OnRuntimeError("Time.__init__: invalid arg %v", gv)
+					}
 				case ValueStr:
 					{
 						var layout string
@@ -93,7 +110,8 @@ func initTimeClass() {
 						if err != nil {
 							c.OnRuntimeError("Time.__init__: parse time error %s", err)
 						}
-						ts = t.UnixNano()
+						// ts = t.UnixNano()
+						_t = t
 					}
 				}
 			case 3:
@@ -104,7 +122,7 @@ func initTimeClass() {
 						ArgRuleRequired{"month", TypeInt, &month},
 						ArgRuleRequired{"day", TypeInt, &day},
 					)
-					ts = time.Date(year.AsInt(), time.Month(month.AsInt()), day.AsInt(), 0, 0, 0, 0, time.Local).UnixNano()
+					_t = time.Date(year.AsInt(), time.Month(month.AsInt()), day.AsInt(), 0, 0, 0, 0, time.Local)
 				}
 			case 6:
 				{
@@ -113,8 +131,11 @@ func initTimeClass() {
 						ArgRuleRequired{"year", TypeInt, &year},
 						ArgRuleRequired{"month", TypeInt, &month},
 						ArgRuleRequired{"day", TypeInt, &day},
+						ArgRuleRequired{"hour", TypeInt, &hour},
+						ArgRuleRequired{"minute", TypeInt, &minute},
+						ArgRuleRequired{"second", TypeInt, &second},
 					)
-					ts = time.Date(
+					_t = time.Date(
 						year.AsInt(),
 						time.Month(month.AsInt()),
 						day.AsInt(),
@@ -123,33 +144,60 @@ func initTimeClass() {
 						second.AsInt(),
 						0,
 						time.Local,
-					).UnixNano()
+					)
 				}
 			default:
 				c.OnRuntimeError("Time.__init__: invalid args")
 			}
-			thisObj.SetMember("unix", NewInt(ts/1e9), c)
-			thisObj.SetMember("unixNano", NewInt(ts), c)
-			t := time.Unix(ts/1e9, ts%1e9)
-			thisObj.SetMember("_t", NewGoValue(t), c)
-			thisObj.SetMember("year", NewInt(int64(t.Year())), c)
-			thisObj.SetMember("month", NewInt(int64(t.Month())), c)
-			thisObj.SetMember("day", NewInt(int64(t.Day())), c)
-			thisObj.SetMember("hour", NewInt(int64(t.Hour())), c)
-			thisObj.SetMember("minute", NewInt(int64(t.Minute())), c)
-			thisObj.SetMember("second", NewInt(int64(t.Second())), c)
+			thisObj.SetMember("__t", NewGoValue(_t), c)
 			if as != "" {
 				thisObj.SetMember("__as", NewStr(as), c)
 			}
+		}).
+		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
+			var field ValueStr
+			EnsureFuncParams(c, "Time.__getAttr__", args, ArgRuleRequired{"field", TypeStr, &field})
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			switch field.Value() {
+			case "unix":
+				return NewInt(t.Unix())
+			case "unixNano":
+				return NewInt(t.UnixNano())
+			case "year":
+				return NewInt(int64(t.Year()))
+			case "month":
+				return NewInt(int64(t.Month()))
+			case "day":
+				return NewInt(int64(t.Day()))
+			case "hour":
+				return NewInt(int64(t.Hour()))
+			case "minute":
+				return NewInt(int64(t.Minute()))
+			case "second":
+				return NewInt(int64(t.Second()))
+			}
+			return Undefined()
+		}).
+		Method("add", func(c *Context, this ValueObject, args []Value) Value {
+			var duration ValueStr
+			EnsureFuncParams(c, "Time.add", args, ArgRuleRequired{"duration", TypeStr, &duration})
+			d, err := time.ParseDuration(duration.Value())
+			if err != nil {
+				c.OnRuntimeError("Invalid duration %s", duration.Value())
+			}
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			rt := t.Add(d)
+			rv := NewObjectAndInit(timeClass, c, NewGoValue(rt))
+			rv.SetMember("__as", this.GetMember("__as", c), c)
+			return rv
 		}).
 		Method("addDays", func(c *Context, this ValueObject, args []Value) Value {
 			var days ValueInt
 			EnsureFuncParams(c, "Time.addDays", args,
 				ArgRuleRequired{"days", TypeInt, &days},
 			)
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			nextNano := ts + days.Value()*86400*1e9
-			rv := NewObjectAndInit(timeClass, c, NewInt(nextNano))
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			rv := NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, days.AsInt())))
 			rv.SetMember("__as", this.GetMember("__as", c), c)
 			return rv
 		}).
@@ -158,9 +206,9 @@ func initTimeClass() {
 			EnsureFuncParams(c, "Time.addHours", args,
 				ArgRuleRequired{"days", TypeInt, &hours},
 			)
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			nextNano := ts + hours.Value()*3600*1e9
-			rv := NewObjectAndInit(timeClass, c, NewInt(nextNano))
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			rv := NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Duration(hours.AsInt())*time.Hour)))
+			rv.SetMember("__as", this.GetMember("__as", c), c)
 			return rv
 		}).
 		Method("as", func(c *Context, this ValueObject, args []Value) Value {
@@ -172,16 +220,16 @@ func initTimeClass() {
 		Method("__next__", func(c *Context, this ValueObject, args []Value) Value {
 			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
 				var r Value
-				ts := c.MustInt(this.GetMember("unixNano", c))
+				t := this.GetMember("__t", c).ToGoValue().(time.Time)
 				switch as.Value() {
 				case "day":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+86400*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, 1)))
 				case "hour":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+3600*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Hour)))
 				case "minute":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+60*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Minute)))
 				case "second":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+1*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Second)))
 				}
 				if r != nil {
 					r.(ValueObject).SetMember("__as", as, c)
@@ -196,20 +244,11 @@ func initTimeClass() {
 				layout   ValueStr
 				timezone ValueStr
 			)
-			switch len(args) {
-			case 2:
-				EnsureFuncParams(c, "Time.format", args,
-					ArgRuleRequired{"layout", TypeStr, &layout},
-					ArgRuleRequired{"timezone", TypeStr, &timezone},
-				)
-			default:
-				EnsureFuncParams(c, "Time.format", args,
-					ArgRuleRequired{"layout", TypeStr, &layout},
-				)
-				timezone = NewStr("")
-			}
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			t := time.Unix(ts/1e9, ts%1e9)
+			EnsureFuncParams(c, "Time.format", args,
+				ArgRuleRequired{"layout", TypeStr, &layout},
+				ArgRuleOptional{"timezone", TypeStr, &timezone, NewStr("")},
+			)
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			layoutStr := layoutP.ReplaceAllStringFunc(layout.Value(), func(s string) string {
 				switch s {
 				case "%Y":
@@ -243,16 +282,17 @@ func initTimeClass() {
 			EnsureFuncParams(c, "Time.__add__", args, ArgRuleRequired{"add", TypeInt, &diff})
 			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
 				var r Value
-				ts := c.MustInt(this.GetMember("unixNano", c))
+				t := this.GetMember("__t", c).ToGoValue().(time.Time)
+				d := diff.AsInt()
 				switch as.Value() {
 				case "day":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+diff.Value()*86400*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, d)))
 				case "hour":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+diff.Value()*3600*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
 				case "minute":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+diff.Value()*60*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
 				case "second":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts+diff.Value()*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
 				}
 				if r != nil {
 					r.(ValueObject).SetMember("__as", as, c)
@@ -267,16 +307,17 @@ func initTimeClass() {
 			EnsureFuncParams(c, "Time.__sub__", args, ArgRuleRequired{"add", TypeInt, &diff})
 			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
 				var r Value
-				ts := c.MustInt(this.GetMember("unixNano", c))
+				t := this.GetMember("__t", c).ToGoValue().(time.Time)
+				d := -diff.AsInt()
 				switch as.Value() {
 				case "day":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts-diff.Value()*86400*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, d)))
 				case "hour":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts-diff.Value()*3600*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
 				case "minute":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts-diff.Value()*60*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
 				case "second":
-					r = NewObjectAndInit(timeClass, c, NewInt(ts-diff.Value()*1e9))
+					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
 				}
 				if r != nil {
 					r.(ValueObject).SetMember("__as", as, c)
@@ -287,18 +328,19 @@ func initTimeClass() {
 			return nil
 		}).
 		Method("timetuple", func(c *Context, this ValueObject, args []Value) Value {
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			return NewArrayByValues(
-				this.GetMember("year", c),
-				this.GetMember("month", c),
-				this.GetMember("day", c),
-				this.GetMember("hour", c),
-				this.GetMember("minute", c),
-				this.GetMember("second", c),
+				NewInt(int64(t.Year())),
+				NewInt(int64(t.Month())),
+				NewInt(int64(t.Day())),
+				NewInt(int64(t.Hour())),
+				NewInt(int64(t.Minute())),
+				NewInt(int64(t.Second())),
+				NewStr(t.Location().String()),
 			)
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			t := time.Unix(ts/1e9, ts%1e9)
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
 				switch as.Value() {
 				case "day":
@@ -314,34 +356,37 @@ func initTimeClass() {
 			return NewStr(t.Format("Time(2006-01-02 15:04:05)"))
 		}).
 		Method("__lt__", func(c *Context, this ValueObject, args []Value) Value {
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			other := c.MustInt(args[0].GetMember("unixNano", c))
-			return NewBool(ts < other)
+			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			return NewBool(t1.Before(t2))
 		}).
 		Method("__le__", func(c *Context, this ValueObject, args []Value) Value {
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			other := c.MustInt(args[0].GetMember("unixNano", c))
-			return NewBool(ts <= other)
+			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			return NewBool(!t1.After(t2))
 		}).
 		Method("__gt__", func(c *Context, this ValueObject, args []Value) Value {
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			other := c.MustInt(args[0].GetMember("unixNano", c))
-			return NewBool(ts > other)
+			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			return NewBool(t1.After(t2))
 		}).
 		Method("__ge__", func(c *Context, this ValueObject, args []Value) Value {
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			other := c.MustInt(args[0].GetMember("unixNano", c))
-			return NewBool(ts >= other)
+			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			return NewBool(!t1.Before(t2))
 		}).
 		Method("__eq__", func(c *Context, this ValueObject, args []Value) Value {
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			other := c.MustInt(args[0].GetMember("unixNano", c))
-			return NewBool(ts == other)
+			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			return NewBool(!t1.Before(t2) && !t1.After(t2))
 		}).
 		Method("__ne__", func(c *Context, this ValueObject, args []Value) Value {
-			ts := c.MustInt(this.GetMember("unixNano", c))
-			other := c.MustInt(args[0].GetMember("unixNano", c))
-			return NewBool(ts != other)
+			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			return NewBool(t1.Before(t2) || t1.After(t2))
+		}).
+		Method("toGoTime", func(c *Context, this ValueObject, args []Value) Value {
+			return this.GetMember("__t", c)
 		}).
 		Build()
 }
