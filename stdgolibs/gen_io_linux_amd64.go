@@ -9,6 +9,8 @@ import (
 func init() {
 	registerValues("io", map[string]reflect.Value{
 		// Functions
+		"MultiReader":      reflect.ValueOf(pkg.MultiReader),
+		"MultiWriter":      reflect.ValueOf(pkg.MultiWriter),
 		"Pipe":             reflect.ValueOf(pkg.Pipe),
 		"WriteString":      reflect.ValueOf(pkg.WriteString),
 		"ReadAtLeast":      reflect.ValueOf(pkg.ReadAtLeast),
@@ -21,8 +23,6 @@ func init() {
 		"TeeReader":        reflect.ValueOf(pkg.TeeReader),
 		"NopCloser":        reflect.ValueOf(pkg.NopCloser),
 		"ReadAll":          reflect.ValueOf(pkg.ReadAll),
-		"MultiReader":      reflect.ValueOf(pkg.MultiReader),
-		"MultiWriter":      reflect.ValueOf(pkg.MultiWriter),
 
 		// Consts
 

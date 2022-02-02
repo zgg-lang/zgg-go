@@ -9,10 +9,10 @@ import (
 func init() {
 	registerValues("compress/flate", map[string]reflect.Value{
 		// Functions
-		"NewWriter":     reflect.ValueOf(pkg.NewWriter),
-		"NewWriterDict": reflect.ValueOf(pkg.NewWriterDict),
 		"NewReader":     reflect.ValueOf(pkg.NewReader),
 		"NewReaderDict": reflect.ValueOf(pkg.NewReaderDict),
+		"NewWriter":     reflect.ValueOf(pkg.NewWriter),
+		"NewWriterDict": reflect.ValueOf(pkg.NewWriterDict),
 
 		// Consts
 
@@ -28,10 +28,10 @@ func init() {
 	registerTypes("compress/flate", map[string]reflect.Type{
 		// Non interfaces
 
-		"Writer":            reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
 		"CorruptInputError": reflect.TypeOf((*pkg.CorruptInputError)(nil)).Elem(),
 		"InternalError":     reflect.TypeOf((*pkg.InternalError)(nil)).Elem(),
 		"ReadError":         reflect.TypeOf((*pkg.ReadError)(nil)).Elem(),
 		"WriteError":        reflect.TypeOf((*pkg.WriteError)(nil)).Elem(),
+		"Writer":            reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
 	})
 }

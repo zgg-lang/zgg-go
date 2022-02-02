@@ -9,7 +9,6 @@ import (
 func init() {
 	registerValues("net/http/httputil", map[string]reflect.Value{
 		// Functions
-		"NewSingleHostReverseProxy": reflect.ValueOf(pkg.NewSingleHostReverseProxy),
 		"DumpRequestOut":            reflect.ValueOf(pkg.DumpRequestOut),
 		"DumpRequest":               reflect.ValueOf(pkg.DumpRequest),
 		"DumpResponse":              reflect.ValueOf(pkg.DumpResponse),
@@ -18,6 +17,7 @@ func init() {
 		"NewServerConn":             reflect.ValueOf(pkg.NewServerConn),
 		"NewClientConn":             reflect.ValueOf(pkg.NewClientConn),
 		"NewProxyClientConn":        reflect.ValueOf(pkg.NewProxyClientConn),
+		"NewSingleHostReverseProxy": reflect.ValueOf(pkg.NewSingleHostReverseProxy),
 
 		// Consts
 
@@ -31,8 +31,8 @@ func init() {
 	registerTypes("net/http/httputil", map[string]reflect.Type{
 		// Non interfaces
 
-		"ReverseProxy": reflect.TypeOf((*pkg.ReverseProxy)(nil)).Elem(),
 		"ServerConn":   reflect.TypeOf((*pkg.ServerConn)(nil)).Elem(),
 		"ClientConn":   reflect.TypeOf((*pkg.ClientConn)(nil)).Elem(),
+		"ReverseProxy": reflect.TypeOf((*pkg.ReverseProxy)(nil)).Elem(),
 	})
 }

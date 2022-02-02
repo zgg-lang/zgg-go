@@ -9,6 +9,7 @@ import (
 func init() {
 	registerValues("io", map[string]reflect.Value{
 		// Functions
+		"Pipe":             reflect.ValueOf(pkg.Pipe),
 		"WriteString":      reflect.ValueOf(pkg.WriteString),
 		"ReadAtLeast":      reflect.ValueOf(pkg.ReadAtLeast),
 		"ReadFull":         reflect.ValueOf(pkg.ReadFull),
@@ -22,7 +23,6 @@ func init() {
 		"ReadAll":          reflect.ValueOf(pkg.ReadAll),
 		"MultiReader":      reflect.ValueOf(pkg.MultiReader),
 		"MultiWriter":      reflect.ValueOf(pkg.MultiWriter),
-		"Pipe":             reflect.ValueOf(pkg.Pipe),
 
 		// Consts
 
@@ -32,20 +32,20 @@ func init() {
 
 		// Variables
 
+		"ErrClosedPipe":    reflect.ValueOf(&pkg.ErrClosedPipe),
 		"ErrShortWrite":    reflect.ValueOf(&pkg.ErrShortWrite),
 		"ErrShortBuffer":   reflect.ValueOf(&pkg.ErrShortBuffer),
 		"EOF":              reflect.ValueOf(&pkg.EOF),
 		"ErrUnexpectedEOF": reflect.ValueOf(&pkg.ErrUnexpectedEOF),
 		"ErrNoProgress":    reflect.ValueOf(&pkg.ErrNoProgress),
 		"Discard":          reflect.ValueOf(&pkg.Discard),
-		"ErrClosedPipe":    reflect.ValueOf(&pkg.ErrClosedPipe),
 	})
 	registerTypes("io", map[string]reflect.Type{
 		// Non interfaces
 
-		"LimitedReader": reflect.TypeOf((*pkg.LimitedReader)(nil)).Elem(),
-		"SectionReader": reflect.TypeOf((*pkg.SectionReader)(nil)).Elem(),
 		"PipeReader":    reflect.TypeOf((*pkg.PipeReader)(nil)).Elem(),
 		"PipeWriter":    reflect.TypeOf((*pkg.PipeWriter)(nil)).Elem(),
+		"LimitedReader": reflect.TypeOf((*pkg.LimitedReader)(nil)).Elem(),
+		"SectionReader": reflect.TypeOf((*pkg.SectionReader)(nil)).Elem(),
 	})
 }

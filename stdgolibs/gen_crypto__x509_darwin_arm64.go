@@ -13,13 +13,8 @@ func init() {
 		"MarshalPKCS1PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS1PrivateKey),
 		"ParsePKCS1PublicKey":      reflect.ValueOf(pkg.ParsePKCS1PublicKey),
 		"MarshalPKCS1PublicKey":    reflect.ValueOf(pkg.MarshalPKCS1PublicKey),
-		"IsEncryptedPEMBlock":      reflect.ValueOf(pkg.IsEncryptedPEMBlock),
-		"DecryptPEMBlock":          reflect.ValueOf(pkg.DecryptPEMBlock),
-		"EncryptPEMBlock":          reflect.ValueOf(pkg.EncryptPEMBlock),
 		"ParsePKCS8PrivateKey":     reflect.ValueOf(pkg.ParsePKCS8PrivateKey),
 		"MarshalPKCS8PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS8PrivateKey),
-		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
-		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
 		"ParsePKIXPublicKey":       reflect.ValueOf(pkg.ParsePKIXPublicKey),
 		"MarshalPKIXPublicKey":     reflect.ValueOf(pkg.MarshalPKIXPublicKey),
 		"ParseCertificate":         reflect.ValueOf(pkg.ParseCertificate),
@@ -32,14 +27,14 @@ func init() {
 		"CreateRevocationList":     reflect.ValueOf(pkg.CreateRevocationList),
 		"NewCertPool":              reflect.ValueOf(pkg.NewCertPool),
 		"SystemCertPool":           reflect.ValueOf(pkg.SystemCertPool),
+		"IsEncryptedPEMBlock":      reflect.ValueOf(pkg.IsEncryptedPEMBlock),
+		"DecryptPEMBlock":          reflect.ValueOf(pkg.DecryptPEMBlock),
+		"EncryptPEMBlock":          reflect.ValueOf(pkg.EncryptPEMBlock),
+		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
+		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
 
 		// Consts
 
-		"PEMCipherDES":                              reflect.ValueOf(pkg.PEMCipherDES),
-		"PEMCipher3DES":                             reflect.ValueOf(pkg.PEMCipher3DES),
-		"PEMCipherAES128":                           reflect.ValueOf(pkg.PEMCipherAES128),
-		"PEMCipherAES192":                           reflect.ValueOf(pkg.PEMCipherAES192),
-		"PEMCipherAES256":                           reflect.ValueOf(pkg.PEMCipherAES256),
 		"NotAuthorizedToSign":                       reflect.ValueOf(pkg.NotAuthorizedToSign),
 		"Expired":                                   reflect.ValueOf(pkg.Expired),
 		"CANotAuthorizedForThisName":                reflect.ValueOf(pkg.CANotAuthorizedForThisName),
@@ -95,16 +90,20 @@ func init() {
 		"ExtKeyUsageNetscapeServerGatedCrypto":      reflect.ValueOf(pkg.ExtKeyUsageNetscapeServerGatedCrypto),
 		"ExtKeyUsageMicrosoftCommercialCodeSigning": reflect.ValueOf(pkg.ExtKeyUsageMicrosoftCommercialCodeSigning),
 		"ExtKeyUsageMicrosoftKernelCodeSigning":     reflect.ValueOf(pkg.ExtKeyUsageMicrosoftKernelCodeSigning),
+		"PEMCipherDES":                              reflect.ValueOf(pkg.PEMCipherDES),
+		"PEMCipher3DES":                             reflect.ValueOf(pkg.PEMCipher3DES),
+		"PEMCipherAES128":                           reflect.ValueOf(pkg.PEMCipherAES128),
+		"PEMCipherAES192":                           reflect.ValueOf(pkg.PEMCipherAES192),
+		"PEMCipherAES256":                           reflect.ValueOf(pkg.PEMCipherAES256),
 
 		// Variables
 
-		"IncorrectPasswordError":  reflect.ValueOf(&pkg.IncorrectPasswordError),
 		"ErrUnsupportedAlgorithm": reflect.ValueOf(&pkg.ErrUnsupportedAlgorithm),
+		"IncorrectPasswordError":  reflect.ValueOf(&pkg.IncorrectPasswordError),
 	})
 	registerTypes("crypto/x509", map[string]reflect.Type{
 		// Non interfaces
 
-		"PEMCipher":                  reflect.TypeOf((*pkg.PEMCipher)(nil)).Elem(),
 		"InvalidReason":              reflect.TypeOf((*pkg.InvalidReason)(nil)).Elem(),
 		"CertificateInvalidError":    reflect.TypeOf((*pkg.CertificateInvalidError)(nil)).Elem(),
 		"HostnameError":              reflect.TypeOf((*pkg.HostnameError)(nil)).Elem(),
@@ -122,5 +121,6 @@ func init() {
 		"CertificateRequest":         reflect.TypeOf((*pkg.CertificateRequest)(nil)).Elem(),
 		"RevocationList":             reflect.TypeOf((*pkg.RevocationList)(nil)).Elem(),
 		"CertPool":                   reflect.TypeOf((*pkg.CertPool)(nil)).Elem(),
+		"PEMCipher":                  reflect.TypeOf((*pkg.PEMCipher)(nil)).Elem(),
 	})
 }

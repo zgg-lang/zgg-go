@@ -9,10 +9,10 @@ import (
 func init() {
 	registerValues("math/big", map[string]reflect.Value{
 		// Functions
-		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
 		"NewInt":     reflect.ValueOf(pkg.NewInt),
 		"Jacobi":     reflect.ValueOf(pkg.Jacobi),
 		"NewRat":     reflect.ValueOf(pkg.NewRat),
+		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
 		"NewFloat":   reflect.ValueOf(pkg.NewFloat),
 
 		// Consts

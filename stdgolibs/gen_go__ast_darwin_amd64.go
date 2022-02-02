@@ -9,13 +9,6 @@ import (
 func init() {
 	registerValues("go/ast", map[string]reflect.Value{
 		// Functions
-		"NewPackage":        reflect.ValueOf(pkg.NewPackage),
-		"NewScope":          reflect.ValueOf(pkg.NewScope),
-		"NewObj":            reflect.ValueOf(pkg.NewObj),
-		"Walk":              reflect.ValueOf(pkg.Walk),
-		"Inspect":           reflect.ValueOf(pkg.Inspect),
-		"NewIdent":          reflect.ValueOf(pkg.NewIdent),
-		"IsExported":        reflect.ValueOf(pkg.IsExported),
 		"NewCommentMap":     reflect.ValueOf(pkg.NewCommentMap),
 		"FileExports":       reflect.ValueOf(pkg.FileExports),
 		"PackageExports":    reflect.ValueOf(pkg.PackageExports),
@@ -27,9 +20,19 @@ func init() {
 		"NotNilFilter":      reflect.ValueOf(pkg.NotNilFilter),
 		"Fprint":            reflect.ValueOf(pkg.Fprint),
 		"Print":             reflect.ValueOf(pkg.Print),
+		"NewPackage":        reflect.ValueOf(pkg.NewPackage),
+		"NewScope":          reflect.ValueOf(pkg.NewScope),
+		"NewObj":            reflect.ValueOf(pkg.NewObj),
+		"Walk":              reflect.ValueOf(pkg.Walk),
+		"Inspect":           reflect.ValueOf(pkg.Inspect),
+		"NewIdent":          reflect.ValueOf(pkg.NewIdent),
+		"IsExported":        reflect.ValueOf(pkg.IsExported),
 
 		// Consts
 
+		"FilterFuncDuplicates":       reflect.ValueOf(pkg.FilterFuncDuplicates),
+		"FilterUnassociatedComments": reflect.ValueOf(pkg.FilterUnassociatedComments),
+		"FilterImportDuplicates":     reflect.ValueOf(pkg.FilterImportDuplicates),
 		"Bad":                        reflect.ValueOf(pkg.Bad),
 		"Pkg":                        reflect.ValueOf(pkg.Pkg),
 		"Con":                        reflect.ValueOf(pkg.Con),
@@ -39,9 +42,6 @@ func init() {
 		"Lbl":                        reflect.ValueOf(pkg.Lbl),
 		"SEND":                       reflect.ValueOf(pkg.SEND),
 		"RECV":                       reflect.ValueOf(pkg.RECV),
-		"FilterFuncDuplicates":       reflect.ValueOf(pkg.FilterFuncDuplicates),
-		"FilterUnassociatedComments": reflect.ValueOf(pkg.FilterUnassociatedComments),
-		"FilterImportDuplicates":     reflect.ValueOf(pkg.FilterImportDuplicates),
 
 		// Variables
 
@@ -49,6 +49,10 @@ func init() {
 	registerTypes("go/ast", map[string]reflect.Type{
 		// Non interfaces
 
+		"CommentMap":     reflect.TypeOf((*pkg.CommentMap)(nil)).Elem(),
+		"Filter":         reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
+		"MergeMode":      reflect.TypeOf((*pkg.MergeMode)(nil)).Elem(),
+		"FieldFilter":    reflect.TypeOf((*pkg.FieldFilter)(nil)).Elem(),
 		"Importer":       reflect.TypeOf((*pkg.Importer)(nil)).Elem(),
 		"Scope":          reflect.TypeOf((*pkg.Scope)(nil)).Elem(),
 		"Object":         reflect.TypeOf((*pkg.Object)(nil)).Elem(),
@@ -109,9 +113,5 @@ func init() {
 		"FuncDecl":       reflect.TypeOf((*pkg.FuncDecl)(nil)).Elem(),
 		"File":           reflect.TypeOf((*pkg.File)(nil)).Elem(),
 		"Package":        reflect.TypeOf((*pkg.Package)(nil)).Elem(),
-		"CommentMap":     reflect.TypeOf((*pkg.CommentMap)(nil)).Elem(),
-		"Filter":         reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
-		"MergeMode":      reflect.TypeOf((*pkg.MergeMode)(nil)).Elem(),
-		"FieldFilter":    reflect.TypeOf((*pkg.FieldFilter)(nil)).Elem(),
 	})
 }

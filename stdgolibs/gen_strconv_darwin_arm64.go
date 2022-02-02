@@ -9,19 +9,9 @@ import (
 func init() {
 	registerValues("strconv", map[string]reflect.Value{
 		// Functions
+		"ParseFloat":               reflect.ValueOf(pkg.ParseFloat),
 		"FormatFloat":              reflect.ValueOf(pkg.FormatFloat),
 		"AppendFloat":              reflect.ValueOf(pkg.AppendFloat),
-		"FormatUint":               reflect.ValueOf(pkg.FormatUint),
-		"FormatInt":                reflect.ValueOf(pkg.FormatInt),
-		"Itoa":                     reflect.ValueOf(pkg.Itoa),
-		"AppendInt":                reflect.ValueOf(pkg.AppendInt),
-		"AppendUint":               reflect.ValueOf(pkg.AppendUint),
-		"ParseComplex":             reflect.ValueOf(pkg.ParseComplex),
-		"ParseFloat":               reflect.ValueOf(pkg.ParseFloat),
-		"ParseUint":                reflect.ValueOf(pkg.ParseUint),
-		"ParseInt":                 reflect.ValueOf(pkg.ParseInt),
-		"Atoi":                     reflect.ValueOf(pkg.Atoi),
-		"FormatComplex":            reflect.ValueOf(pkg.FormatComplex),
 		"Quote":                    reflect.ValueOf(pkg.Quote),
 		"AppendQuote":              reflect.ValueOf(pkg.AppendQuote),
 		"QuoteToASCII":             reflect.ValueOf(pkg.QuoteToASCII),
@@ -42,6 +32,16 @@ func init() {
 		"ParseBool":                reflect.ValueOf(pkg.ParseBool),
 		"FormatBool":               reflect.ValueOf(pkg.FormatBool),
 		"AppendBool":               reflect.ValueOf(pkg.AppendBool),
+		"ParseComplex":             reflect.ValueOf(pkg.ParseComplex),
+		"ParseUint":                reflect.ValueOf(pkg.ParseUint),
+		"ParseInt":                 reflect.ValueOf(pkg.ParseInt),
+		"Atoi":                     reflect.ValueOf(pkg.Atoi),
+		"FormatComplex":            reflect.ValueOf(pkg.FormatComplex),
+		"FormatUint":               reflect.ValueOf(pkg.FormatUint),
+		"FormatInt":                reflect.ValueOf(pkg.FormatInt),
+		"Itoa":                     reflect.ValueOf(pkg.Itoa),
+		"AppendInt":                reflect.ValueOf(pkg.AppendInt),
+		"AppendUint":               reflect.ValueOf(pkg.AppendUint),
 
 		// Consts
 

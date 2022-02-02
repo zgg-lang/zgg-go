@@ -15,12 +15,12 @@ func init() {
 		"WriteHeapProfile":   reflect.ValueOf(pkg.WriteHeapProfile),
 		"StartCPUProfile":    reflect.ValueOf(pkg.StartCPUProfile),
 		"StopCPUProfile":     reflect.ValueOf(pkg.StopCPUProfile),
-		"SetGoroutineLabels": reflect.ValueOf(pkg.SetGoroutineLabels),
-		"Do":                 reflect.ValueOf(pkg.Do),
 		"WithLabels":         reflect.ValueOf(pkg.WithLabels),
 		"Labels":             reflect.ValueOf(pkg.Labels),
 		"Label":              reflect.ValueOf(pkg.Label),
 		"ForLabels":          reflect.ValueOf(pkg.ForLabels),
+		"SetGoroutineLabels": reflect.ValueOf(pkg.SetGoroutineLabels),
+		"Do":                 reflect.ValueOf(pkg.Do),
 
 		// Consts
 

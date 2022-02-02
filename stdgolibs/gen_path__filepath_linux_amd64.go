@@ -9,8 +9,6 @@ import (
 func init() {
 	registerValues("path/filepath", map[string]reflect.Value{
 		// Functions
-		"IsAbs":        reflect.ValueOf(pkg.IsAbs),
-		"HasPrefix":    reflect.ValueOf(pkg.HasPrefix),
 		"Match":        reflect.ValueOf(pkg.Match),
 		"Glob":         reflect.ValueOf(pkg.Glob),
 		"Clean":        reflect.ValueOf(pkg.Clean),
@@ -28,6 +26,8 @@ func init() {
 		"Base":         reflect.ValueOf(pkg.Base),
 		"Dir":          reflect.ValueOf(pkg.Dir),
 		"VolumeName":   reflect.ValueOf(pkg.VolumeName),
+		"IsAbs":        reflect.ValueOf(pkg.IsAbs),
+		"HasPrefix":    reflect.ValueOf(pkg.HasPrefix),
 
 		// Consts
 

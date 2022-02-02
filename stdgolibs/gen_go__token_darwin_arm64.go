@@ -9,14 +9,15 @@ import (
 func init() {
 	registerValues("go/token", map[string]reflect.Value{
 		// Functions
+		"NewFileSet":   reflect.ValueOf(pkg.NewFileSet),
 		"Lookup":       reflect.ValueOf(pkg.Lookup),
 		"IsExported":   reflect.ValueOf(pkg.IsExported),
 		"IsKeyword":    reflect.ValueOf(pkg.IsKeyword),
 		"IsIdentifier": reflect.ValueOf(pkg.IsIdentifier),
-		"NewFileSet":   reflect.ValueOf(pkg.NewFileSet),
 
 		// Consts
 
+		"NoPos":          reflect.ValueOf(pkg.NoPos),
 		"ILLEGAL":        reflect.ValueOf(pkg.ILLEGAL),
 		"EOF":            reflect.ValueOf(pkg.EOF),
 		"COMMENT":        reflect.ValueOf(pkg.COMMENT),
@@ -101,7 +102,6 @@ func init() {
 		"LowestPrec":     reflect.ValueOf(pkg.LowestPrec),
 		"UnaryPrec":      reflect.ValueOf(pkg.UnaryPrec),
 		"HighestPrec":    reflect.ValueOf(pkg.HighestPrec),
-		"NoPos":          reflect.ValueOf(pkg.NoPos),
 
 		// Variables
 
@@ -109,10 +109,10 @@ func init() {
 	registerTypes("go/token", map[string]reflect.Type{
 		// Non interfaces
 
-		"Token":    reflect.TypeOf((*pkg.Token)(nil)).Elem(),
 		"Position": reflect.TypeOf((*pkg.Position)(nil)).Elem(),
 		"Pos":      reflect.TypeOf((*pkg.Pos)(nil)).Elem(),
 		"File":     reflect.TypeOf((*pkg.File)(nil)).Elem(),
 		"FileSet":  reflect.TypeOf((*pkg.FileSet)(nil)).Elem(),
+		"Token":    reflect.TypeOf((*pkg.Token)(nil)).Elem(),
 	})
 }

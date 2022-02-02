@@ -9,10 +9,10 @@ import (
 func init() {
 	registerValues("regexp/syntax", map[string]reflect.Value{
 		// Functions
-		"Compile":        reflect.ValueOf(pkg.Compile),
 		"Parse":          reflect.ValueOf(pkg.Parse),
 		"EmptyOpContext": reflect.ValueOf(pkg.EmptyOpContext),
 		"IsWordChar":     reflect.ValueOf(pkg.IsWordChar),
+		"Compile":        reflect.ValueOf(pkg.Compile),
 
 		// Consts
 

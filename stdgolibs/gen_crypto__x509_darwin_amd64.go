@@ -9,6 +9,12 @@ import (
 func init() {
 	registerValues("crypto/x509", map[string]reflect.Value{
 		// Functions
+		"ParsePKCS1PrivateKey":     reflect.ValueOf(pkg.ParsePKCS1PrivateKey),
+		"MarshalPKCS1PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS1PrivateKey),
+		"ParsePKCS1PublicKey":      reflect.ValueOf(pkg.ParsePKCS1PublicKey),
+		"MarshalPKCS1PublicKey":    reflect.ValueOf(pkg.MarshalPKCS1PublicKey),
+		"ParsePKCS8PrivateKey":     reflect.ValueOf(pkg.ParsePKCS8PrivateKey),
+		"MarshalPKCS8PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS8PrivateKey),
 		"ParsePKIXPublicKey":       reflect.ValueOf(pkg.ParsePKIXPublicKey),
 		"MarshalPKIXPublicKey":     reflect.ValueOf(pkg.MarshalPKIXPublicKey),
 		"ParseCertificate":         reflect.ValueOf(pkg.ParseCertificate),
@@ -21,17 +27,11 @@ func init() {
 		"CreateRevocationList":     reflect.ValueOf(pkg.CreateRevocationList),
 		"NewCertPool":              reflect.ValueOf(pkg.NewCertPool),
 		"SystemCertPool":           reflect.ValueOf(pkg.SystemCertPool),
-		"ParsePKCS8PrivateKey":     reflect.ValueOf(pkg.ParsePKCS8PrivateKey),
-		"MarshalPKCS8PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS8PrivateKey),
-		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
-		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
 		"IsEncryptedPEMBlock":      reflect.ValueOf(pkg.IsEncryptedPEMBlock),
 		"DecryptPEMBlock":          reflect.ValueOf(pkg.DecryptPEMBlock),
 		"EncryptPEMBlock":          reflect.ValueOf(pkg.EncryptPEMBlock),
-		"ParsePKCS1PrivateKey":     reflect.ValueOf(pkg.ParsePKCS1PrivateKey),
-		"MarshalPKCS1PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS1PrivateKey),
-		"ParsePKCS1PublicKey":      reflect.ValueOf(pkg.ParsePKCS1PublicKey),
-		"MarshalPKCS1PublicKey":    reflect.ValueOf(pkg.MarshalPKCS1PublicKey),
+		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
+		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
 
 		// Consts
 

@@ -44,6 +44,10 @@ func init() {
 	registerTypes("html/template", map[string]reflect.Type{
 		// Non interfaces
 
+		"Template":  reflect.TypeOf((*pkg.Template)(nil)).Elem(),
+		"FuncMap":   reflect.TypeOf((*pkg.FuncMap)(nil)).Elem(),
+		"Error":     reflect.TypeOf((*pkg.Error)(nil)).Elem(),
+		"ErrorCode": reflect.TypeOf((*pkg.ErrorCode)(nil)).Elem(),
 		"CSS":       reflect.TypeOf((*pkg.CSS)(nil)).Elem(),
 		"HTML":      reflect.TypeOf((*pkg.HTML)(nil)).Elem(),
 		"HTMLAttr":  reflect.TypeOf((*pkg.HTMLAttr)(nil)).Elem(),
@@ -51,9 +55,5 @@ func init() {
 		"JSStr":     reflect.TypeOf((*pkg.JSStr)(nil)).Elem(),
 		"URL":       reflect.TypeOf((*pkg.URL)(nil)).Elem(),
 		"Srcset":    reflect.TypeOf((*pkg.Srcset)(nil)).Elem(),
-		"Template":  reflect.TypeOf((*pkg.Template)(nil)).Elem(),
-		"FuncMap":   reflect.TypeOf((*pkg.FuncMap)(nil)).Elem(),
-		"Error":     reflect.TypeOf((*pkg.Error)(nil)).Elem(),
-		"ErrorCode": reflect.TypeOf((*pkg.ErrorCode)(nil)).Elem(),
 	})
 }

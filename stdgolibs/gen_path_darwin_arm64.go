@@ -9,7 +9,6 @@ import (
 func init() {
 	registerValues("path", map[string]reflect.Value{
 		// Functions
-		"Match": reflect.ValueOf(pkg.Match),
 		"Clean": reflect.ValueOf(pkg.Clean),
 		"Split": reflect.ValueOf(pkg.Split),
 		"Join":  reflect.ValueOf(pkg.Join),
@@ -17,6 +16,7 @@ func init() {
 		"Base":  reflect.ValueOf(pkg.Base),
 		"IsAbs": reflect.ValueOf(pkg.IsAbs),
 		"Dir":   reflect.ValueOf(pkg.Dir),
+		"Match": reflect.ValueOf(pkg.Match),
 
 		// Consts
 
