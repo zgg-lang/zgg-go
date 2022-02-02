@@ -60,3 +60,20 @@ do
 		> ${LIBDIR}/${dstname}
 	echo "    ${dstname} done"
 done < ${pkgs_file}
+
+export GOOS=windows
+export GOARCH=amd64
+
+while read pkg mapping
+do
+	dstname="gen_$(echo ${pkg} | sed 's/\//__/g')_${GOOS}_${GOARCH}.go"
+	echo "Generating ${pkg} into ${LIBDIR}/${dstname}......"
+	bin/devtools export \
+		--root ${GO_ROOT} \
+		--go ${GO_ROOT}/bin/go \
+		--gotemplate ${LIBDIR}/pkg.tpl \
+		--spectypes "${mapping}" \
+		${pkg} \
+		> ${LIBDIR}/${dstname}
+	echo "    ${dstname} done"
+done < ${pkgs_file}
