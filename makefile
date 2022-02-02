@@ -15,6 +15,9 @@ linuxamd64:
 darwinamd64:
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/darwin_amd64/zgg cmd/*.go
 
+windowsamd64:
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/windows_amd64/zgg.exe cmd/*.go
+
 darwinarm64:
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/darwin_arm64/zgg cmd/*.go
 
