@@ -598,10 +598,15 @@ func initHttpRequestContextClass() ValueType {
 			} else {
 				targetUrl = r.URL.Scheme + "://" + targetUrl
 			}
-			targetUrl += r.URL.Path
+			reqPath := r.URL.Path
 			if r.URL.RawQuery != "" {
-				targetUrl += "?" + r.URL.RawQuery
+				reqPath += "?" + r.URL.RawQuery
 			}
+			if rewriteFunc := options.GetMember("rewrite", c); c.IsCallable(rewriteFunc) {
+				c.Invoke(rewriteFunc, nil, Args(NewStr(reqPath)))
+				reqPath = c.RetVal.ToString(c)
+			}
+			targetUrl += reqPath
 			reqBody := r.Body
 			if reqBody != nil {
 				defer reqBody.Close()
