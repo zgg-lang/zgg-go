@@ -387,7 +387,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 							return
 						}
 						modC := c.Clone()
-						modC.Path = filepath.Dir(name)
+						modC.Path = filepath.Dir(filename)
 						modC.SetLocalValue("_native", v)
 						modAst.Eval(modC)
 						return modC.RetVal, thisTime, true
