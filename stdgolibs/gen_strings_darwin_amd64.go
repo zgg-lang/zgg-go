@@ -9,6 +9,9 @@ import (
 func init() {
 	registerValues("strings", map[string]reflect.Value{
 		// Functions
+		"Compare":        reflect.ValueOf(pkg.Compare),
+		"NewReader":      reflect.ValueOf(pkg.NewReader),
+		"NewReplacer":    reflect.ValueOf(pkg.NewReplacer),
 		"Count":          reflect.ValueOf(pkg.Count),
 		"Contains":       reflect.ValueOf(pkg.Contains),
 		"ContainsAny":    reflect.ValueOf(pkg.ContainsAny),
@@ -53,9 +56,6 @@ func init() {
 		"ReplaceAll":     reflect.ValueOf(pkg.ReplaceAll),
 		"EqualFold":      reflect.ValueOf(pkg.EqualFold),
 		"Index":          reflect.ValueOf(pkg.Index),
-		"Compare":        reflect.ValueOf(pkg.Compare),
-		"NewReader":      reflect.ValueOf(pkg.NewReader),
-		"NewReplacer":    reflect.ValueOf(pkg.NewReplacer),
 
 		// Consts
 

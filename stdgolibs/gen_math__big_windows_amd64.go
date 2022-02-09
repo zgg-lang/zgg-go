@@ -10,14 +10,13 @@ func init() {
 	registerValues("math/big", map[string]reflect.Value{
 		// Functions
 		"NewRat":     reflect.ValueOf(pkg.NewRat),
-		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
 		"NewFloat":   reflect.ValueOf(pkg.NewFloat),
+		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
 		"NewInt":     reflect.ValueOf(pkg.NewInt),
 		"Jacobi":     reflect.ValueOf(pkg.Jacobi),
 
 		// Consts
 
-		"MaxBase":       reflect.ValueOf(pkg.MaxBase),
 		"MaxExp":        reflect.ValueOf(pkg.MaxExp),
 		"MinExp":        reflect.ValueOf(pkg.MinExp),
 		"MaxPrec":       reflect.ValueOf(pkg.MaxPrec),
@@ -30,6 +29,7 @@ func init() {
 		"Below":         reflect.ValueOf(pkg.Below),
 		"Exact":         reflect.ValueOf(pkg.Exact),
 		"Above":         reflect.ValueOf(pkg.Above),
+		"MaxBase":       reflect.ValueOf(pkg.MaxBase),
 
 		// Variables
 

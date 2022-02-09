@@ -9,6 +9,9 @@ import (
 func init() {
 	registerValues("image", map[string]reflect.Value{
 		// Functions
+		"RegisterFormat": reflect.ValueOf(pkg.RegisterFormat),
+		"Decode":         reflect.ValueOf(pkg.Decode),
+		"DecodeConfig":   reflect.ValueOf(pkg.DecodeConfig),
 		"Pt":             reflect.ValueOf(pkg.Pt),
 		"Rect":           reflect.ValueOf(pkg.Rect),
 		"NewRGBA":        reflect.ValueOf(pkg.NewRGBA),
@@ -24,9 +27,6 @@ func init() {
 		"NewUniform":     reflect.ValueOf(pkg.NewUniform),
 		"NewYCbCr":       reflect.ValueOf(pkg.NewYCbCr),
 		"NewNYCbCrA":     reflect.ValueOf(pkg.NewNYCbCrA),
-		"RegisterFormat": reflect.ValueOf(pkg.RegisterFormat),
-		"Decode":         reflect.ValueOf(pkg.Decode),
-		"DecodeConfig":   reflect.ValueOf(pkg.DecodeConfig),
 
 		// Consts
 
@@ -39,13 +39,13 @@ func init() {
 
 		// Variables
 
+		"ErrFormat":   reflect.ValueOf(&pkg.ErrFormat),
 		"ZP":          reflect.ValueOf(&pkg.ZP),
 		"ZR":          reflect.ValueOf(&pkg.ZR),
 		"Black":       reflect.ValueOf(&pkg.Black),
 		"White":       reflect.ValueOf(&pkg.White),
 		"Transparent": reflect.ValueOf(&pkg.Transparent),
 		"Opaque":      reflect.ValueOf(&pkg.Opaque),
-		"ErrFormat":   reflect.ValueOf(&pkg.ErrFormat),
 	})
 	registerTypes("image", map[string]reflect.Type{
 		// Non interfaces

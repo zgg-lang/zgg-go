@@ -9,6 +9,8 @@ import (
 func init() {
 	registerValues("go/ast", map[string]reflect.Value{
 		// Functions
+		"NewIdent":          reflect.ValueOf(pkg.NewIdent),
+		"IsExported":        reflect.ValueOf(pkg.IsExported),
 		"NewCommentMap":     reflect.ValueOf(pkg.NewCommentMap),
 		"FileExports":       reflect.ValueOf(pkg.FileExports),
 		"PackageExports":    reflect.ValueOf(pkg.PackageExports),
@@ -25,11 +27,11 @@ func init() {
 		"NewObj":            reflect.ValueOf(pkg.NewObj),
 		"Walk":              reflect.ValueOf(pkg.Walk),
 		"Inspect":           reflect.ValueOf(pkg.Inspect),
-		"NewIdent":          reflect.ValueOf(pkg.NewIdent),
-		"IsExported":        reflect.ValueOf(pkg.IsExported),
 
 		// Consts
 
+		"SEND":                       reflect.ValueOf(pkg.SEND),
+		"RECV":                       reflect.ValueOf(pkg.RECV),
 		"FilterFuncDuplicates":       reflect.ValueOf(pkg.FilterFuncDuplicates),
 		"FilterUnassociatedComments": reflect.ValueOf(pkg.FilterUnassociatedComments),
 		"FilterImportDuplicates":     reflect.ValueOf(pkg.FilterImportDuplicates),
@@ -40,8 +42,6 @@ func init() {
 		"Var":                        reflect.ValueOf(pkg.Var),
 		"Fun":                        reflect.ValueOf(pkg.Fun),
 		"Lbl":                        reflect.ValueOf(pkg.Lbl),
-		"SEND":                       reflect.ValueOf(pkg.SEND),
-		"RECV":                       reflect.ValueOf(pkg.RECV),
 
 		// Variables
 
@@ -49,14 +49,6 @@ func init() {
 	registerTypes("go/ast", map[string]reflect.Type{
 		// Non interfaces
 
-		"CommentMap":     reflect.TypeOf((*pkg.CommentMap)(nil)).Elem(),
-		"Filter":         reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
-		"MergeMode":      reflect.TypeOf((*pkg.MergeMode)(nil)).Elem(),
-		"FieldFilter":    reflect.TypeOf((*pkg.FieldFilter)(nil)).Elem(),
-		"Importer":       reflect.TypeOf((*pkg.Importer)(nil)).Elem(),
-		"Scope":          reflect.TypeOf((*pkg.Scope)(nil)).Elem(),
-		"Object":         reflect.TypeOf((*pkg.Object)(nil)).Elem(),
-		"ObjKind":        reflect.TypeOf((*pkg.ObjKind)(nil)).Elem(),
 		"Comment":        reflect.TypeOf((*pkg.Comment)(nil)).Elem(),
 		"CommentGroup":   reflect.TypeOf((*pkg.CommentGroup)(nil)).Elem(),
 		"Field":          reflect.TypeOf((*pkg.Field)(nil)).Elem(),
@@ -113,5 +105,13 @@ func init() {
 		"FuncDecl":       reflect.TypeOf((*pkg.FuncDecl)(nil)).Elem(),
 		"File":           reflect.TypeOf((*pkg.File)(nil)).Elem(),
 		"Package":        reflect.TypeOf((*pkg.Package)(nil)).Elem(),
+		"CommentMap":     reflect.TypeOf((*pkg.CommentMap)(nil)).Elem(),
+		"Filter":         reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
+		"MergeMode":      reflect.TypeOf((*pkg.MergeMode)(nil)).Elem(),
+		"FieldFilter":    reflect.TypeOf((*pkg.FieldFilter)(nil)).Elem(),
+		"Importer":       reflect.TypeOf((*pkg.Importer)(nil)).Elem(),
+		"Scope":          reflect.TypeOf((*pkg.Scope)(nil)).Elem(),
+		"Object":         reflect.TypeOf((*pkg.Object)(nil)).Elem(),
+		"ObjKind":        reflect.TypeOf((*pkg.ObjKind)(nil)).Elem(),
 	})
 }

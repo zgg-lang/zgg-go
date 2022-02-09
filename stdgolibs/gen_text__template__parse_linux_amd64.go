@@ -9,13 +9,14 @@ import (
 func init() {
 	registerValues("text/template/parse", map[string]reflect.Value{
 		// Functions
-		"NewIdentifier": reflect.ValueOf(pkg.NewIdentifier),
 		"Parse":         reflect.ValueOf(pkg.Parse),
 		"New":           reflect.ValueOf(pkg.New),
 		"IsEmptyTree":   reflect.ValueOf(pkg.IsEmptyTree),
+		"NewIdentifier": reflect.ValueOf(pkg.NewIdentifier),
 
 		// Consts
 
+		"ParseComments":  reflect.ValueOf(pkg.ParseComments),
 		"NodeText":       reflect.ValueOf(pkg.NodeText),
 		"NodeAction":     reflect.ValueOf(pkg.NodeAction),
 		"NodeBool":       reflect.ValueOf(pkg.NodeBool),
@@ -35,7 +36,6 @@ func init() {
 		"NodeVariable":   reflect.ValueOf(pkg.NodeVariable),
 		"NodeWith":       reflect.ValueOf(pkg.NodeWith),
 		"NodeComment":    reflect.ValueOf(pkg.NodeComment),
-		"ParseComments":  reflect.ValueOf(pkg.ParseComments),
 
 		// Variables
 
@@ -43,6 +43,8 @@ func init() {
 	registerTypes("text/template/parse", map[string]reflect.Type{
 		// Non interfaces
 
+		"Tree":           reflect.TypeOf((*pkg.Tree)(nil)).Elem(),
+		"Mode":           reflect.TypeOf((*pkg.Mode)(nil)).Elem(),
 		"NodeType":       reflect.TypeOf((*pkg.NodeType)(nil)).Elem(),
 		"Pos":            reflect.TypeOf((*pkg.Pos)(nil)).Elem(),
 		"ListNode":       reflect.TypeOf((*pkg.ListNode)(nil)).Elem(),
@@ -65,7 +67,5 @@ func init() {
 		"RangeNode":      reflect.TypeOf((*pkg.RangeNode)(nil)).Elem(),
 		"WithNode":       reflect.TypeOf((*pkg.WithNode)(nil)).Elem(),
 		"TemplateNode":   reflect.TypeOf((*pkg.TemplateNode)(nil)).Elem(),
-		"Tree":           reflect.TypeOf((*pkg.Tree)(nil)).Elem(),
-		"Mode":           reflect.TypeOf((*pkg.Mode)(nil)).Elem(),
 	})
 }

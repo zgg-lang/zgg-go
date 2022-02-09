@@ -9,10 +9,15 @@ import (
 func init() {
 	registerValues("time", map[string]reflect.Value{
 		// Functions
-		"LoadLocationFromTZData": reflect.ValueOf(pkg.LoadLocationFromTZData),
 		"Parse":                  reflect.ValueOf(pkg.Parse),
 		"ParseInLocation":        reflect.ValueOf(pkg.ParseInLocation),
 		"ParseDuration":          reflect.ValueOf(pkg.ParseDuration),
+		"Sleep":                  reflect.ValueOf(pkg.Sleep),
+		"NewTimer":               reflect.ValueOf(pkg.NewTimer),
+		"After":                  reflect.ValueOf(pkg.After),
+		"AfterFunc":              reflect.ValueOf(pkg.AfterFunc),
+		"NewTicker":              reflect.ValueOf(pkg.NewTicker),
+		"Tick":                   reflect.ValueOf(pkg.Tick),
 		"Since":                  reflect.ValueOf(pkg.Since),
 		"Until":                  reflect.ValueOf(pkg.Until),
 		"Now":                    reflect.ValueOf(pkg.Now),
@@ -20,12 +25,7 @@ func init() {
 		"Date":                   reflect.ValueOf(pkg.Date),
 		"FixedZone":              reflect.ValueOf(pkg.FixedZone),
 		"LoadLocation":           reflect.ValueOf(pkg.LoadLocation),
-		"Sleep":                  reflect.ValueOf(pkg.Sleep),
-		"NewTimer":               reflect.ValueOf(pkg.NewTimer),
-		"After":                  reflect.ValueOf(pkg.After),
-		"AfterFunc":              reflect.ValueOf(pkg.AfterFunc),
-		"NewTicker":              reflect.ValueOf(pkg.NewTicker),
-		"Tick":                   reflect.ValueOf(pkg.Tick),
+		"LoadLocationFromTZData": reflect.ValueOf(pkg.LoadLocationFromTZData),
 
 		// Consts
 
@@ -79,12 +79,12 @@ func init() {
 		// Non interfaces
 
 		"ParseError": reflect.TypeOf((*pkg.ParseError)(nil)).Elem(),
+		"Timer":      reflect.TypeOf((*pkg.Timer)(nil)).Elem(),
+		"Ticker":     reflect.TypeOf((*pkg.Ticker)(nil)).Elem(),
 		"Time":       reflect.TypeOf((*pkg.Time)(nil)).Elem(),
 		"Month":      reflect.TypeOf((*pkg.Month)(nil)).Elem(),
 		"Weekday":    reflect.TypeOf((*pkg.Weekday)(nil)).Elem(),
 		"Duration":   reflect.TypeOf((*pkg.Duration)(nil)).Elem(),
 		"Location":   reflect.TypeOf((*pkg.Location)(nil)).Elem(),
-		"Timer":      reflect.TypeOf((*pkg.Timer)(nil)).Elem(),
-		"Ticker":     reflect.TypeOf((*pkg.Ticker)(nil)).Elem(),
 	})
 }

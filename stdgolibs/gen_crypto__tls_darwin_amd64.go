@@ -88,9 +88,9 @@ func init() {
 	registerTypes("crypto/tls", map[string]reflect.Type{
 		// Non interfaces
 
-		"Dialer":                 reflect.TypeOf((*pkg.Dialer)(nil)).Elem(),
 		"Conn":                   reflect.TypeOf((*pkg.Conn)(nil)).Elem(),
 		"RecordHeaderError":      reflect.TypeOf((*pkg.RecordHeaderError)(nil)).Elem(),
+		"Dialer":                 reflect.TypeOf((*pkg.Dialer)(nil)).Elem(),
 		"CipherSuite":            reflect.TypeOf((*pkg.CipherSuite)(nil)).Elem(),
 		"CurveID":                reflect.TypeOf((*pkg.CurveID)(nil)).Elem(),
 		"ConnectionState":        reflect.TypeOf((*pkg.ConnectionState)(nil)).Elem(),

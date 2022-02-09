@@ -9,6 +9,7 @@ import (
 func init() {
 	registerValues("math/rand", map[string]reflect.Value{
 		// Functions
+		"NewZipf":     reflect.ValueOf(pkg.NewZipf),
 		"NewSource":   reflect.ValueOf(pkg.NewSource),
 		"New":         reflect.ValueOf(pkg.New),
 		"Seed":        reflect.ValueOf(pkg.Seed),
@@ -27,7 +28,6 @@ func init() {
 		"Read":        reflect.ValueOf(pkg.Read),
 		"NormFloat64": reflect.ValueOf(pkg.NormFloat64),
 		"ExpFloat64":  reflect.ValueOf(pkg.ExpFloat64),
-		"NewZipf":     reflect.ValueOf(pkg.NewZipf),
 
 		// Consts
 
@@ -37,7 +37,7 @@ func init() {
 	registerTypes("math/rand", map[string]reflect.Type{
 		// Non interfaces
 
-		"Rand": reflect.TypeOf((*pkg.Rand)(nil)).Elem(),
 		"Zipf": reflect.TypeOf((*pkg.Zipf)(nil)).Elem(),
+		"Rand": reflect.TypeOf((*pkg.Rand)(nil)).Elem(),
 	})
 }

@@ -9,7 +9,6 @@ import (
 func init() {
 	registerValues("time", map[string]reflect.Value{
 		// Functions
-		"LoadLocationFromTZData": reflect.ValueOf(pkg.LoadLocationFromTZData),
 		"Parse":                  reflect.ValueOf(pkg.Parse),
 		"ParseInLocation":        reflect.ValueOf(pkg.ParseInLocation),
 		"ParseDuration":          reflect.ValueOf(pkg.ParseDuration),
@@ -26,6 +25,7 @@ func init() {
 		"Date":                   reflect.ValueOf(pkg.Date),
 		"FixedZone":              reflect.ValueOf(pkg.FixedZone),
 		"LoadLocation":           reflect.ValueOf(pkg.LoadLocation),
+		"LoadLocationFromTZData": reflect.ValueOf(pkg.LoadLocationFromTZData),
 
 		// Consts
 

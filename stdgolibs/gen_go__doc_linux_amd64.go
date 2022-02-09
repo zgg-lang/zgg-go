@@ -9,13 +9,13 @@ import (
 func init() {
 	registerValues("go/doc", map[string]reflect.Value{
 		// Functions
-		"IsPredeclared": reflect.ValueOf(pkg.IsPredeclared),
-		"Synopsis":      reflect.ValueOf(pkg.Synopsis),
 		"ToHTML":        reflect.ValueOf(pkg.ToHTML),
 		"ToText":        reflect.ValueOf(pkg.ToText),
 		"New":           reflect.ValueOf(pkg.New),
 		"NewFromFiles":  reflect.ValueOf(pkg.NewFromFiles),
 		"Examples":      reflect.ValueOf(pkg.Examples),
+		"IsPredeclared": reflect.ValueOf(pkg.IsPredeclared),
+		"Synopsis":      reflect.ValueOf(pkg.Synopsis),
 
 		// Consts
 
@@ -30,7 +30,6 @@ func init() {
 	registerTypes("go/doc", map[string]reflect.Type{
 		// Non interfaces
 
-		"Filter":  reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
 		"Package": reflect.TypeOf((*pkg.Package)(nil)).Elem(),
 		"Value":   reflect.TypeOf((*pkg.Value)(nil)).Elem(),
 		"Type":    reflect.TypeOf((*pkg.Type)(nil)).Elem(),
@@ -38,5 +37,6 @@ func init() {
 		"Note":    reflect.TypeOf((*pkg.Note)(nil)).Elem(),
 		"Mode":    reflect.TypeOf((*pkg.Mode)(nil)).Elem(),
 		"Example": reflect.TypeOf((*pkg.Example)(nil)).Elem(),
+		"Filter":  reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
 	})
 }

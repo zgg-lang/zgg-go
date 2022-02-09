@@ -13,8 +13,8 @@ func init() {
 		"MarshalPKCS1PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS1PrivateKey),
 		"ParsePKCS1PublicKey":      reflect.ValueOf(pkg.ParsePKCS1PublicKey),
 		"MarshalPKCS1PublicKey":    reflect.ValueOf(pkg.MarshalPKCS1PublicKey),
-		"ParsePKCS8PrivateKey":     reflect.ValueOf(pkg.ParsePKCS8PrivateKey),
-		"MarshalPKCS8PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS8PrivateKey),
+		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
+		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
 		"ParsePKIXPublicKey":       reflect.ValueOf(pkg.ParsePKIXPublicKey),
 		"MarshalPKIXPublicKey":     reflect.ValueOf(pkg.MarshalPKIXPublicKey),
 		"ParseCertificate":         reflect.ValueOf(pkg.ParseCertificate),
@@ -30,21 +30,11 @@ func init() {
 		"IsEncryptedPEMBlock":      reflect.ValueOf(pkg.IsEncryptedPEMBlock),
 		"DecryptPEMBlock":          reflect.ValueOf(pkg.DecryptPEMBlock),
 		"EncryptPEMBlock":          reflect.ValueOf(pkg.EncryptPEMBlock),
-		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
-		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
+		"ParsePKCS8PrivateKey":     reflect.ValueOf(pkg.ParsePKCS8PrivateKey),
+		"MarshalPKCS8PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS8PrivateKey),
 
 		// Consts
 
-		"NotAuthorizedToSign":                       reflect.ValueOf(pkg.NotAuthorizedToSign),
-		"Expired":                                   reflect.ValueOf(pkg.Expired),
-		"CANotAuthorizedForThisName":                reflect.ValueOf(pkg.CANotAuthorizedForThisName),
-		"TooManyIntermediates":                      reflect.ValueOf(pkg.TooManyIntermediates),
-		"IncompatibleUsage":                         reflect.ValueOf(pkg.IncompatibleUsage),
-		"NameMismatch":                              reflect.ValueOf(pkg.NameMismatch),
-		"NameConstraintsWithoutSANs":                reflect.ValueOf(pkg.NameConstraintsWithoutSANs),
-		"UnconstrainedName":                         reflect.ValueOf(pkg.UnconstrainedName),
-		"TooManyConstraints":                        reflect.ValueOf(pkg.TooManyConstraints),
-		"CANotAuthorizedForExtKeyUsage":             reflect.ValueOf(pkg.CANotAuthorizedForExtKeyUsage),
 		"UnknownSignatureAlgorithm":                 reflect.ValueOf(pkg.UnknownSignatureAlgorithm),
 		"MD2WithRSA":                                reflect.ValueOf(pkg.MD2WithRSA),
 		"MD5WithRSA":                                reflect.ValueOf(pkg.MD5WithRSA),
@@ -95,6 +85,16 @@ func init() {
 		"PEMCipherAES128":                           reflect.ValueOf(pkg.PEMCipherAES128),
 		"PEMCipherAES192":                           reflect.ValueOf(pkg.PEMCipherAES192),
 		"PEMCipherAES256":                           reflect.ValueOf(pkg.PEMCipherAES256),
+		"NotAuthorizedToSign":                       reflect.ValueOf(pkg.NotAuthorizedToSign),
+		"Expired":                                   reflect.ValueOf(pkg.Expired),
+		"CANotAuthorizedForThisName":                reflect.ValueOf(pkg.CANotAuthorizedForThisName),
+		"TooManyIntermediates":                      reflect.ValueOf(pkg.TooManyIntermediates),
+		"IncompatibleUsage":                         reflect.ValueOf(pkg.IncompatibleUsage),
+		"NameMismatch":                              reflect.ValueOf(pkg.NameMismatch),
+		"NameConstraintsWithoutSANs":                reflect.ValueOf(pkg.NameConstraintsWithoutSANs),
+		"UnconstrainedName":                         reflect.ValueOf(pkg.UnconstrainedName),
+		"TooManyConstraints":                        reflect.ValueOf(pkg.TooManyConstraints),
+		"CANotAuthorizedForExtKeyUsage":             reflect.ValueOf(pkg.CANotAuthorizedForExtKeyUsage),
 
 		// Variables
 
@@ -104,12 +104,6 @@ func init() {
 	registerTypes("crypto/x509", map[string]reflect.Type{
 		// Non interfaces
 
-		"InvalidReason":              reflect.TypeOf((*pkg.InvalidReason)(nil)).Elem(),
-		"CertificateInvalidError":    reflect.TypeOf((*pkg.CertificateInvalidError)(nil)).Elem(),
-		"HostnameError":              reflect.TypeOf((*pkg.HostnameError)(nil)).Elem(),
-		"UnknownAuthorityError":      reflect.TypeOf((*pkg.UnknownAuthorityError)(nil)).Elem(),
-		"SystemRootsError":           reflect.TypeOf((*pkg.SystemRootsError)(nil)).Elem(),
-		"VerifyOptions":              reflect.TypeOf((*pkg.VerifyOptions)(nil)).Elem(),
 		"SignatureAlgorithm":         reflect.TypeOf((*pkg.SignatureAlgorithm)(nil)).Elem(),
 		"PublicKeyAlgorithm":         reflect.TypeOf((*pkg.PublicKeyAlgorithm)(nil)).Elem(),
 		"KeyUsage":                   reflect.TypeOf((*pkg.KeyUsage)(nil)).Elem(),
@@ -122,5 +116,11 @@ func init() {
 		"RevocationList":             reflect.TypeOf((*pkg.RevocationList)(nil)).Elem(),
 		"CertPool":                   reflect.TypeOf((*pkg.CertPool)(nil)).Elem(),
 		"PEMCipher":                  reflect.TypeOf((*pkg.PEMCipher)(nil)).Elem(),
+		"InvalidReason":              reflect.TypeOf((*pkg.InvalidReason)(nil)).Elem(),
+		"CertificateInvalidError":    reflect.TypeOf((*pkg.CertificateInvalidError)(nil)).Elem(),
+		"HostnameError":              reflect.TypeOf((*pkg.HostnameError)(nil)).Elem(),
+		"UnknownAuthorityError":      reflect.TypeOf((*pkg.UnknownAuthorityError)(nil)).Elem(),
+		"SystemRootsError":           reflect.TypeOf((*pkg.SystemRootsError)(nil)).Elem(),
+		"VerifyOptions":              reflect.TypeOf((*pkg.VerifyOptions)(nil)).Elem(),
 	})
 }

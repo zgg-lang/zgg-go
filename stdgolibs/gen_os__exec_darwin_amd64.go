@@ -9,9 +9,9 @@ import (
 func init() {
 	registerValues("os/exec", map[string]reflect.Value{
 		// Functions
-		"LookPath":       reflect.ValueOf(pkg.LookPath),
 		"Command":        reflect.ValueOf(pkg.Command),
 		"CommandContext": reflect.ValueOf(pkg.CommandContext),
+		"LookPath":       reflect.ValueOf(pkg.LookPath),
 
 		// Consts
 

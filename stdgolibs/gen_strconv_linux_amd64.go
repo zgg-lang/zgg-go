@@ -9,14 +9,17 @@ import (
 func init() {
 	registerValues("strconv", map[string]reflect.Value{
 		// Functions
+		"ParseBool":                reflect.ValueOf(pkg.ParseBool),
+		"FormatBool":               reflect.ValueOf(pkg.FormatBool),
+		"AppendBool":               reflect.ValueOf(pkg.AppendBool),
+		"ParseComplex":             reflect.ValueOf(pkg.ParseComplex),
+		"ParseFloat":               reflect.ValueOf(pkg.ParseFloat),
+		"FormatFloat":              reflect.ValueOf(pkg.FormatFloat),
+		"AppendFloat":              reflect.ValueOf(pkg.AppendFloat),
 		"ParseUint":                reflect.ValueOf(pkg.ParseUint),
 		"ParseInt":                 reflect.ValueOf(pkg.ParseInt),
 		"Atoi":                     reflect.ValueOf(pkg.Atoi),
-		"ParseFloat":               reflect.ValueOf(pkg.ParseFloat),
-		"ParseComplex":             reflect.ValueOf(pkg.ParseComplex),
 		"FormatComplex":            reflect.ValueOf(pkg.FormatComplex),
-		"FormatFloat":              reflect.ValueOf(pkg.FormatFloat),
-		"AppendFloat":              reflect.ValueOf(pkg.AppendFloat),
 		"FormatUint":               reflect.ValueOf(pkg.FormatUint),
 		"FormatInt":                reflect.ValueOf(pkg.FormatInt),
 		"Itoa":                     reflect.ValueOf(pkg.Itoa),
@@ -39,9 +42,6 @@ func init() {
 		"Unquote":                  reflect.ValueOf(pkg.Unquote),
 		"IsPrint":                  reflect.ValueOf(pkg.IsPrint),
 		"IsGraphic":                reflect.ValueOf(pkg.IsGraphic),
-		"ParseBool":                reflect.ValueOf(pkg.ParseBool),
-		"FormatBool":               reflect.ValueOf(pkg.FormatBool),
-		"AppendBool":               reflect.ValueOf(pkg.AppendBool),
 
 		// Consts
 

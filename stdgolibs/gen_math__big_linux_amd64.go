@@ -9,11 +9,11 @@ import (
 func init() {
 	registerValues("math/big", map[string]reflect.Value{
 		// Functions
+		"NewFloat":   reflect.ValueOf(pkg.NewFloat),
 		"NewRat":     reflect.ValueOf(pkg.NewRat),
+		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
 		"NewInt":     reflect.ValueOf(pkg.NewInt),
 		"Jacobi":     reflect.ValueOf(pkg.Jacobi),
-		"NewFloat":   reflect.ValueOf(pkg.NewFloat),
-		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
 
 		// Consts
 
@@ -37,12 +37,12 @@ func init() {
 	registerTypes("math/big", map[string]reflect.Type{
 		// Non interfaces
 
-		"Rat":          reflect.TypeOf((*pkg.Rat)(nil)).Elem(),
-		"Int":          reflect.TypeOf((*pkg.Int)(nil)).Elem(),
 		"Float":        reflect.TypeOf((*pkg.Float)(nil)).Elem(),
 		"ErrNaN":       reflect.TypeOf((*pkg.ErrNaN)(nil)).Elem(),
 		"RoundingMode": reflect.TypeOf((*pkg.RoundingMode)(nil)).Elem(),
 		"Accuracy":     reflect.TypeOf((*pkg.Accuracy)(nil)).Elem(),
+		"Rat":          reflect.TypeOf((*pkg.Rat)(nil)).Elem(),
+		"Int":          reflect.TypeOf((*pkg.Int)(nil)).Elem(),
 		"Word":         reflect.TypeOf((*pkg.Word)(nil)).Elem(),
 	})
 }

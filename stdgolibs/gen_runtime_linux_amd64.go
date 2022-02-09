@@ -9,14 +9,16 @@ import (
 func init() {
 	registerValues("runtime", map[string]reflect.Value{
 		// Functions
-		"GOMAXPROCS":              reflect.ValueOf(pkg.GOMAXPROCS),
-		"NumCPU":                  reflect.ValueOf(pkg.NumCPU),
-		"NumCgoCall":              reflect.ValueOf(pkg.NumCgoCall),
-		"NumGoroutine":            reflect.ValueOf(pkg.NumGoroutine),
+		"ReadMemStats":            reflect.ValueOf(pkg.ReadMemStats),
 		"CallersFrames":           reflect.ValueOf(pkg.CallersFrames),
 		"FuncForPC":               reflect.ValueOf(pkg.FuncForPC),
+		"Goexit":                  reflect.ValueOf(pkg.Goexit),
+		"SetCgoTraceback":         reflect.ValueOf(pkg.SetCgoTraceback),
+		"GC":                      reflect.ValueOf(pkg.GC),
 		"SetCPUProfileRate":       reflect.ValueOf(pkg.SetCPUProfileRate),
 		"CPUProfile":              reflect.ValueOf(pkg.CPUProfile),
+		"SetFinalizer":            reflect.ValueOf(pkg.SetFinalizer),
+		"KeepAlive":               reflect.ValueOf(pkg.KeepAlive),
 		"Gosched":                 reflect.ValueOf(pkg.Gosched),
 		"Breakpoint":              reflect.ValueOf(pkg.Breakpoint),
 		"LockOSThread":            reflect.ValueOf(pkg.LockOSThread),
@@ -29,19 +31,17 @@ func init() {
 		"ThreadCreateProfile":     reflect.ValueOf(pkg.ThreadCreateProfile),
 		"GoroutineProfile":        reflect.ValueOf(pkg.GoroutineProfile),
 		"Stack":                   reflect.ValueOf(pkg.Stack),
-		"GC":                      reflect.ValueOf(pkg.GC),
-		"ReadMemStats":            reflect.ValueOf(pkg.ReadMemStats),
+		"StartTrace":              reflect.ValueOf(pkg.StartTrace),
+		"StopTrace":               reflect.ValueOf(pkg.StopTrace),
+		"ReadTrace":               reflect.ValueOf(pkg.ReadTrace),
+		"GOMAXPROCS":              reflect.ValueOf(pkg.GOMAXPROCS),
+		"NumCPU":                  reflect.ValueOf(pkg.NumCPU),
+		"NumCgoCall":              reflect.ValueOf(pkg.NumCgoCall),
+		"NumGoroutine":            reflect.ValueOf(pkg.NumGoroutine),
 		"Caller":                  reflect.ValueOf(pkg.Caller),
 		"Callers":                 reflect.ValueOf(pkg.Callers),
 		"GOROOT":                  reflect.ValueOf(pkg.GOROOT),
 		"Version":                 reflect.ValueOf(pkg.Version),
-		"SetFinalizer":            reflect.ValueOf(pkg.SetFinalizer),
-		"KeepAlive":               reflect.ValueOf(pkg.KeepAlive),
-		"Goexit":                  reflect.ValueOf(pkg.Goexit),
-		"StartTrace":              reflect.ValueOf(pkg.StartTrace),
-		"StopTrace":               reflect.ValueOf(pkg.StopTrace),
-		"ReadTrace":               reflect.ValueOf(pkg.ReadTrace),
-		"SetCgoTraceback":         reflect.ValueOf(pkg.SetCgoTraceback),
 
 		// Consts
 
@@ -56,13 +56,13 @@ func init() {
 	registerTypes("runtime", map[string]reflect.Type{
 		// Non interfaces
 
+		"MemStats":           reflect.TypeOf((*pkg.MemStats)(nil)).Elem(),
 		"Frames":             reflect.TypeOf((*pkg.Frames)(nil)).Elem(),
 		"Frame":              reflect.TypeOf((*pkg.Frame)(nil)).Elem(),
 		"Func":               reflect.TypeOf((*pkg.Func)(nil)).Elem(),
 		"StackRecord":        reflect.TypeOf((*pkg.StackRecord)(nil)).Elem(),
 		"MemProfileRecord":   reflect.TypeOf((*pkg.MemProfileRecord)(nil)).Elem(),
 		"BlockProfileRecord": reflect.TypeOf((*pkg.BlockProfileRecord)(nil)).Elem(),
-		"MemStats":           reflect.TypeOf((*pkg.MemStats)(nil)).Elem(),
 		"TypeAssertionError": reflect.TypeOf((*pkg.TypeAssertionError)(nil)).Elem(),
 	})
 }

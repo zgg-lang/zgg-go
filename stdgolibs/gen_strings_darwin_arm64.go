@@ -65,8 +65,8 @@ func init() {
 	registerTypes("strings", map[string]reflect.Type{
 		// Non interfaces
 
-		"Builder":  reflect.TypeOf((*pkg.Builder)(nil)).Elem(),
 		"Reader":   reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 		"Replacer": reflect.TypeOf((*pkg.Replacer)(nil)).Elem(),
+		"Builder":  reflect.TypeOf((*pkg.Builder)(nil)).Elem(),
 	})
 }

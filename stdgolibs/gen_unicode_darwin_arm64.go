@@ -46,8 +46,6 @@ func init() {
 
 		// Variables
 
-		"TurkishCase":                        reflect.ValueOf(&pkg.TurkishCase),
-		"AzeriCase":                          reflect.ValueOf(&pkg.AzeriCase),
 		"GraphicRanges":                      reflect.ValueOf(&pkg.GraphicRanges),
 		"PrintRanges":                        reflect.ValueOf(&pkg.PrintRanges),
 		"Categories":                         reflect.ValueOf(&pkg.Categories),
@@ -294,6 +292,8 @@ func init() {
 		"CaseRanges":                         reflect.ValueOf(&pkg.CaseRanges),
 		"FoldCategory":                       reflect.ValueOf(&pkg.FoldCategory),
 		"FoldScript":                         reflect.ValueOf(&pkg.FoldScript),
+		"TurkishCase":                        reflect.ValueOf(&pkg.TurkishCase),
+		"AzeriCase":                          reflect.ValueOf(&pkg.AzeriCase),
 	})
 	registerTypes("unicode", map[string]reflect.Type{
 		// Non interfaces

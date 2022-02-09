@@ -9,8 +9,6 @@ import (
 func init() {
 	registerValues("reflect", map[string]reflect.Value{
 		// Functions
-		"DeepEqual":       reflect.ValueOf(pkg.DeepEqual),
-		"MakeFunc":        reflect.ValueOf(pkg.MakeFunc),
 		"Swapper":         reflect.ValueOf(pkg.Swapper),
 		"TypeOf":          reflect.ValueOf(pkg.TypeOf),
 		"PtrTo":           reflect.ValueOf(pkg.PtrTo),
@@ -33,6 +31,8 @@ func init() {
 		"Zero":            reflect.ValueOf(pkg.Zero),
 		"New":             reflect.ValueOf(pkg.New),
 		"NewAt":           reflect.ValueOf(pkg.NewAt),
+		"DeepEqual":       reflect.ValueOf(pkg.DeepEqual),
+		"MakeFunc":        reflect.ValueOf(pkg.MakeFunc),
 
 		// Consts
 

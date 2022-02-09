@@ -9,15 +9,15 @@ import (
 func init() {
 	registerValues("encoding/xml", map[string]reflect.Value{
 		// Functions
-		"Marshal":         reflect.ValueOf(pkg.Marshal),
-		"MarshalIndent":   reflect.ValueOf(pkg.MarshalIndent),
-		"NewEncoder":      reflect.ValueOf(pkg.NewEncoder),
-		"Unmarshal":       reflect.ValueOf(pkg.Unmarshal),
 		"CopyToken":       reflect.ValueOf(pkg.CopyToken),
 		"NewDecoder":      reflect.ValueOf(pkg.NewDecoder),
 		"NewTokenDecoder": reflect.ValueOf(pkg.NewTokenDecoder),
 		"EscapeText":      reflect.ValueOf(pkg.EscapeText),
 		"Escape":          reflect.ValueOf(pkg.Escape),
+		"Marshal":         reflect.ValueOf(pkg.Marshal),
+		"MarshalIndent":   reflect.ValueOf(pkg.MarshalIndent),
+		"NewEncoder":      reflect.ValueOf(pkg.NewEncoder),
+		"Unmarshal":       reflect.ValueOf(pkg.Unmarshal),
 
 		// Consts
 
@@ -31,9 +31,6 @@ func init() {
 	registerTypes("encoding/xml", map[string]reflect.Type{
 		// Non interfaces
 
-		"Encoder":              reflect.TypeOf((*pkg.Encoder)(nil)).Elem(),
-		"UnsupportedTypeError": reflect.TypeOf((*pkg.UnsupportedTypeError)(nil)).Elem(),
-		"UnmarshalError":       reflect.TypeOf((*pkg.UnmarshalError)(nil)).Elem(),
 		"TagPathError":         reflect.TypeOf((*pkg.TagPathError)(nil)).Elem(),
 		"SyntaxError":          reflect.TypeOf((*pkg.SyntaxError)(nil)).Elem(),
 		"Name":                 reflect.TypeOf((*pkg.Name)(nil)).Elem(),
@@ -45,5 +42,8 @@ func init() {
 		"ProcInst":             reflect.TypeOf((*pkg.ProcInst)(nil)).Elem(),
 		"Directive":            reflect.TypeOf((*pkg.Directive)(nil)).Elem(),
 		"Decoder":              reflect.TypeOf((*pkg.Decoder)(nil)).Elem(),
+		"Encoder":              reflect.TypeOf((*pkg.Encoder)(nil)).Elem(),
+		"UnsupportedTypeError": reflect.TypeOf((*pkg.UnsupportedTypeError)(nil)).Elem(),
+		"UnmarshalError":       reflect.TypeOf((*pkg.UnmarshalError)(nil)).Elem(),
 	})
 }

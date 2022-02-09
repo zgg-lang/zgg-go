@@ -9,15 +9,15 @@ import (
 func init() {
 	registerValues("net/http/httputil", map[string]reflect.Value{
 		// Functions
-		"DumpRequestOut":            reflect.ValueOf(pkg.DumpRequestOut),
-		"DumpRequest":               reflect.ValueOf(pkg.DumpRequest),
-		"DumpResponse":              reflect.ValueOf(pkg.DumpResponse),
 		"NewChunkedReader":          reflect.ValueOf(pkg.NewChunkedReader),
 		"NewChunkedWriter":          reflect.ValueOf(pkg.NewChunkedWriter),
 		"NewServerConn":             reflect.ValueOf(pkg.NewServerConn),
 		"NewClientConn":             reflect.ValueOf(pkg.NewClientConn),
 		"NewProxyClientConn":        reflect.ValueOf(pkg.NewProxyClientConn),
 		"NewSingleHostReverseProxy": reflect.ValueOf(pkg.NewSingleHostReverseProxy),
+		"DumpRequestOut":            reflect.ValueOf(pkg.DumpRequestOut),
+		"DumpRequest":               reflect.ValueOf(pkg.DumpRequest),
+		"DumpResponse":              reflect.ValueOf(pkg.DumpResponse),
 
 		// Consts
 

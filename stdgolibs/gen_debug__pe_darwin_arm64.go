@@ -14,7 +14,6 @@ func init() {
 
 		// Consts
 
-		"COFFSymbolSize":                                 reflect.ValueOf(pkg.COFFSymbolSize),
 		"IMAGE_FILE_MACHINE_UNKNOWN":                     reflect.ValueOf(pkg.IMAGE_FILE_MACHINE_UNKNOWN),
 		"IMAGE_FILE_MACHINE_AM33":                        reflect.ValueOf(pkg.IMAGE_FILE_MACHINE_AM33),
 		"IMAGE_FILE_MACHINE_AMD64":                       reflect.ValueOf(pkg.IMAGE_FILE_MACHINE_AMD64),
@@ -92,6 +91,7 @@ func init() {
 		"IMAGE_DLLCHARACTERISTICS_WDM_DRIVER":            reflect.ValueOf(pkg.IMAGE_DLLCHARACTERISTICS_WDM_DRIVER),
 		"IMAGE_DLLCHARACTERISTICS_GUARD_CF":              reflect.ValueOf(pkg.IMAGE_DLLCHARACTERISTICS_GUARD_CF),
 		"IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE": reflect.ValueOf(pkg.IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE),
+		"COFFSymbolSize":                                 reflect.ValueOf(pkg.COFFSymbolSize),
 
 		// Variables
 
@@ -99,13 +99,6 @@ func init() {
 	registerTypes("debug/pe", map[string]reflect.Type{
 		// Non interfaces
 
-		"SectionHeader32":  reflect.TypeOf((*pkg.SectionHeader32)(nil)).Elem(),
-		"Reloc":            reflect.TypeOf((*pkg.Reloc)(nil)).Elem(),
-		"SectionHeader":    reflect.TypeOf((*pkg.SectionHeader)(nil)).Elem(),
-		"Section":          reflect.TypeOf((*pkg.Section)(nil)).Elem(),
-		"StringTable":      reflect.TypeOf((*pkg.StringTable)(nil)).Elem(),
-		"COFFSymbol":       reflect.TypeOf((*pkg.COFFSymbol)(nil)).Elem(),
-		"Symbol":           reflect.TypeOf((*pkg.Symbol)(nil)).Elem(),
 		"File":             reflect.TypeOf((*pkg.File)(nil)).Elem(),
 		"ImportDirectory":  reflect.TypeOf((*pkg.ImportDirectory)(nil)).Elem(),
 		"FormatError":      reflect.TypeOf((*pkg.FormatError)(nil)).Elem(),
@@ -113,5 +106,12 @@ func init() {
 		"DataDirectory":    reflect.TypeOf((*pkg.DataDirectory)(nil)).Elem(),
 		"OptionalHeader32": reflect.TypeOf((*pkg.OptionalHeader32)(nil)).Elem(),
 		"OptionalHeader64": reflect.TypeOf((*pkg.OptionalHeader64)(nil)).Elem(),
+		"SectionHeader32":  reflect.TypeOf((*pkg.SectionHeader32)(nil)).Elem(),
+		"Reloc":            reflect.TypeOf((*pkg.Reloc)(nil)).Elem(),
+		"SectionHeader":    reflect.TypeOf((*pkg.SectionHeader)(nil)).Elem(),
+		"Section":          reflect.TypeOf((*pkg.Section)(nil)).Elem(),
+		"StringTable":      reflect.TypeOf((*pkg.StringTable)(nil)).Elem(),
+		"COFFSymbol":       reflect.TypeOf((*pkg.COFFSymbol)(nil)).Elem(),
+		"Symbol":           reflect.TypeOf((*pkg.Symbol)(nil)).Elem(),
 	})
 }

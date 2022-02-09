@@ -9,9 +9,17 @@ import (
 func init() {
 	registerValues("crypto/x509", map[string]reflect.Value{
 		// Functions
+		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
+		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
+		"NewCertPool":              reflect.ValueOf(pkg.NewCertPool),
+		"SystemCertPool":           reflect.ValueOf(pkg.SystemCertPool),
 		"IsEncryptedPEMBlock":      reflect.ValueOf(pkg.IsEncryptedPEMBlock),
 		"DecryptPEMBlock":          reflect.ValueOf(pkg.DecryptPEMBlock),
 		"EncryptPEMBlock":          reflect.ValueOf(pkg.EncryptPEMBlock),
+		"ParsePKCS1PrivateKey":     reflect.ValueOf(pkg.ParsePKCS1PrivateKey),
+		"MarshalPKCS1PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS1PrivateKey),
+		"ParsePKCS1PublicKey":      reflect.ValueOf(pkg.ParsePKCS1PublicKey),
+		"MarshalPKCS1PublicKey":    reflect.ValueOf(pkg.MarshalPKCS1PublicKey),
 		"ParsePKCS8PrivateKey":     reflect.ValueOf(pkg.ParsePKCS8PrivateKey),
 		"MarshalPKCS8PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS8PrivateKey),
 		"ParsePKIXPublicKey":       reflect.ValueOf(pkg.ParsePKIXPublicKey),
@@ -24,22 +32,9 @@ func init() {
 		"CreateCertificateRequest": reflect.ValueOf(pkg.CreateCertificateRequest),
 		"ParseCertificateRequest":  reflect.ValueOf(pkg.ParseCertificateRequest),
 		"CreateRevocationList":     reflect.ValueOf(pkg.CreateRevocationList),
-		"NewCertPool":              reflect.ValueOf(pkg.NewCertPool),
-		"SystemCertPool":           reflect.ValueOf(pkg.SystemCertPool),
-		"ParsePKCS1PrivateKey":     reflect.ValueOf(pkg.ParsePKCS1PrivateKey),
-		"MarshalPKCS1PrivateKey":   reflect.ValueOf(pkg.MarshalPKCS1PrivateKey),
-		"ParsePKCS1PublicKey":      reflect.ValueOf(pkg.ParsePKCS1PublicKey),
-		"MarshalPKCS1PublicKey":    reflect.ValueOf(pkg.MarshalPKCS1PublicKey),
-		"ParseECPrivateKey":        reflect.ValueOf(pkg.ParseECPrivateKey),
-		"MarshalECPrivateKey":      reflect.ValueOf(pkg.MarshalECPrivateKey),
 
 		// Consts
 
-		"PEMCipherDES":                              reflect.ValueOf(pkg.PEMCipherDES),
-		"PEMCipher3DES":                             reflect.ValueOf(pkg.PEMCipher3DES),
-		"PEMCipherAES128":                           reflect.ValueOf(pkg.PEMCipherAES128),
-		"PEMCipherAES192":                           reflect.ValueOf(pkg.PEMCipherAES192),
-		"PEMCipherAES256":                           reflect.ValueOf(pkg.PEMCipherAES256),
 		"NotAuthorizedToSign":                       reflect.ValueOf(pkg.NotAuthorizedToSign),
 		"Expired":                                   reflect.ValueOf(pkg.Expired),
 		"CANotAuthorizedForThisName":                reflect.ValueOf(pkg.CANotAuthorizedForThisName),
@@ -50,6 +45,11 @@ func init() {
 		"UnconstrainedName":                         reflect.ValueOf(pkg.UnconstrainedName),
 		"TooManyConstraints":                        reflect.ValueOf(pkg.TooManyConstraints),
 		"CANotAuthorizedForExtKeyUsage":             reflect.ValueOf(pkg.CANotAuthorizedForExtKeyUsage),
+		"PEMCipherDES":                              reflect.ValueOf(pkg.PEMCipherDES),
+		"PEMCipher3DES":                             reflect.ValueOf(pkg.PEMCipher3DES),
+		"PEMCipherAES128":                           reflect.ValueOf(pkg.PEMCipherAES128),
+		"PEMCipherAES192":                           reflect.ValueOf(pkg.PEMCipherAES192),
+		"PEMCipherAES256":                           reflect.ValueOf(pkg.PEMCipherAES256),
 		"UnknownSignatureAlgorithm":                 reflect.ValueOf(pkg.UnknownSignatureAlgorithm),
 		"MD2WithRSA":                                reflect.ValueOf(pkg.MD2WithRSA),
 		"MD5WithRSA":                                reflect.ValueOf(pkg.MD5WithRSA),
@@ -104,13 +104,14 @@ func init() {
 	registerTypes("crypto/x509", map[string]reflect.Type{
 		// Non interfaces
 
-		"PEMCipher":                  reflect.TypeOf((*pkg.PEMCipher)(nil)).Elem(),
 		"InvalidReason":              reflect.TypeOf((*pkg.InvalidReason)(nil)).Elem(),
 		"CertificateInvalidError":    reflect.TypeOf((*pkg.CertificateInvalidError)(nil)).Elem(),
 		"HostnameError":              reflect.TypeOf((*pkg.HostnameError)(nil)).Elem(),
 		"UnknownAuthorityError":      reflect.TypeOf((*pkg.UnknownAuthorityError)(nil)).Elem(),
 		"SystemRootsError":           reflect.TypeOf((*pkg.SystemRootsError)(nil)).Elem(),
 		"VerifyOptions":              reflect.TypeOf((*pkg.VerifyOptions)(nil)).Elem(),
+		"CertPool":                   reflect.TypeOf((*pkg.CertPool)(nil)).Elem(),
+		"PEMCipher":                  reflect.TypeOf((*pkg.PEMCipher)(nil)).Elem(),
 		"SignatureAlgorithm":         reflect.TypeOf((*pkg.SignatureAlgorithm)(nil)).Elem(),
 		"PublicKeyAlgorithm":         reflect.TypeOf((*pkg.PublicKeyAlgorithm)(nil)).Elem(),
 		"KeyUsage":                   reflect.TypeOf((*pkg.KeyUsage)(nil)).Elem(),
@@ -121,6 +122,5 @@ func init() {
 		"UnhandledCriticalExtension": reflect.TypeOf((*pkg.UnhandledCriticalExtension)(nil)).Elem(),
 		"CertificateRequest":         reflect.TypeOf((*pkg.CertificateRequest)(nil)).Elem(),
 		"RevocationList":             reflect.TypeOf((*pkg.RevocationList)(nil)).Elem(),
-		"CertPool":                   reflect.TypeOf((*pkg.CertPool)(nil)).Elem(),
 	})
 }

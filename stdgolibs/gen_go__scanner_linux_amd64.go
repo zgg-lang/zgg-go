@@ -21,10 +21,10 @@ func init() {
 	registerTypes("go/scanner", map[string]reflect.Type{
 		// Non interfaces
 
-		"Error":        reflect.TypeOf((*pkg.Error)(nil)).Elem(),
-		"ErrorList":    reflect.TypeOf((*pkg.ErrorList)(nil)).Elem(),
 		"ErrorHandler": reflect.TypeOf((*pkg.ErrorHandler)(nil)).Elem(),
 		"Scanner":      reflect.TypeOf((*pkg.Scanner)(nil)).Elem(),
 		"Mode":         reflect.TypeOf((*pkg.Mode)(nil)).Elem(),
+		"Error":        reflect.TypeOf((*pkg.Error)(nil)).Elem(),
+		"ErrorList":    reflect.TypeOf((*pkg.ErrorList)(nil)).Elem(),
 	})
 }

@@ -11,13 +11,12 @@ func init() {
 		// Functions
 		"NewInt":     reflect.ValueOf(pkg.NewInt),
 		"Jacobi":     reflect.ValueOf(pkg.Jacobi),
-		"NewRat":     reflect.ValueOf(pkg.NewRat),
-		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
 		"NewFloat":   reflect.ValueOf(pkg.NewFloat),
+		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
+		"NewRat":     reflect.ValueOf(pkg.NewRat),
 
 		// Consts
 
-		"MaxBase":       reflect.ValueOf(pkg.MaxBase),
 		"MaxExp":        reflect.ValueOf(pkg.MaxExp),
 		"MinExp":        reflect.ValueOf(pkg.MinExp),
 		"MaxPrec":       reflect.ValueOf(pkg.MaxPrec),
@@ -30,6 +29,7 @@ func init() {
 		"Below":         reflect.ValueOf(pkg.Below),
 		"Exact":         reflect.ValueOf(pkg.Exact),
 		"Above":         reflect.ValueOf(pkg.Above),
+		"MaxBase":       reflect.ValueOf(pkg.MaxBase),
 
 		// Variables
 
@@ -38,11 +38,11 @@ func init() {
 		// Non interfaces
 
 		"Int":          reflect.TypeOf((*pkg.Int)(nil)).Elem(),
-		"Rat":          reflect.TypeOf((*pkg.Rat)(nil)).Elem(),
-		"Word":         reflect.TypeOf((*pkg.Word)(nil)).Elem(),
 		"Float":        reflect.TypeOf((*pkg.Float)(nil)).Elem(),
 		"ErrNaN":       reflect.TypeOf((*pkg.ErrNaN)(nil)).Elem(),
 		"RoundingMode": reflect.TypeOf((*pkg.RoundingMode)(nil)).Elem(),
 		"Accuracy":     reflect.TypeOf((*pkg.Accuracy)(nil)).Elem(),
+		"Word":         reflect.TypeOf((*pkg.Word)(nil)).Elem(),
+		"Rat":          reflect.TypeOf((*pkg.Rat)(nil)).Elem(),
 	})
 }

@@ -9,9 +9,9 @@ import (
 func init() {
 	registerValues("archive/tar", map[string]reflect.Value{
 		// Functions
-		"NewReader":      reflect.ValueOf(pkg.NewReader),
 		"NewWriter":      reflect.ValueOf(pkg.NewWriter),
 		"FileInfoHeader": reflect.ValueOf(pkg.FileInfoHeader),
+		"NewReader":      reflect.ValueOf(pkg.NewReader),
 
 		// Consts
 
@@ -44,9 +44,9 @@ func init() {
 	registerTypes("archive/tar", map[string]reflect.Type{
 		// Non interfaces
 
-		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 		"Writer": reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
 		"Header": reflect.TypeOf((*pkg.Header)(nil)).Elem(),
 		"Format": reflect.TypeOf((*pkg.Format)(nil)).Elem(),
+		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 	})
 }

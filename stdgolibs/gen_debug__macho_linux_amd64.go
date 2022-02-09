@@ -9,10 +9,10 @@ import (
 func init() {
 	registerValues("debug/macho", map[string]reflect.Value{
 		// Functions
-		"NewFatFile": reflect.ValueOf(pkg.NewFatFile),
-		"OpenFat":    reflect.ValueOf(pkg.OpenFat),
 		"Open":       reflect.ValueOf(pkg.Open),
 		"NewFile":    reflect.ValueOf(pkg.NewFile),
+		"NewFatFile": reflect.ValueOf(pkg.NewFatFile),
+		"OpenFat":    reflect.ValueOf(pkg.OpenFat),
 
 		// Consts
 
@@ -109,9 +109,6 @@ func init() {
 	registerTypes("debug/macho", map[string]reflect.Type{
 		// Non interfaces
 
-		"FatFile":          reflect.TypeOf((*pkg.FatFile)(nil)).Elem(),
-		"FatArchHeader":    reflect.TypeOf((*pkg.FatArchHeader)(nil)).Elem(),
-		"FatArch":          reflect.TypeOf((*pkg.FatArch)(nil)).Elem(),
 		"File":             reflect.TypeOf((*pkg.File)(nil)).Elem(),
 		"LoadBytes":        reflect.TypeOf((*pkg.LoadBytes)(nil)).Elem(),
 		"SegmentHeader":    reflect.TypeOf((*pkg.SegmentHeader)(nil)).Elem(),
@@ -146,5 +143,8 @@ func init() {
 		"RelocTypeX86_64":  reflect.TypeOf((*pkg.RelocTypeX86_64)(nil)).Elem(),
 		"RelocTypeARM":     reflect.TypeOf((*pkg.RelocTypeARM)(nil)).Elem(),
 		"RelocTypeARM64":   reflect.TypeOf((*pkg.RelocTypeARM64)(nil)).Elem(),
+		"FatFile":          reflect.TypeOf((*pkg.FatFile)(nil)).Elem(),
+		"FatArchHeader":    reflect.TypeOf((*pkg.FatArchHeader)(nil)).Elem(),
+		"FatArch":          reflect.TypeOf((*pkg.FatArch)(nil)).Elem(),
 	})
 }

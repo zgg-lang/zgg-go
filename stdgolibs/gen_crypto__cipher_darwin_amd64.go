@@ -9,15 +9,15 @@ import (
 func init() {
 	registerValues("crypto/cipher", map[string]reflect.Value{
 		// Functions
+		"NewCFBEncrypter":     reflect.ValueOf(pkg.NewCFBEncrypter),
+		"NewCFBDecrypter":     reflect.ValueOf(pkg.NewCFBDecrypter),
+		"NewCTR":              reflect.ValueOf(pkg.NewCTR),
 		"NewGCM":              reflect.ValueOf(pkg.NewGCM),
 		"NewGCMWithNonceSize": reflect.ValueOf(pkg.NewGCMWithNonceSize),
 		"NewGCMWithTagSize":   reflect.ValueOf(pkg.NewGCMWithTagSize),
 		"NewOFB":              reflect.ValueOf(pkg.NewOFB),
 		"NewCBCEncrypter":     reflect.ValueOf(pkg.NewCBCEncrypter),
 		"NewCBCDecrypter":     reflect.ValueOf(pkg.NewCBCDecrypter),
-		"NewCFBEncrypter":     reflect.ValueOf(pkg.NewCFBEncrypter),
-		"NewCFBDecrypter":     reflect.ValueOf(pkg.NewCFBDecrypter),
-		"NewCTR":              reflect.ValueOf(pkg.NewCTR),
 
 		// Consts
 
