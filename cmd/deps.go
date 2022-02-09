@@ -95,7 +95,7 @@ func depsParseRequirement(s string, verbose bool) (depsRequirement, error) {
 	}
 	name := url
 	if !strings.ContainsRune(url, '/') {
-		url = "github.com/zgg-lang/" + url
+		url = "github.com/zgg-libs/" + url
 	}
 	if strings.HasPrefix(url, "github.com/") {
 		if tag != "" {
