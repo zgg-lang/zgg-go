@@ -325,7 +325,7 @@ func debugTrace(beginTime time.Time) {
 	debugLogger.Output(2, "TRACE"+gap.String())
 }
 
-func SimpleImport(c *runtime.Context, name string, code string, importType string, lastTime int64) (modVal runtime.Value, thisTime int64, success bool) {
+func SimpleImport(c *runtime.Context, name string, code string, importType string, force bool) (modVal runtime.Value, thisTime int64, success bool) {
 	if name == "" {
 		node, errs := ParseReplFromString(code, true)
 		if len(errs) > 0 || node == nil {
@@ -356,12 +356,19 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 		c.OnRuntimeError("import: stat file %s err %s", name, err)
 		return
 	}
-	if thisTime = fi.ModTime().UnixNano(); thisTime == lastTime {
+	var lastTime int64
+	modVal, lastTime = c.GetModule(filename)
+	if thisTime = fi.ModTime().UnixNano(); thisTime == lastTime && !force {
 		success = true
 		return
 	}
 	modVal = runtime.Undefined()
 	success = false
+	defer func() {
+		if success {
+			c.AddModule(filename, modVal, thisTime)
+		}
+	}()
 	if strings.ToLower(filepath.Ext(filename)) == ".so" {
 		p, err := plugin.Open(filename)
 		if err != nil {
@@ -375,7 +382,8 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 		}
 		switch newFn := s.(type) {
 		case func(*runtime.Context) runtime.Value:
-			return newFn(c), 0, true
+			modVal, thisTime, success = newFn(c), 0, true
+			return
 		case func() map[string]interface{}:
 			{
 				v := runtime.NewObject()
@@ -399,10 +407,12 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 						modC.Path = filepath.Dir(filename)
 						modC.SetLocalValue("_native", v)
 						modAst.Eval(modC)
-						return modC.RetVal, thisTime, true
+						modVal, success = modC.RetVal, true
+						return
 					}
 				}
-				return v, 0, true
+				modVal, thisTime, success = v, 0, true
+				return
 			}
 		default:
 			c.OnRuntimeError("import: load %s find entry error", name)
@@ -431,11 +441,14 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 		modC := c.Clone()
 		modC.Path = filepath.Dir(filename)
 		modAst.Eval(modC)
-		return modC.RetVal, thisTime, true
+		modVal, success = modC.RetVal, true
+		return
 	case runtime.ImportTypeText:
-		return runtime.NewStr(string(codeBs)), thisTime, true
+		modVal, success = runtime.NewStr(string(codeBs)), true
+		return
 	case runtime.ImportTypeBytes:
-		return runtime.NewBytes(codeBs), thisTime, true
+		modVal, success = runtime.NewBytes(codeBs), true
+		return
 	case runtime.ImportTypeCsv:
 		{
 			rd := csv.NewReader(bytes.NewReader(codeBs))
@@ -451,7 +464,8 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 				}
 				rows.PushBack(rowItem)
 			}
-			return rows, thisTime, true
+			modVal, success = rows, true
+			return
 		}
 	case runtime.ImportTypeJson:
 		{
@@ -459,8 +473,9 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 			if err := json.Unmarshal(codeBs, &r); err != nil {
 				c.OnRuntimeError("read json %s fail: %s", name, err)
 			}
-			return runtime.FromGoValue(reflect.ValueOf(r), c), thisTime, true
+			modVal, success = runtime.FromGoValue(reflect.ValueOf(r), c), true
+			return
 		}
 	}
-	return nil, 0, false
+	return
 }

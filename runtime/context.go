@@ -109,7 +109,7 @@ type Context struct {
 	ContinuingLabel string
 	Returned        bool
 	ExportValue     ValueObject
-	ImportFunc      func(*Context, string, string, string, int64) (Value, int64, bool)
+	ImportFunc      func(*Context, string, string, string, bool) (Value, int64, bool)
 	modules         *sync.Map
 	curFrame        *contextFrame
 	funcRootFrame   *contextFrame
@@ -369,6 +369,15 @@ func (c *Context) AddModule(name string, val Value, modTime int64) {
 	}
 }
 
+func (c *Context) GetModule(name string) (Value, int64) {
+	modInfo, found := c.modules.Load(name)
+	if !found {
+		return nil, 0
+	}
+	info := modInfo.(ModuleInfo)
+	return info.Value, info.ModifyTime
+}
+
 const (
 	ImportTypeScript = "script"
 	ImportTypeText   = "text"
@@ -378,24 +387,10 @@ const (
 )
 
 func (c *Context) ImportModule(modPath string, forceReload bool, importType string) Value {
-	modInfo, found := c.modules.Load(modPath)
-	modTime := int64(0)
-	if found {
-		info := modInfo.(ModuleInfo)
-		if !forceReload || info.ModifyTime == 0 {
-			return info.Value
-		}
-		modTime = info.ModifyTime
-	}
-	modVal, thisTime, success := c.ImportFunc(c, modPath, "", importType, modTime)
+	modVal, thisTime, success := c.ImportFunc(c, modPath, "", importType, forceReload)
 	if !success {
 		c.OnRuntimeError("ImportError: module %s not exists", modPath)
 		return constUndefined
-	}
-	if thisTime == modTime {
-		if found {
-			return modInfo.(ModuleInfo).Value
-		}
 	}
 	if _, isUndefined := modVal.(ValueUndefined); !isUndefined {
 		c.AddModule(modPath, modVal, thisTime)
@@ -606,7 +601,7 @@ func (c *Context) Eval(code string, force bool) Value {
 	if !force && !c.CanEval {
 		c.OnRuntimeError("eval is forbidden!")
 	}
-	val, _, ok := c.ImportFunc(c, "", code, ImportTypeScript, 0)
+	val, _, ok := c.ImportFunc(c, "", code, ImportTypeScript, true)
 	if !ok {
 		c.OnRuntimeError("eval error")
 		return nil
@@ -626,7 +621,7 @@ func (c *Context) AutoImport() {
 		if _, err := os.Stat(filename); err != nil {
 			continue
 		}
-		val, _, ok := c.ImportFunc(c, filename, "", ImportTypeScript, 0)
+		val, _, ok := c.ImportFunc(c, filename, "", ImportTypeScript, false)
 		if !ok {
 			continue
 		}
