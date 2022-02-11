@@ -354,6 +354,13 @@ func (c *Context) SetPosition(filename string, lineNum int) {
 	c.curFrame.lineNum = lineNum
 }
 
+func (c *Context) GetPosition() (filename string, lineNum int) {
+	if c.curFrame == nil {
+		return "", -1
+	}
+	return c.curFrame.filename, c.curFrame.lineNum
+}
+
 func (c *Context) AddModule(name string, val Value, modTime int64) {
 	if _, isUndefined := val.(ValueUndefined); !isUndefined {
 		c.modules.Store(name, ModuleInfo{Value: val, ModifyTime: modTime})

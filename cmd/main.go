@@ -140,7 +140,8 @@ func main() {
 					return
 				}
 				if f, err := os.Open(filename); err == nil {
-					runFile(moduleName, f, os.Stdout, os.Stderr, filepath.Dir(filename), os.Args[3:], isDebug)
+					defer f.Close()
+					runFile(filename, f, os.Stdout, os.Stderr, filepath.Dir(filename), os.Args[3:], isDebug)
 				} else {
 					panic(err)
 				}

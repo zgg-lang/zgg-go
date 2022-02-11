@@ -285,9 +285,18 @@ func tryModulePath(prefix string) (string, bool) {
 	}
 	return "", false
 }
+
 func GetModulePath(c *runtime.Context, name string) string {
 	if strings.HasPrefix(name, ".") && c != nil {
-		filename, _ := tryModulePath(filepath.Join(c.Path, name))
+		var root, curFile string
+		if c != nil {
+			root = c.Path
+			curFile, _ = c.GetPosition()
+			if curFile != "" {
+				root = filepath.Dir(curFile)
+			}
+		}
+		filename, _ := tryModulePath(filepath.Join(root, name))
 		return filename
 	}
 	if filepath.IsAbs(name) {

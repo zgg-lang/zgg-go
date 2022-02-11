@@ -461,28 +461,25 @@ var builtinFunctions = map[string]ValueCallable{
 			return NewStr(hex.EncodeToString(res[:]))
 		},
 	},
-	"import": &ValueBuiltinFunction{
-		name: "import",
-		body: func(c *Context, thisArg Value, args []Value) Value {
-			importType := "script"
-			forceReload := false
-			var modName string
-			switch len(args) {
-			case 3:
-				importType = c.MustStr(args[2], "import importType")
-				fallthrough
-			case 2:
-				forceReload = c.MustBool(args[1], "import forceReload")
-				fallthrough
-			case 1:
-				modName = c.MustStr(args[0], "import modName")
-			default:
-				c.OnRuntimeError("import requires only one or two argument(s)")
-				return nil
-			}
-			return c.ImportModule(modName, forceReload, importType)
-		},
-	},
+	"import": NewNativeFunction("import", func(c *Context, thisArg Value, args []Value) Value {
+		importType := "script"
+		forceReload := false
+		var modName string
+		switch len(args) {
+		case 3:
+			importType = c.MustStr(args[2], "import importType")
+			fallthrough
+		case 2:
+			forceReload = c.MustBool(args[1], "import forceReload")
+			fallthrough
+		case 1:
+			modName = c.MustStr(args[0], "import modName")
+		default:
+			c.OnRuntimeError("import requires only one or two argument(s)")
+			return nil
+		}
+		return c.ImportModule(modName, forceReload, importType)
+	}, "name", "force", "type"),
 	"isUndefined": &ValueBuiltinFunction{
 		name: "isUndefined",
 		body: func(c *Context, thisArg Value, args []Value) Value {
