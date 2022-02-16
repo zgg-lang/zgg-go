@@ -175,7 +175,6 @@ postIncDec
 lval
     : lval '.' field=IDENTIFIER                             # lvalByField
     | lval '[' index=expr ']'                               # lvalByIndex
-    | lval '?.' field=IDENTIFIER                            # lvalByOptionalField
     | IDENTIFIER                                            # lvalById
     ;
 

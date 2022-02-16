@@ -316,10 +316,6 @@ func (v *BaseZggParserVisitor) VisitLvalByIndex(ctx *LvalByIndexContext) interfa
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseZggParserVisitor) VisitLvalByOptionalField(ctx *LvalByOptionalFieldContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BaseZggParserVisitor) VisitLvalByField(ctx *LvalByFieldContext) interface{} {
 	return v.VisitChildren(ctx)
 }

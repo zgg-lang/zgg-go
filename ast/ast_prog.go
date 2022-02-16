@@ -481,6 +481,7 @@ type StmtTry struct {
 }
 
 func (s *StmtTry) Eval(c *runtime.Context) {
+	var ret runtime.Value = runtime.Undefined()
 	defer func() {
 		if s.Catch != nil {
 			e := recover()
@@ -491,6 +492,7 @@ func (s *StmtTry) Eval(c *runtime.Context) {
 					defer c.PopStack()
 					c.SetLocalValue(s.ExcName, runtime.ExceptionToValue(exc, c))
 					s.Catch.Eval(c)
+					ret = c.RetVal
 				default:
 					panic(e)
 				}
@@ -499,8 +501,10 @@ func (s *StmtTry) Eval(c *runtime.Context) {
 		if s.Finally != nil {
 			s.Finally.Eval(c)
 		}
+		c.RetVal = ret
 	}()
 	s.Try.Eval(c)
+	ret = c.RetVal
 }
 
 type StmtFallback struct {

@@ -239,9 +239,6 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#lvalByIndex.
 	VisitLvalByIndex(ctx *LvalByIndexContext) interface{}
 
-	// Visit a parse tree produced by ZggParser#lvalByOptionalField.
-	VisitLvalByOptionalField(ctx *LvalByOptionalFieldContext) interface{}
-
 	// Visit a parse tree produced by ZggParser#lvalByField.
 	VisitLvalByField(ctx *LvalByFieldContext) interface{}
 
