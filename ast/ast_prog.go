@@ -499,9 +499,12 @@ func (s *StmtTry) Eval(c *runtime.Context) {
 			}
 		}
 		if s.Finally != nil {
+			returned := c.Returned
 			s.Finally.Eval(c)
+			if returned {
+				c.RetVal = ret
+			}
 		}
-		c.RetVal = ret
 	}()
 	s.Try.Eval(c)
 	ret = c.RetVal
