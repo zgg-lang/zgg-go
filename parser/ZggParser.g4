@@ -135,8 +135,9 @@ expr
     | expr '??' expr                                        	        # exprFallback
     | assignExpr                                            	        # exprAssign
     | '(' expr ')'                                          	        # exprSub
-    // | L_DCURLY block R_DCURLY                               	        # exprOnceCall
-    | USE expr                                              	        # exprUse
+    | USE_AT IDENTIFIER expr                                            # exprUseMethod
+    | USE_AT codeBlock expr                                             # exprUseBlock
+    | USE expr                                              	        # exprUseCloser
     | expr '!'                                              	        # exprAssertError
     ;
     

@@ -111,9 +111,27 @@ func (v *ParseVisitor) VisitExprBitXor(ctx *ExprBitXorContext) interface{} {
 	}
 }
 
-func (v *ParseVisitor) VisitExprUse(ctx *ExprUseContext) interface{} {
+func (v *ParseVisitor) VisitExprUseMethod(ctx *ExprUseMethodContext) interface{} {
+	return &ast.ExprUse{
+		Expr:       ctx.Expr().Accept(v).(ast.Expr),
+		Identifier: ctx.IDENTIFIER().GetText(),
+	}
+}
+
+func (v *ParseVisitor) VisitExprUseCloser(ctx *ExprUseCloserContext) interface{} {
 	return &ast.ExprUse{
 		Expr: ctx.Expr().Accept(v).(ast.Expr),
+	}
+}
+
+func (v *ParseVisitor) VisitExprUseBlock(ctx *ExprUseBlockContext) interface{} {
+	return &ast.ExprUse{
+		Expr: ctx.Expr().Accept(v).(ast.Expr),
+		DeferFunc: ast.ExprFunc{
+			Value: runtime.NewFunc("", []string{}, false,
+				ctx.CodeBlock().Accept(v).(*ast.Block),
+			),
+		},
 	}
 }
 

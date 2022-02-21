@@ -28,6 +28,7 @@ FINALLY     : 'finally';
 STATIC      : 'static';
 ASSERT      : 'assert';
 EXTEND      : 'extend';
+USE_AT      : 'use@';
 USE         : 'use';
 SWITCH      : 'switch';
 CASE        : 'case';

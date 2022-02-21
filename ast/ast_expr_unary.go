@@ -61,18 +61,31 @@ func (e *ExprBitNot) Eval(c *runtime.Context) {
 }
 
 type ExprUse struct {
-	Expr Expr
+	Expr       Expr
+	Identifier string
+	DeferFunc  ExprFunc
 }
 
 func (e *ExprUse) Eval(c *runtime.Context) {
 	e.Expr.Eval(c)
 	v := c.RetVal
-	if closer := v.GetMember("close", c); c.IsCallable(closer) {
-		c.AddBlockDefer(closer, []runtime.Value{}, true)
-	} else if closer := v.GetMember("Close", c); c.IsCallable(closer) {
-		c.AddBlockDefer(closer, []runtime.Value{}, true)
+	if e.DeferFunc.Value != nil {
+		closer := e.DeferFunc.Value.CloneWithEnv(c)
+		c.AddBlockDefer(closer, []runtime.Value{v}, true)
+	} else if e.Identifier != "" {
+		if closer := v.GetMember(e.Identifier, c); c.IsCallable(closer) {
+			c.AddBlockDefer(closer, []runtime.Value{}, true)
+		} else {
+			c.OnRuntimeError("use value without close/Close method")
+		}
 	} else {
-		c.OnRuntimeError("use value without close/Close method")
+		if closer := v.GetMember("close", c); c.IsCallable(closer) {
+			c.AddBlockDefer(closer, []runtime.Value{}, true)
+		} else if closer := v.GetMember("Close", c); c.IsCallable(closer) {
+			c.AddBlockDefer(closer, []runtime.Value{}, true)
+		} else {
+			c.OnRuntimeError("use value without close/Close method")
+		}
 	}
 }
 

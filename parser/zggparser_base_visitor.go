@@ -152,7 +152,15 @@ func (v *BaseZggParserVisitor) VisitExprPlusMinus(ctx *ExprPlusMinusContext) int
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitExprUseCloser(ctx *ExprUseCloserContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitExprAssign(ctx *ExprAssignContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseZggParserVisitor) VisitExprUseMethod(ctx *ExprUseMethodContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -184,6 +192,10 @@ func (v *BaseZggParserVisitor) VisitExprPreIncDec(ctx *ExprPreIncDecContext) int
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitExprUseBlock(ctx *ExprUseBlockContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitExprPow(ctx *ExprPowContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -205,10 +217,6 @@ func (v *BaseZggParserVisitor) VisitExprLogicAnd(ctx *ExprLogicAndContext) inter
 }
 
 func (v *BaseZggParserVisitor) VisitExprIdentifier(ctx *ExprIdentifierContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *BaseZggParserVisitor) VisitExprUse(ctx *ExprUseContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

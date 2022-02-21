@@ -116,8 +116,14 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#exprPlusMinus.
 	VisitExprPlusMinus(ctx *ExprPlusMinusContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#exprUseCloser.
+	VisitExprUseCloser(ctx *ExprUseCloserContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#exprAssign.
 	VisitExprAssign(ctx *ExprAssignContext) interface{}
+
+	// Visit a parse tree produced by ZggParser#exprUseMethod.
+	VisitExprUseMethod(ctx *ExprUseMethodContext) interface{}
 
 	// Visit a parse tree produced by ZggParser#exprWhenValue.
 	VisitExprWhenValue(ctx *ExprWhenValueContext) interface{}
@@ -140,6 +146,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#exprPreIncDec.
 	VisitExprPreIncDec(ctx *ExprPreIncDecContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#exprUseBlock.
+	VisitExprUseBlock(ctx *ExprUseBlockContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#exprPow.
 	VisitExprPow(ctx *ExprPowContext) interface{}
 
@@ -157,9 +166,6 @@ type ZggParserVisitor interface {
 
 	// Visit a parse tree produced by ZggParser#exprIdentifier.
 	VisitExprIdentifier(ctx *ExprIdentifierContext) interface{}
-
-	// Visit a parse tree produced by ZggParser#exprUse.
-	VisitExprUse(ctx *ExprUseContext) interface{}
 
 	// Visit a parse tree produced by ZggParser#exprFallback.
 	VisitExprFallback(ctx *ExprFallbackContext) interface{}
