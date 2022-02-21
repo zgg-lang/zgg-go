@@ -100,8 +100,8 @@ func (s *StmtFor) Eval(c *runtime.Context) {
 type StmtForEach struct {
 	Pos
 	Label             string
-	Identifier1       string
-	Identifier2       string
+	IdIndex           string
+	IdValue           string
 	Iteratable        Expr
 	RangeBegin        Expr
 	RangeEnd          Expr
@@ -128,11 +128,9 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 			} else {
 				value = retArr.GetIndex(0, c)
 			}
-			if s.Identifier2 == "" {
-				c.ForceSetLocalValue(s.Identifier1, value)
-			} else {
-				c.ForceSetLocalValue(s.Identifier1, runtime.NewInt(int64(i)))
-				c.ForceSetLocalValue(s.Identifier2, value)
+			c.ForceSetLocalValue(s.IdValue, value)
+			if id := s.IdIndex; id != "" {
+				c.ForceSetLocalValue(id, runtime.NewInt(int64(i)))
 			}
 			if !execLoopBody(s.Label, s.Exec, c) {
 				break
@@ -144,11 +142,9 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 	case runtime.CanLen:
 		if obj, ok := iteratable.(runtime.ValueObject); ok {
 			obj.Each(func(key string, value runtime.Value) bool {
-				if s.Identifier2 == "" {
-					c.ForceSetLocalValue(s.Identifier1, value)
-				} else {
-					c.ForceSetLocalValue(s.Identifier1, runtime.NewStr(key))
-					c.ForceSetLocalValue(s.Identifier2, value)
+				c.ForceSetLocalValue(s.IdValue, value)
+				if id := s.IdIndex; id != "" {
+					c.ForceSetLocalValue(id, runtime.NewStr(key))
 				}
 				if !execLoopBody(s.Label, s.Exec, c) {
 					return false
@@ -159,11 +155,9 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 			l := v.Len()
 			for i := 0; i < l; i++ {
 				value := iteratable.GetIndex(i, c)
-				if s.Identifier2 == "" {
-					c.ForceSetLocalValue(s.Identifier1, value)
-				} else {
-					c.ForceSetLocalValue(s.Identifier1, runtime.NewInt(int64(i)))
-					c.ForceSetLocalValue(s.Identifier2, value)
+				c.ForceSetLocalValue(s.IdValue, value)
+				if s.IdIndex != "" {
+					c.ForceSetLocalValue(s.IdIndex, runtime.NewInt(int64(i)))
 				}
 				if !execLoopBody(s.Label, s.Exec, c) {
 					break
@@ -174,11 +168,9 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 		l := v.AsInt()
 		for i := 0; i < l; i++ {
 			value := runtime.NewInt(int64(i))
-			if s.Identifier2 == "" {
-				c.ForceSetLocalValue(s.Identifier1, value)
-			} else {
-				c.ForceSetLocalValue(s.Identifier1, value)
-				c.ForceSetLocalValue(s.Identifier2, value)
+			c.ForceSetLocalValue(s.IdValue, value)
+			if s.IdIndex != "" {
+				c.ForceSetLocalValue(s.IdIndex, value)
 			}
 			if !execLoopBody(s.Label, s.Exec, c) {
 				break
@@ -214,11 +206,9 @@ func (s *StmtForEach) Eval(c *runtime.Context) {
 		}
 		for i := -1; cur < end; cur++ {
 			i++
-			if s.Identifier2 == "" {
-				c.ForceSetLocalValue(s.Identifier1, runtime.NewInt(int64(cur)))
-			} else {
-				c.ForceSetLocalValue(s.Identifier1, runtime.NewInt(int64(i)))
-				c.ForceSetLocalValue(s.Identifier2, runtime.NewInt(int64(cur)))
+			c.ForceSetLocalValue(s.IdValue, runtime.NewInt(int64(cur)))
+			if s.IdIndex != "" {
+				c.ForceSetLocalValue(s.IdIndex, runtime.NewInt(int64(i)))
 			}
 			if !execLoopBody(s.Label, s.Exec, c) {
 				break

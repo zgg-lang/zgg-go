@@ -43,7 +43,7 @@ stmt
             ';'
             nextExpr=expr
             execBlock=codeBlock                 # stmtFor
-    | (label=IDENTIFIER ':')? FOR id1=IDENTIFIER (',' id2=IDENTIFIER)? IN
+    | (label=IDENTIFIER ':')? FOR (idIndex=IDENTIFIER ',')? idValue=IDENTIFIER IN
         begin=expr (('..'|'..<') end=expr)?
         execBlock=codeBlock                     # stmtForEach
     | (label=IDENTIFIER ':')? DO    execBlock=codeBlock

@@ -31,13 +31,13 @@ func (v *ParseVisitor) VisitStmtFor(ctx *StmtForContext) interface{} {
 
 func (v *ParseVisitor) VisitStmtForEach(ctx *StmtForEachContext) interface{} {
 	r := &ast.StmtForEach{
-		Pos:         getPos(v, ctx),
-		Identifier1: ctx.GetId1().GetText(),
-		Exec:        ctx.GetExecBlock().Accept(v).(*ast.Block),
+		Pos:     getPos(v, ctx),
+		IdValue: ctx.GetIdValue().GetText(),
+		Exec:    ctx.GetExecBlock().Accept(v).(*ast.Block),
 	}
 	r.Exec.Type = ast.BlockTypeLoopTop
-	if id2 := ctx.GetId2(); id2 != nil {
-		r.Identifier2 = id2.GetText()
+	if id := ctx.GetIdIndex(); id != nil {
+		r.IdIndex = id.GetText()
 	}
 	if endExpr := ctx.GetEnd(); endExpr == nil {
 		r.Iteratable = ctx.GetBegin().Accept(v).(ast.Expr)

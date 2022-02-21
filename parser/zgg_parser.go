@@ -31,7 +31,7 @@ var parserATN = []uint16{
 	118, 10, 6, 3, 6, 3, 6, 5, 6, 122, 10, 6, 3, 6, 3, 6, 7, 6, 126, 10, 6,
 	12, 6, 14, 6, 129, 11, 6, 3, 6, 3, 6, 3, 6, 5, 6, 134, 10, 6, 3, 6, 3,
 	6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 5, 6, 146, 10, 6, 3,
-	6, 3, 6, 3, 6, 3, 6, 5, 6, 152, 10, 6, 3, 6, 3, 6, 3, 6, 3, 6, 5, 6, 158,
+	6, 3, 6, 3, 6, 5, 6, 151, 10, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 5, 6, 158,
 	10, 6, 3, 6, 3, 6, 3, 6, 3, 6, 5, 6, 164, 10, 6, 3, 6, 3, 6, 3, 6, 3, 6,
 	3, 6, 3, 6, 3, 6, 5, 6, 173, 10, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6,
 	5, 6, 181, 10, 6, 3, 6, 3, 6, 5, 6, 185, 10, 6, 3, 6, 3, 6, 3, 6, 3, 6,
@@ -139,17 +139,17 @@ var parserATN = []uint16{
 	5, 24, 13, 2, 137, 138, 7, 82, 2, 2, 138, 139, 5, 24, 13, 2, 139, 140,
 	7, 82, 2, 2, 140, 141, 5, 24, 13, 2, 141, 142, 5, 8, 5, 2, 142, 296, 3,
 	2, 2, 2, 143, 144, 7, 103, 2, 2, 144, 146, 7, 83, 2, 2, 145, 143, 3, 2,
-	2, 2, 145, 146, 3, 2, 2, 2, 146, 147, 3, 2, 2, 2, 147, 148, 7, 5, 2, 2,
-	148, 151, 7, 103, 2, 2, 149, 150, 7, 81, 2, 2, 150, 152, 7, 103, 2, 2,
-	151, 149, 3, 2, 2, 2, 151, 152, 3, 2, 2, 2, 152, 153, 3, 2, 2, 2, 153,
-	154, 7, 6, 2, 2, 154, 157, 5, 24, 13, 2, 155, 156, 9, 2, 2, 2, 156, 158,
-	5, 24, 13, 2, 157, 155, 3, 2, 2, 2, 157, 158, 3, 2, 2, 2, 158, 159, 3,
-	2, 2, 2, 159, 160, 5, 8, 5, 2, 160, 296, 3, 2, 2, 2, 161, 162, 7, 103,
-	2, 2, 162, 164, 7, 83, 2, 2, 163, 161, 3, 2, 2, 2, 163, 164, 3, 2, 2, 2,
-	164, 165, 3, 2, 2, 2, 165, 166, 7, 9, 2, 2, 166, 167, 5, 8, 5, 2, 167,
-	168, 7, 8, 2, 2, 168, 169, 5, 24, 13, 2, 169, 296, 3, 2, 2, 2, 170, 171,
-	7, 103, 2, 2, 171, 173, 7, 83, 2, 2, 172, 170, 3, 2, 2, 2, 172, 173, 3,
-	2, 2, 2, 173, 174, 3, 2, 2, 2, 174, 175, 7, 8, 2, 2, 175, 176, 5, 24, 13,
+	2, 2, 145, 146, 3, 2, 2, 2, 146, 147, 3, 2, 2, 2, 147, 150, 7, 5, 2, 2,
+	148, 149, 7, 103, 2, 2, 149, 151, 7, 81, 2, 2, 150, 148, 3, 2, 2, 2, 150,
+	151, 3, 2, 2, 2, 151, 152, 3, 2, 2, 2, 152, 153, 7, 103, 2, 2, 153, 154,
+	7, 6, 2, 2, 154, 157, 5, 24, 13, 2, 155, 156, 9, 2, 2, 2, 156, 158, 5,
+	24, 13, 2, 157, 155, 3, 2, 2, 2, 157, 158, 3, 2, 2, 2, 158, 159, 3, 2,
+	2, 2, 159, 160, 5, 8, 5, 2, 160, 296, 3, 2, 2, 2, 161, 162, 7, 103, 2,
+	2, 162, 164, 7, 83, 2, 2, 163, 161, 3, 2, 2, 2, 163, 164, 3, 2, 2, 2, 164,
+	165, 3, 2, 2, 2, 165, 166, 7, 9, 2, 2, 166, 167, 5, 8, 5, 2, 167, 168,
+	7, 8, 2, 2, 168, 169, 5, 24, 13, 2, 169, 296, 3, 2, 2, 2, 170, 171, 7,
+	103, 2, 2, 171, 173, 7, 83, 2, 2, 172, 170, 3, 2, 2, 2, 172, 173, 3, 2,
+	2, 2, 173, 174, 3, 2, 2, 2, 174, 175, 7, 8, 2, 2, 175, 176, 5, 24, 13,
 	2, 176, 177, 5, 8, 5, 2, 177, 296, 3, 2, 2, 2, 178, 180, 7, 11, 2, 2, 179,
 	181, 7, 103, 2, 2, 180, 179, 3, 2, 2, 2, 180, 181, 3, 2, 2, 2, 181, 296,
 	3, 2, 2, 2, 182, 184, 7, 10, 2, 2, 183, 185, 7, 103, 2, 2, 184, 183, 3,
@@ -379,7 +379,7 @@ var parserATN = []uint16{
 	750, 751, 5, 24, 13, 2, 751, 752, 7, 87, 2, 2, 752, 754, 3, 2, 2, 2, 753,
 	747, 3, 2, 2, 2, 753, 748, 3, 2, 2, 2, 753, 749, 3, 2, 2, 2, 754, 55, 3,
 	2, 2, 2, 98, 58, 64, 68, 88, 94, 97, 102, 104, 109, 117, 121, 127, 133,
-	145, 151, 157, 163, 172, 180, 184, 196, 201, 209, 212, 219, 236, 242, 245,
+	145, 150, 157, 163, 172, 180, 184, 196, 201, 209, 212, 219, 236, 242, 245,
 	249, 256, 269, 273, 279, 282, 290, 295, 300, 305, 311, 316, 323, 352, 357,
 	370, 375, 386, 430, 443, 445, 453, 460, 468, 472, 474, 479, 483, 488, 503,
 	509, 512, 523, 532, 551, 553, 561, 577, 583, 586, 590, 600, 606, 609, 613,
@@ -2299,8 +2299,8 @@ func (s *StmtForContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 type StmtForEachContext struct {
 	*StmtContext
 	label     antlr.Token
-	id1       antlr.Token
-	id2       antlr.Token
+	idIndex   antlr.Token
+	idValue   antlr.Token
 	begin     IExprContext
 	end       IExprContext
 	execBlock ICodeBlockContext
@@ -2318,15 +2318,15 @@ func NewStmtForEachContext(parser antlr.Parser, ctx antlr.ParserRuleContext) *St
 
 func (s *StmtForEachContext) GetLabel() antlr.Token { return s.label }
 
-func (s *StmtForEachContext) GetId1() antlr.Token { return s.id1 }
+func (s *StmtForEachContext) GetIdIndex() antlr.Token { return s.idIndex }
 
-func (s *StmtForEachContext) GetId2() antlr.Token { return s.id2 }
+func (s *StmtForEachContext) GetIdValue() antlr.Token { return s.idValue }
 
 func (s *StmtForEachContext) SetLabel(v antlr.Token) { s.label = v }
 
-func (s *StmtForEachContext) SetId1(v antlr.Token) { s.id1 = v }
+func (s *StmtForEachContext) SetIdIndex(v antlr.Token) { s.idIndex = v }
 
-func (s *StmtForEachContext) SetId2(v antlr.Token) { s.id2 = v }
+func (s *StmtForEachContext) SetIdValue(v antlr.Token) { s.idValue = v }
 
 func (s *StmtForEachContext) GetBegin() IExprContext { return s.begin }
 
@@ -3060,30 +3060,29 @@ func (p *ZggParser) Stmt() (localctx IStmtContext) {
 			p.SetState(145)
 			p.Match(ZggParserFOR)
 		}
-		{
-			p.SetState(146)
-
-			var _m = p.Match(ZggParserIDENTIFIER)
-
-			localctx.(*StmtForEachContext).id1 = _m
-		}
-		p.SetState(149)
+		p.SetState(148)
 		p.GetErrorHandler().Sync(p)
-		_la = p.GetTokenStream().LA(1)
 
-		if _la == ZggParserCOMMA {
+		if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 14, p.GetParserRuleContext()) == 1 {
+			{
+				p.SetState(146)
+
+				var _m = p.Match(ZggParserIDENTIFIER)
+
+				localctx.(*StmtForEachContext).idIndex = _m
+			}
 			{
 				p.SetState(147)
 				p.Match(ZggParserCOMMA)
 			}
-			{
-				p.SetState(148)
 
-				var _m = p.Match(ZggParserIDENTIFIER)
+		}
+		{
+			p.SetState(150)
 
-				localctx.(*StmtForEachContext).id2 = _m
-			}
+			var _m = p.Match(ZggParserIDENTIFIER)
 
+			localctx.(*StmtForEachContext).idValue = _m
 		}
 		{
 			p.SetState(151)

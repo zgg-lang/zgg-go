@@ -145,22 +145,41 @@ func arrayFind(c *Context, arr ValueArray, predict ValueCallable, start int) (in
 var builtinArrayMethods = map[string]ValueCallable{
 	"map": &ValueBuiltinFunction{
 		body: func(c *Context, thisArg Value, args []Value) Value {
-			if len(args) != 1 {
-				c.OnRuntimeError("array.map: arguments length must be 1")
-				return nil
-			}
-			f, isCallable := args[0].(ValueCallable)
-			if !isCallable {
-				c.OnRuntimeError("array.map: argument 0 must be callable")
-				return nil
-			}
+			var (
+				mapFunc    ValueCallable
+				fieldName  ValueStr
+				fieldIndex ValueInt
+				mapType    int
+			)
+			EnsureFuncParams(c, "array.map", args,
+				ArgRuleOneOf{"mapper",
+					[]ValueType{TypeCallable, TypeStr, TypeInt},
+					[]interface{}{&mapFunc, &fieldName, &fieldIndex},
+					&mapType, nil, nil,
+				},
+			)
 			thisArr := thisArg.(ValueArray)
 			l := thisArr.Len()
 			rv := NewArray(l)
-			for i := 0; i < l; i++ {
-				v := thisArr.GetIndex(i, c)
-				f.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
-				rv.PushBack(c.RetVal)
+			switch mapType {
+			case 0:
+				for i := 0; i < l; i++ {
+					v := thisArr.GetIndex(i, c)
+					mapFunc.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
+					rv.PushBack(c.RetVal)
+				}
+			case 1:
+				name := fieldName.Value()
+				for i := 0; i < l; i++ {
+					v := thisArr.GetIndex(i, c)
+					rv.PushBack(v.GetMember(name, c))
+				}
+			case 2:
+				index := fieldIndex.AsInt()
+				for i := 0; i < l; i++ {
+					v := thisArr.GetIndex(i, c)
+					rv.PushBack(v.GetIndex(index, c))
+				}
 			}
 			return rv
 		},
