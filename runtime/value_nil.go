@@ -14,8 +14,8 @@ func (ValueNil) GetIndex(int, *Context) Value {
 	return constUndefined
 }
 
-func (ValueNil) GetMember(string, *Context) Value {
-	return constUndefined
+func (v ValueNil) GetMember(name string, c *Context) Value {
+	return getExtMember(v, name, c)
 }
 
 func (ValueNil) IsTrue() bool {

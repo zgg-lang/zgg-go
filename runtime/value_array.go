@@ -147,14 +147,14 @@ var builtinArrayMethods = map[string]ValueCallable{
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			var (
 				mapFunc    ValueCallable
-				fieldName  ValueStr
+				fieldPath  ValueStr
 				fieldIndex ValueInt
 				mapType    int
 			)
 			EnsureFuncParams(c, "array.map", args,
 				ArgRuleOneOf{"mapper",
 					[]ValueType{TypeCallable, TypeStr, TypeInt},
-					[]interface{}{&mapFunc, &fieldName, &fieldIndex},
+					[]interface{}{&mapFunc, &fieldPath, &fieldIndex},
 					&mapType, nil, nil,
 				},
 			)
@@ -169,10 +169,10 @@ var builtinArrayMethods = map[string]ValueCallable{
 					rv.PushBack(c.RetVal)
 				}
 			case 1:
-				name := fieldName.Value()
+				fp := fieldPath.Value()
 				for i := 0; i < l; i++ {
 					v := thisArr.GetIndex(i, c)
-					rv.PushBack(v.GetMember(name, c))
+					rv.PushBack(GetValueByPath(c, v, fp))
 				}
 			case 2:
 				index := fieldIndex.AsInt()

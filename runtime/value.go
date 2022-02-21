@@ -56,11 +56,14 @@ var MakeMember = makeMember
 func getExtMember(owner Value, name string, c *Context) Value {
 	tid := owner.Type().TypeId
 	extName := fmt.Sprintf("%d#%s", tid, name)
-	ext, found := c.FindValue(extName)
-	if !found {
-		return constUndefined
+	if ext, found := c.FindValue(extName); found {
+		return makeMember(owner, ext)
 	}
-	return makeMember(owner, ext)
+	switch name {
+	case "$get":
+		return makeMember(owner, commonValueGet)
+	}
+	return constUndefined
 }
 
 type CanLen interface {
@@ -74,3 +77,11 @@ type CanSetMember interface {
 type CanSetIndex interface {
 	SetIndex(int, Value, *Context)
 }
+
+var (
+	commonValueGet = NewNativeFunction("$get", func(c *Context, this Value, args []Value) Value {
+		var path ValueStr
+		EnsureFuncParams(c, "$get", args, ArgRuleRequired{"path", TypeStr, &path})
+		return GetValueByPath(c, this, path.Value())
+	}, "path")
+)
