@@ -9,11 +9,11 @@ import (
 func init() {
 	registerValues("mime", map[string]reflect.Value{
 		// Functions
+		"FormatMediaType":  reflect.ValueOf(pkg.FormatMediaType),
+		"ParseMediaType":   reflect.ValueOf(pkg.ParseMediaType),
 		"TypeByExtension":  reflect.ValueOf(pkg.TypeByExtension),
 		"ExtensionsByType": reflect.ValueOf(pkg.ExtensionsByType),
 		"AddExtensionType": reflect.ValueOf(pkg.AddExtensionType),
-		"FormatMediaType":  reflect.ValueOf(pkg.FormatMediaType),
-		"ParseMediaType":   reflect.ValueOf(pkg.ParseMediaType),
 
 		// Consts
 

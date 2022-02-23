@@ -9,8 +9,8 @@ import (
 func init() {
 	registerValues("compress/lzw", map[string]reflect.Value{
 		// Functions
-		"NewWriter": reflect.ValueOf(pkg.NewWriter),
 		"NewReader": reflect.ValueOf(pkg.NewReader),
+		"NewWriter": reflect.ValueOf(pkg.NewWriter),
 
 		// Consts
 

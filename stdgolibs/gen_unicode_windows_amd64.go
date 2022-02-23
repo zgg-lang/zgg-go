@@ -9,15 +9,6 @@ import (
 func init() {
 	registerValues("unicode", map[string]reflect.Value{
 		// Functions
-		"Is":         reflect.ValueOf(pkg.Is),
-		"IsUpper":    reflect.ValueOf(pkg.IsUpper),
-		"IsLower":    reflect.ValueOf(pkg.IsLower),
-		"IsTitle":    reflect.ValueOf(pkg.IsTitle),
-		"To":         reflect.ValueOf(pkg.To),
-		"ToUpper":    reflect.ValueOf(pkg.ToUpper),
-		"ToLower":    reflect.ValueOf(pkg.ToLower),
-		"ToTitle":    reflect.ValueOf(pkg.ToTitle),
-		"SimpleFold": reflect.ValueOf(pkg.SimpleFold),
 		"IsDigit":    reflect.ValueOf(pkg.IsDigit),
 		"IsGraphic":  reflect.ValueOf(pkg.IsGraphic),
 		"IsPrint":    reflect.ValueOf(pkg.IsPrint),
@@ -30,9 +21,19 @@ func init() {
 		"IsPunct":    reflect.ValueOf(pkg.IsPunct),
 		"IsSpace":    reflect.ValueOf(pkg.IsSpace),
 		"IsSymbol":   reflect.ValueOf(pkg.IsSymbol),
+		"Is":         reflect.ValueOf(pkg.Is),
+		"IsUpper":    reflect.ValueOf(pkg.IsUpper),
+		"IsLower":    reflect.ValueOf(pkg.IsLower),
+		"IsTitle":    reflect.ValueOf(pkg.IsTitle),
+		"To":         reflect.ValueOf(pkg.To),
+		"ToUpper":    reflect.ValueOf(pkg.ToUpper),
+		"ToLower":    reflect.ValueOf(pkg.ToLower),
+		"ToTitle":    reflect.ValueOf(pkg.ToTitle),
+		"SimpleFold": reflect.ValueOf(pkg.SimpleFold),
 
 		// Consts
 
+		"Version":         reflect.ValueOf(pkg.Version),
 		"MaxRune":         reflect.ValueOf(pkg.MaxRune),
 		"ReplacementChar": reflect.ValueOf(pkg.ReplacementChar),
 		"MaxASCII":        reflect.ValueOf(pkg.MaxASCII),
@@ -42,7 +43,6 @@ func init() {
 		"TitleCase":       reflect.ValueOf(pkg.TitleCase),
 		"MaxCase":         reflect.ValueOf(pkg.MaxCase),
 		"UpperLower":      reflect.ValueOf(pkg.UpperLower),
-		"Version":         reflect.ValueOf(pkg.Version),
 
 		// Variables
 

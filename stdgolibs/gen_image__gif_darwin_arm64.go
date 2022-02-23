@@ -9,11 +9,11 @@ import (
 func init() {
 	registerValues("image/gif", map[string]reflect.Value{
 		// Functions
-		"EncodeAll":    reflect.ValueOf(pkg.EncodeAll),
-		"Encode":       reflect.ValueOf(pkg.Encode),
 		"Decode":       reflect.ValueOf(pkg.Decode),
 		"DecodeAll":    reflect.ValueOf(pkg.DecodeAll),
 		"DecodeConfig": reflect.ValueOf(pkg.DecodeConfig),
+		"EncodeAll":    reflect.ValueOf(pkg.EncodeAll),
+		"Encode":       reflect.ValueOf(pkg.Encode),
 
 		// Consts
 
@@ -27,7 +27,7 @@ func init() {
 	registerTypes("image/gif", map[string]reflect.Type{
 		// Non interfaces
 
-		"Options": reflect.TypeOf((*pkg.Options)(nil)).Elem(),
 		"GIF":     reflect.TypeOf((*pkg.GIF)(nil)).Elem(),
+		"Options": reflect.TypeOf((*pkg.Options)(nil)).Elem(),
 	})
 }

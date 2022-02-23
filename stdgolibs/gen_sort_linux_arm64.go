@@ -9,6 +9,10 @@ import (
 func init() {
 	registerValues("sort", map[string]reflect.Value{
 		// Functions
+		"Search":            reflect.ValueOf(pkg.Search),
+		"SearchInts":        reflect.ValueOf(pkg.SearchInts),
+		"SearchFloat64s":    reflect.ValueOf(pkg.SearchFloat64s),
+		"SearchStrings":     reflect.ValueOf(pkg.SearchStrings),
 		"Slice":             reflect.ValueOf(pkg.Slice),
 		"SliceStable":       reflect.ValueOf(pkg.SliceStable),
 		"SliceIsSorted":     reflect.ValueOf(pkg.SliceIsSorted),
@@ -22,10 +26,6 @@ func init() {
 		"Float64sAreSorted": reflect.ValueOf(pkg.Float64sAreSorted),
 		"StringsAreSorted":  reflect.ValueOf(pkg.StringsAreSorted),
 		"Stable":            reflect.ValueOf(pkg.Stable),
-		"Search":            reflect.ValueOf(pkg.Search),
-		"SearchInts":        reflect.ValueOf(pkg.SearchInts),
-		"SearchFloat64s":    reflect.ValueOf(pkg.SearchFloat64s),
-		"SearchStrings":     reflect.ValueOf(pkg.SearchStrings),
 
 		// Consts
 

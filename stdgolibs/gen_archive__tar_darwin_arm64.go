@@ -9,12 +9,16 @@ import (
 func init() {
 	registerValues("archive/tar", map[string]reflect.Value{
 		// Functions
-		"FileInfoHeader": reflect.ValueOf(pkg.FileInfoHeader),
 		"NewReader":      reflect.ValueOf(pkg.NewReader),
 		"NewWriter":      reflect.ValueOf(pkg.NewWriter),
+		"FileInfoHeader": reflect.ValueOf(pkg.FileInfoHeader),
 
 		// Consts
 
+		"FormatUnknown":     reflect.ValueOf(pkg.FormatUnknown),
+		"FormatUSTAR":       reflect.ValueOf(pkg.FormatUSTAR),
+		"FormatPAX":         reflect.ValueOf(pkg.FormatPAX),
+		"FormatGNU":         reflect.ValueOf(pkg.FormatGNU),
 		"TypeReg":           reflect.ValueOf(pkg.TypeReg),
 		"TypeRegA":          reflect.ValueOf(pkg.TypeRegA),
 		"TypeLink":          reflect.ValueOf(pkg.TypeLink),
@@ -29,10 +33,6 @@ func init() {
 		"TypeGNUSparse":     reflect.ValueOf(pkg.TypeGNUSparse),
 		"TypeGNULongName":   reflect.ValueOf(pkg.TypeGNULongName),
 		"TypeGNULongLink":   reflect.ValueOf(pkg.TypeGNULongLink),
-		"FormatUnknown":     reflect.ValueOf(pkg.FormatUnknown),
-		"FormatUSTAR":       reflect.ValueOf(pkg.FormatUSTAR),
-		"FormatPAX":         reflect.ValueOf(pkg.FormatPAX),
-		"FormatGNU":         reflect.ValueOf(pkg.FormatGNU),
 
 		// Variables
 
@@ -44,9 +44,9 @@ func init() {
 	registerTypes("archive/tar", map[string]reflect.Type{
 		// Non interfaces
 
-		"Header": reflect.TypeOf((*pkg.Header)(nil)).Elem(),
 		"Format": reflect.TypeOf((*pkg.Format)(nil)).Elem(),
 		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 		"Writer": reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
+		"Header": reflect.TypeOf((*pkg.Header)(nil)).Elem(),
 	})
 }

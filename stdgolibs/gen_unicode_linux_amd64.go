@@ -9,15 +9,6 @@ import (
 func init() {
 	registerValues("unicode", map[string]reflect.Value{
 		// Functions
-		"Is":         reflect.ValueOf(pkg.Is),
-		"IsUpper":    reflect.ValueOf(pkg.IsUpper),
-		"IsLower":    reflect.ValueOf(pkg.IsLower),
-		"IsTitle":    reflect.ValueOf(pkg.IsTitle),
-		"To":         reflect.ValueOf(pkg.To),
-		"ToUpper":    reflect.ValueOf(pkg.ToUpper),
-		"ToLower":    reflect.ValueOf(pkg.ToLower),
-		"ToTitle":    reflect.ValueOf(pkg.ToTitle),
-		"SimpleFold": reflect.ValueOf(pkg.SimpleFold),
 		"IsDigit":    reflect.ValueOf(pkg.IsDigit),
 		"IsGraphic":  reflect.ValueOf(pkg.IsGraphic),
 		"IsPrint":    reflect.ValueOf(pkg.IsPrint),
@@ -30,6 +21,15 @@ func init() {
 		"IsPunct":    reflect.ValueOf(pkg.IsPunct),
 		"IsSpace":    reflect.ValueOf(pkg.IsSpace),
 		"IsSymbol":   reflect.ValueOf(pkg.IsSymbol),
+		"Is":         reflect.ValueOf(pkg.Is),
+		"IsUpper":    reflect.ValueOf(pkg.IsUpper),
+		"IsLower":    reflect.ValueOf(pkg.IsLower),
+		"IsTitle":    reflect.ValueOf(pkg.IsTitle),
+		"To":         reflect.ValueOf(pkg.To),
+		"ToUpper":    reflect.ValueOf(pkg.ToUpper),
+		"ToLower":    reflect.ValueOf(pkg.ToLower),
+		"ToTitle":    reflect.ValueOf(pkg.ToTitle),
+		"SimpleFold": reflect.ValueOf(pkg.SimpleFold),
 
 		// Consts
 
@@ -46,6 +46,8 @@ func init() {
 
 		// Variables
 
+		"GraphicRanges":                      reflect.ValueOf(&pkg.GraphicRanges),
+		"PrintRanges":                        reflect.ValueOf(&pkg.PrintRanges),
 		"Categories":                         reflect.ValueOf(&pkg.Categories),
 		"Cc":                                 reflect.ValueOf(&pkg.Cc),
 		"Cf":                                 reflect.ValueOf(&pkg.Cf),
@@ -292,8 +294,6 @@ func init() {
 		"FoldScript":                         reflect.ValueOf(&pkg.FoldScript),
 		"TurkishCase":                        reflect.ValueOf(&pkg.TurkishCase),
 		"AzeriCase":                          reflect.ValueOf(&pkg.AzeriCase),
-		"GraphicRanges":                      reflect.ValueOf(&pkg.GraphicRanges),
-		"PrintRanges":                        reflect.ValueOf(&pkg.PrintRanges),
 	})
 	registerTypes("unicode", map[string]reflect.Type{
 		// Non interfaces

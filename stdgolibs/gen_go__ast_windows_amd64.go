@@ -9,6 +9,7 @@ import (
 func init() {
 	registerValues("go/ast", map[string]reflect.Value{
 		// Functions
+		"NewCommentMap":     reflect.ValueOf(pkg.NewCommentMap),
 		"FileExports":       reflect.ValueOf(pkg.FileExports),
 		"PackageExports":    reflect.ValueOf(pkg.PackageExports),
 		"FilterDecl":        reflect.ValueOf(pkg.FilterDecl),
@@ -26,7 +27,6 @@ func init() {
 		"Inspect":           reflect.ValueOf(pkg.Inspect),
 		"NewIdent":          reflect.ValueOf(pkg.NewIdent),
 		"IsExported":        reflect.ValueOf(pkg.IsExported),
-		"NewCommentMap":     reflect.ValueOf(pkg.NewCommentMap),
 
 		// Consts
 
@@ -49,6 +49,7 @@ func init() {
 	registerTypes("go/ast", map[string]reflect.Type{
 		// Non interfaces
 
+		"CommentMap":     reflect.TypeOf((*pkg.CommentMap)(nil)).Elem(),
 		"Filter":         reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
 		"MergeMode":      reflect.TypeOf((*pkg.MergeMode)(nil)).Elem(),
 		"FieldFilter":    reflect.TypeOf((*pkg.FieldFilter)(nil)).Elem(),
@@ -112,6 +113,5 @@ func init() {
 		"FuncDecl":       reflect.TypeOf((*pkg.FuncDecl)(nil)).Elem(),
 		"File":           reflect.TypeOf((*pkg.File)(nil)).Elem(),
 		"Package":        reflect.TypeOf((*pkg.Package)(nil)).Elem(),
-		"CommentMap":     reflect.TypeOf((*pkg.CommentMap)(nil)).Elem(),
 	})
 }

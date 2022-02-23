@@ -9,8 +9,6 @@ import (
 func init() {
 	registerValues("debug/elf", map[string]reflect.Value{
 		// Functions
-		"Open":          reflect.ValueOf(pkg.Open),
-		"NewFile":       reflect.ValueOf(pkg.NewFile),
 		"R_SYM32":       reflect.ValueOf(pkg.R_SYM32),
 		"R_TYPE32":      reflect.ValueOf(pkg.R_TYPE32),
 		"R_INFO32":      reflect.ValueOf(pkg.R_INFO32),
@@ -21,6 +19,8 @@ func init() {
 		"R_SYM64":       reflect.ValueOf(pkg.R_SYM64),
 		"R_TYPE64":      reflect.ValueOf(pkg.R_TYPE64),
 		"R_INFO":        reflect.ValueOf(pkg.R_INFO),
+		"Open":          reflect.ValueOf(pkg.Open),
+		"NewFile":       reflect.ValueOf(pkg.NewFile),
 
 		// Consts
 
@@ -1308,15 +1308,6 @@ func init() {
 	registerTypes("debug/elf", map[string]reflect.Type{
 		// Non interfaces
 
-		"FileHeader":      reflect.TypeOf((*pkg.FileHeader)(nil)).Elem(),
-		"File":            reflect.TypeOf((*pkg.File)(nil)).Elem(),
-		"SectionHeader":   reflect.TypeOf((*pkg.SectionHeader)(nil)).Elem(),
-		"Section":         reflect.TypeOf((*pkg.Section)(nil)).Elem(),
-		"ProgHeader":      reflect.TypeOf((*pkg.ProgHeader)(nil)).Elem(),
-		"Prog":            reflect.TypeOf((*pkg.Prog)(nil)).Elem(),
-		"Symbol":          reflect.TypeOf((*pkg.Symbol)(nil)).Elem(),
-		"FormatError":     reflect.TypeOf((*pkg.FormatError)(nil)).Elem(),
-		"ImportedSymbol":  reflect.TypeOf((*pkg.ImportedSymbol)(nil)).Elem(),
 		"Version":         reflect.TypeOf((*pkg.Version)(nil)).Elem(),
 		"Class":           reflect.TypeOf((*pkg.Class)(nil)).Elem(),
 		"Data":            reflect.TypeOf((*pkg.Data)(nil)).Elem(),
@@ -1362,5 +1353,14 @@ func init() {
 		"Rel64":           reflect.TypeOf((*pkg.Rel64)(nil)).Elem(),
 		"Rela64":          reflect.TypeOf((*pkg.Rela64)(nil)).Elem(),
 		"Sym64":           reflect.TypeOf((*pkg.Sym64)(nil)).Elem(),
+		"FileHeader":      reflect.TypeOf((*pkg.FileHeader)(nil)).Elem(),
+		"File":            reflect.TypeOf((*pkg.File)(nil)).Elem(),
+		"SectionHeader":   reflect.TypeOf((*pkg.SectionHeader)(nil)).Elem(),
+		"Section":         reflect.TypeOf((*pkg.Section)(nil)).Elem(),
+		"ProgHeader":      reflect.TypeOf((*pkg.ProgHeader)(nil)).Elem(),
+		"Prog":            reflect.TypeOf((*pkg.Prog)(nil)).Elem(),
+		"Symbol":          reflect.TypeOf((*pkg.Symbol)(nil)).Elem(),
+		"FormatError":     reflect.TypeOf((*pkg.FormatError)(nil)).Elem(),
+		"ImportedSymbol":  reflect.TypeOf((*pkg.ImportedSymbol)(nil)).Elem(),
 	})
 }

@@ -33,7 +33,6 @@ func init() {
 
 		// Consts
 
-		"Version":         reflect.ValueOf(pkg.Version),
 		"MaxRune":         reflect.ValueOf(pkg.MaxRune),
 		"ReplacementChar": reflect.ValueOf(pkg.ReplacementChar),
 		"MaxASCII":        reflect.ValueOf(pkg.MaxASCII),
@@ -43,9 +42,14 @@ func init() {
 		"TitleCase":       reflect.ValueOf(pkg.TitleCase),
 		"MaxCase":         reflect.ValueOf(pkg.MaxCase),
 		"UpperLower":      reflect.ValueOf(pkg.UpperLower),
+		"Version":         reflect.ValueOf(pkg.Version),
 
 		// Variables
 
+		"TurkishCase":                        reflect.ValueOf(&pkg.TurkishCase),
+		"AzeriCase":                          reflect.ValueOf(&pkg.AzeriCase),
+		"GraphicRanges":                      reflect.ValueOf(&pkg.GraphicRanges),
+		"PrintRanges":                        reflect.ValueOf(&pkg.PrintRanges),
 		"Categories":                         reflect.ValueOf(&pkg.Categories),
 		"Cc":                                 reflect.ValueOf(&pkg.Cc),
 		"Cf":                                 reflect.ValueOf(&pkg.Cf),
@@ -290,10 +294,6 @@ func init() {
 		"CaseRanges":                         reflect.ValueOf(&pkg.CaseRanges),
 		"FoldCategory":                       reflect.ValueOf(&pkg.FoldCategory),
 		"FoldScript":                         reflect.ValueOf(&pkg.FoldScript),
-		"TurkishCase":                        reflect.ValueOf(&pkg.TurkishCase),
-		"AzeriCase":                          reflect.ValueOf(&pkg.AzeriCase),
-		"GraphicRanges":                      reflect.ValueOf(&pkg.GraphicRanges),
-		"PrintRanges":                        reflect.ValueOf(&pkg.PrintRanges),
 	})
 	registerTypes("unicode", map[string]reflect.Type{
 		// Non interfaces

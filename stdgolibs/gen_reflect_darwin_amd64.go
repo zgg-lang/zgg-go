@@ -9,17 +9,6 @@ import (
 func init() {
 	registerValues("reflect", map[string]reflect.Value{
 		// Functions
-		"DeepEqual":       reflect.ValueOf(pkg.DeepEqual),
-		"MakeFunc":        reflect.ValueOf(pkg.MakeFunc),
-		"Swapper":         reflect.ValueOf(pkg.Swapper),
-		"TypeOf":          reflect.ValueOf(pkg.TypeOf),
-		"PtrTo":           reflect.ValueOf(pkg.PtrTo),
-		"ChanOf":          reflect.ValueOf(pkg.ChanOf),
-		"MapOf":           reflect.ValueOf(pkg.MapOf),
-		"FuncOf":          reflect.ValueOf(pkg.FuncOf),
-		"SliceOf":         reflect.ValueOf(pkg.SliceOf),
-		"StructOf":        reflect.ValueOf(pkg.StructOf),
-		"ArrayOf":         reflect.ValueOf(pkg.ArrayOf),
 		"Append":          reflect.ValueOf(pkg.Append),
 		"AppendSlice":     reflect.ValueOf(pkg.AppendSlice),
 		"Copy":            reflect.ValueOf(pkg.Copy),
@@ -33,9 +22,23 @@ func init() {
 		"Zero":            reflect.ValueOf(pkg.Zero),
 		"New":             reflect.ValueOf(pkg.New),
 		"NewAt":           reflect.ValueOf(pkg.NewAt),
+		"DeepEqual":       reflect.ValueOf(pkg.DeepEqual),
+		"MakeFunc":        reflect.ValueOf(pkg.MakeFunc),
+		"Swapper":         reflect.ValueOf(pkg.Swapper),
+		"TypeOf":          reflect.ValueOf(pkg.TypeOf),
+		"PtrTo":           reflect.ValueOf(pkg.PtrTo),
+		"ChanOf":          reflect.ValueOf(pkg.ChanOf),
+		"MapOf":           reflect.ValueOf(pkg.MapOf),
+		"FuncOf":          reflect.ValueOf(pkg.FuncOf),
+		"SliceOf":         reflect.ValueOf(pkg.SliceOf),
+		"StructOf":        reflect.ValueOf(pkg.StructOf),
+		"ArrayOf":         reflect.ValueOf(pkg.ArrayOf),
 
 		// Consts
 
+		"SelectSend":    reflect.ValueOf(pkg.SelectSend),
+		"SelectRecv":    reflect.ValueOf(pkg.SelectRecv),
+		"SelectDefault": reflect.ValueOf(pkg.SelectDefault),
 		"Invalid":       reflect.ValueOf(pkg.Invalid),
 		"Bool":          reflect.ValueOf(pkg.Bool),
 		"Int":           reflect.ValueOf(pkg.Int),
@@ -66,9 +69,6 @@ func init() {
 		"RecvDir":       reflect.ValueOf(pkg.RecvDir),
 		"SendDir":       reflect.ValueOf(pkg.SendDir),
 		"BothDir":       reflect.ValueOf(pkg.BothDir),
-		"SelectSend":    reflect.ValueOf(pkg.SelectSend),
-		"SelectRecv":    reflect.ValueOf(pkg.SelectRecv),
-		"SelectDefault": reflect.ValueOf(pkg.SelectDefault),
 
 		// Variables
 
@@ -76,11 +76,6 @@ func init() {
 	registerTypes("reflect", map[string]reflect.Type{
 		// Non interfaces
 
-		"Kind":         reflect.TypeOf((*pkg.Kind)(nil)).Elem(),
-		"ChanDir":      reflect.TypeOf((*pkg.ChanDir)(nil)).Elem(),
-		"Method":       reflect.TypeOf((*pkg.Method)(nil)).Elem(),
-		"StructField":  reflect.TypeOf((*pkg.StructField)(nil)).Elem(),
-		"StructTag":    reflect.TypeOf((*pkg.StructTag)(nil)).Elem(),
 		"Value":        reflect.TypeOf((*pkg.Value)(nil)).Elem(),
 		"ValueError":   reflect.TypeOf((*pkg.ValueError)(nil)).Elem(),
 		"MapIter":      reflect.TypeOf((*pkg.MapIter)(nil)).Elem(),
@@ -88,5 +83,10 @@ func init() {
 		"SliceHeader":  reflect.TypeOf((*pkg.SliceHeader)(nil)).Elem(),
 		"SelectDir":    reflect.TypeOf((*pkg.SelectDir)(nil)).Elem(),
 		"SelectCase":   reflect.TypeOf((*pkg.SelectCase)(nil)).Elem(),
+		"Kind":         reflect.TypeOf((*pkg.Kind)(nil)).Elem(),
+		"ChanDir":      reflect.TypeOf((*pkg.ChanDir)(nil)).Elem(),
+		"Method":       reflect.TypeOf((*pkg.Method)(nil)).Elem(),
+		"StructField":  reflect.TypeOf((*pkg.StructField)(nil)).Elem(),
+		"StructTag":    reflect.TypeOf((*pkg.StructTag)(nil)).Elem(),
 	})
 }

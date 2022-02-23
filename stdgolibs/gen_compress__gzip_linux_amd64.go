@@ -9,9 +9,9 @@ import (
 func init() {
 	registerValues("compress/gzip", map[string]reflect.Value{
 		// Functions
-		"NewReader":      reflect.ValueOf(pkg.NewReader),
 		"NewWriter":      reflect.ValueOf(pkg.NewWriter),
 		"NewWriterLevel": reflect.ValueOf(pkg.NewWriterLevel),
+		"NewReader":      reflect.ValueOf(pkg.NewReader),
 
 		// Consts
 
@@ -29,8 +29,8 @@ func init() {
 	registerTypes("compress/gzip", map[string]reflect.Type{
 		// Non interfaces
 
+		"Writer": reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
 		"Header": reflect.TypeOf((*pkg.Header)(nil)).Elem(),
 		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
-		"Writer": reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
 	})
 }

@@ -10,6 +10,9 @@ func init() {
 	registerValues("crypto/tls", map[string]reflect.Value{
 		// Functions
 		"NewLRUClientSessionCache": reflect.ValueOf(pkg.NewLRUClientSessionCache),
+		"CipherSuites":             reflect.ValueOf(pkg.CipherSuites),
+		"InsecureCipherSuites":     reflect.ValueOf(pkg.InsecureCipherSuites),
+		"CipherSuiteName":          reflect.ValueOf(pkg.CipherSuiteName),
 		"Server":                   reflect.ValueOf(pkg.Server),
 		"Client":                   reflect.ValueOf(pkg.Client),
 		"NewListener":              reflect.ValueOf(pkg.NewListener),
@@ -18,9 +21,6 @@ func init() {
 		"Dial":                     reflect.ValueOf(pkg.Dial),
 		"LoadX509KeyPair":          reflect.ValueOf(pkg.LoadX509KeyPair),
 		"X509KeyPair":              reflect.ValueOf(pkg.X509KeyPair),
-		"CipherSuites":             reflect.ValueOf(pkg.CipherSuites),
-		"InsecureCipherSuites":     reflect.ValueOf(pkg.InsecureCipherSuites),
-		"CipherSuiteName":          reflect.ValueOf(pkg.CipherSuiteName),
 
 		// Consts
 
@@ -88,6 +88,8 @@ func init() {
 	registerTypes("crypto/tls", map[string]reflect.Type{
 		// Non interfaces
 
+		"Conn":                   reflect.TypeOf((*pkg.Conn)(nil)).Elem(),
+		"RecordHeaderError":      reflect.TypeOf((*pkg.RecordHeaderError)(nil)).Elem(),
 		"CurveID":                reflect.TypeOf((*pkg.CurveID)(nil)).Elem(),
 		"ConnectionState":        reflect.TypeOf((*pkg.ConnectionState)(nil)).Elem(),
 		"ClientAuthType":         reflect.TypeOf((*pkg.ClientAuthType)(nil)).Elem(),
@@ -98,9 +100,7 @@ func init() {
 		"RenegotiationSupport":   reflect.TypeOf((*pkg.RenegotiationSupport)(nil)).Elem(),
 		"Config":                 reflect.TypeOf((*pkg.Config)(nil)).Elem(),
 		"Certificate":            reflect.TypeOf((*pkg.Certificate)(nil)).Elem(),
-		"Dialer":                 reflect.TypeOf((*pkg.Dialer)(nil)).Elem(),
 		"CipherSuite":            reflect.TypeOf((*pkg.CipherSuite)(nil)).Elem(),
-		"Conn":                   reflect.TypeOf((*pkg.Conn)(nil)).Elem(),
-		"RecordHeaderError":      reflect.TypeOf((*pkg.RecordHeaderError)(nil)).Elem(),
+		"Dialer":                 reflect.TypeOf((*pkg.Dialer)(nil)).Elem(),
 	})
 }

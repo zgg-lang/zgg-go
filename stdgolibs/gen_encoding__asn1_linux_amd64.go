@@ -9,10 +9,10 @@ import (
 func init() {
 	registerValues("encoding/asn1", map[string]reflect.Value{
 		// Functions
-		"Unmarshal":           reflect.ValueOf(pkg.Unmarshal),
-		"UnmarshalWithParams": reflect.ValueOf(pkg.UnmarshalWithParams),
 		"Marshal":             reflect.ValueOf(pkg.Marshal),
 		"MarshalWithParams":   reflect.ValueOf(pkg.MarshalWithParams),
+		"Unmarshal":           reflect.ValueOf(pkg.Unmarshal),
+		"UnmarshalWithParams": reflect.ValueOf(pkg.UnmarshalWithParams),
 
 		// Consts
 

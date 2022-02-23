@@ -9,32 +9,13 @@ import (
 func init() {
 	registerValues("regexp/syntax", map[string]reflect.Value{
 		// Functions
-		"Compile":        reflect.ValueOf(pkg.Compile),
 		"Parse":          reflect.ValueOf(pkg.Parse),
 		"EmptyOpContext": reflect.ValueOf(pkg.EmptyOpContext),
 		"IsWordChar":     reflect.ValueOf(pkg.IsWordChar),
+		"Compile":        reflect.ValueOf(pkg.Compile),
 
 		// Consts
 
-		"OpNoMatch":                reflect.ValueOf(pkg.OpNoMatch),
-		"OpEmptyMatch":             reflect.ValueOf(pkg.OpEmptyMatch),
-		"OpLiteral":                reflect.ValueOf(pkg.OpLiteral),
-		"OpCharClass":              reflect.ValueOf(pkg.OpCharClass),
-		"OpAnyCharNotNL":           reflect.ValueOf(pkg.OpAnyCharNotNL),
-		"OpAnyChar":                reflect.ValueOf(pkg.OpAnyChar),
-		"OpBeginLine":              reflect.ValueOf(pkg.OpBeginLine),
-		"OpEndLine":                reflect.ValueOf(pkg.OpEndLine),
-		"OpBeginText":              reflect.ValueOf(pkg.OpBeginText),
-		"OpEndText":                reflect.ValueOf(pkg.OpEndText),
-		"OpWordBoundary":           reflect.ValueOf(pkg.OpWordBoundary),
-		"OpNoWordBoundary":         reflect.ValueOf(pkg.OpNoWordBoundary),
-		"OpCapture":                reflect.ValueOf(pkg.OpCapture),
-		"OpStar":                   reflect.ValueOf(pkg.OpStar),
-		"OpPlus":                   reflect.ValueOf(pkg.OpPlus),
-		"OpQuest":                  reflect.ValueOf(pkg.OpQuest),
-		"OpRepeat":                 reflect.ValueOf(pkg.OpRepeat),
-		"OpConcat":                 reflect.ValueOf(pkg.OpConcat),
-		"OpAlternate":              reflect.ValueOf(pkg.OpAlternate),
 		"ErrInternalError":         reflect.ValueOf(pkg.ErrInternalError),
 		"ErrInvalidCharClass":      reflect.ValueOf(pkg.ErrInvalidCharClass),
 		"ErrInvalidCharRange":      reflect.ValueOf(pkg.ErrInvalidCharRange),
@@ -79,6 +60,25 @@ func init() {
 		"EmptyEndText":             reflect.ValueOf(pkg.EmptyEndText),
 		"EmptyWordBoundary":        reflect.ValueOf(pkg.EmptyWordBoundary),
 		"EmptyNoWordBoundary":      reflect.ValueOf(pkg.EmptyNoWordBoundary),
+		"OpNoMatch":                reflect.ValueOf(pkg.OpNoMatch),
+		"OpEmptyMatch":             reflect.ValueOf(pkg.OpEmptyMatch),
+		"OpLiteral":                reflect.ValueOf(pkg.OpLiteral),
+		"OpCharClass":              reflect.ValueOf(pkg.OpCharClass),
+		"OpAnyCharNotNL":           reflect.ValueOf(pkg.OpAnyCharNotNL),
+		"OpAnyChar":                reflect.ValueOf(pkg.OpAnyChar),
+		"OpBeginLine":              reflect.ValueOf(pkg.OpBeginLine),
+		"OpEndLine":                reflect.ValueOf(pkg.OpEndLine),
+		"OpBeginText":              reflect.ValueOf(pkg.OpBeginText),
+		"OpEndText":                reflect.ValueOf(pkg.OpEndText),
+		"OpWordBoundary":           reflect.ValueOf(pkg.OpWordBoundary),
+		"OpNoWordBoundary":         reflect.ValueOf(pkg.OpNoWordBoundary),
+		"OpCapture":                reflect.ValueOf(pkg.OpCapture),
+		"OpStar":                   reflect.ValueOf(pkg.OpStar),
+		"OpPlus":                   reflect.ValueOf(pkg.OpPlus),
+		"OpQuest":                  reflect.ValueOf(pkg.OpQuest),
+		"OpRepeat":                 reflect.ValueOf(pkg.OpRepeat),
+		"OpConcat":                 reflect.ValueOf(pkg.OpConcat),
+		"OpAlternate":              reflect.ValueOf(pkg.OpAlternate),
 
 		// Variables
 
@@ -86,8 +86,6 @@ func init() {
 	registerTypes("regexp/syntax", map[string]reflect.Type{
 		// Non interfaces
 
-		"Regexp":    reflect.TypeOf((*pkg.Regexp)(nil)).Elem(),
-		"Op":        reflect.TypeOf((*pkg.Op)(nil)).Elem(),
 		"Error":     reflect.TypeOf((*pkg.Error)(nil)).Elem(),
 		"ErrorCode": reflect.TypeOf((*pkg.ErrorCode)(nil)).Elem(),
 		"Flags":     reflect.TypeOf((*pkg.Flags)(nil)).Elem(),
@@ -95,5 +93,7 @@ func init() {
 		"InstOp":    reflect.TypeOf((*pkg.InstOp)(nil)).Elem(),
 		"EmptyOp":   reflect.TypeOf((*pkg.EmptyOp)(nil)).Elem(),
 		"Inst":      reflect.TypeOf((*pkg.Inst)(nil)).Elem(),
+		"Regexp":    reflect.TypeOf((*pkg.Regexp)(nil)).Elem(),
+		"Op":        reflect.TypeOf((*pkg.Op)(nil)).Elem(),
 	})
 }

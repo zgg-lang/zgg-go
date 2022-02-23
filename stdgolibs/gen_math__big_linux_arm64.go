@@ -9,14 +9,15 @@ import (
 func init() {
 	registerValues("math/big", map[string]reflect.Value{
 		// Functions
+		"NewRat":     reflect.ValueOf(pkg.NewRat),
 		"NewInt":     reflect.ValueOf(pkg.NewInt),
 		"Jacobi":     reflect.ValueOf(pkg.Jacobi),
-		"NewRat":     reflect.ValueOf(pkg.NewRat),
-		"NewFloat":   reflect.ValueOf(pkg.NewFloat),
 		"ParseFloat": reflect.ValueOf(pkg.ParseFloat),
+		"NewFloat":   reflect.ValueOf(pkg.NewFloat),
 
 		// Consts
 
+		"MaxBase":       reflect.ValueOf(pkg.MaxBase),
 		"MaxExp":        reflect.ValueOf(pkg.MaxExp),
 		"MinExp":        reflect.ValueOf(pkg.MinExp),
 		"MaxPrec":       reflect.ValueOf(pkg.MaxPrec),
@@ -29,7 +30,6 @@ func init() {
 		"Below":         reflect.ValueOf(pkg.Below),
 		"Exact":         reflect.ValueOf(pkg.Exact),
 		"Above":         reflect.ValueOf(pkg.Above),
-		"MaxBase":       reflect.ValueOf(pkg.MaxBase),
 
 		// Variables
 
@@ -37,12 +37,12 @@ func init() {
 	registerTypes("math/big", map[string]reflect.Type{
 		// Non interfaces
 
-		"Int":          reflect.TypeOf((*pkg.Int)(nil)).Elem(),
 		"Rat":          reflect.TypeOf((*pkg.Rat)(nil)).Elem(),
+		"Int":          reflect.TypeOf((*pkg.Int)(nil)).Elem(),
+		"Word":         reflect.TypeOf((*pkg.Word)(nil)).Elem(),
 		"Float":        reflect.TypeOf((*pkg.Float)(nil)).Elem(),
 		"ErrNaN":       reflect.TypeOf((*pkg.ErrNaN)(nil)).Elem(),
 		"RoundingMode": reflect.TypeOf((*pkg.RoundingMode)(nil)).Elem(),
 		"Accuracy":     reflect.TypeOf((*pkg.Accuracy)(nil)).Elem(),
-		"Word":         reflect.TypeOf((*pkg.Word)(nil)).Elem(),
 	})
 }

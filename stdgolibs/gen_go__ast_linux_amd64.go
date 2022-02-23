@@ -9,6 +9,10 @@ import (
 func init() {
 	registerValues("go/ast", map[string]reflect.Value{
 		// Functions
+		"NotNilFilter":      reflect.ValueOf(pkg.NotNilFilter),
+		"Fprint":            reflect.ValueOf(pkg.Fprint),
+		"Print":             reflect.ValueOf(pkg.Print),
+		"NewPackage":        reflect.ValueOf(pkg.NewPackage),
 		"NewScope":          reflect.ValueOf(pkg.NewScope),
 		"NewObj":            reflect.ValueOf(pkg.NewObj),
 		"Walk":              reflect.ValueOf(pkg.Walk),
@@ -23,10 +27,6 @@ func init() {
 		"FilterPackage":     reflect.ValueOf(pkg.FilterPackage),
 		"MergePackageFiles": reflect.ValueOf(pkg.MergePackageFiles),
 		"SortImports":       reflect.ValueOf(pkg.SortImports),
-		"NotNilFilter":      reflect.ValueOf(pkg.NotNilFilter),
-		"Fprint":            reflect.ValueOf(pkg.Fprint),
-		"Print":             reflect.ValueOf(pkg.Print),
-		"NewPackage":        reflect.ValueOf(pkg.NewPackage),
 
 		// Consts
 
@@ -49,6 +49,8 @@ func init() {
 	registerTypes("go/ast", map[string]reflect.Type{
 		// Non interfaces
 
+		"FieldFilter":    reflect.TypeOf((*pkg.FieldFilter)(nil)).Elem(),
+		"Importer":       reflect.TypeOf((*pkg.Importer)(nil)).Elem(),
 		"Scope":          reflect.TypeOf((*pkg.Scope)(nil)).Elem(),
 		"Object":         reflect.TypeOf((*pkg.Object)(nil)).Elem(),
 		"ObjKind":        reflect.TypeOf((*pkg.ObjKind)(nil)).Elem(),
@@ -111,7 +113,5 @@ func init() {
 		"CommentMap":     reflect.TypeOf((*pkg.CommentMap)(nil)).Elem(),
 		"Filter":         reflect.TypeOf((*pkg.Filter)(nil)).Elem(),
 		"MergeMode":      reflect.TypeOf((*pkg.MergeMode)(nil)).Elem(),
-		"FieldFilter":    reflect.TypeOf((*pkg.FieldFilter)(nil)).Elem(),
-		"Importer":       reflect.TypeOf((*pkg.Importer)(nil)).Elem(),
 	})
 }

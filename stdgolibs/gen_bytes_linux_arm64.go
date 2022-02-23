@@ -9,7 +9,6 @@ import (
 func init() {
 	registerValues("bytes", map[string]reflect.Value{
 		// Functions
-		"NewReader":       reflect.ValueOf(pkg.NewReader),
 		"NewBuffer":       reflect.ValueOf(pkg.NewBuffer),
 		"NewBufferString": reflect.ValueOf(pkg.NewBufferString),
 		"Equal":           reflect.ValueOf(pkg.Equal),
@@ -59,6 +58,7 @@ func init() {
 		"ReplaceAll":      reflect.ValueOf(pkg.ReplaceAll),
 		"EqualFold":       reflect.ValueOf(pkg.EqualFold),
 		"Index":           reflect.ValueOf(pkg.Index),
+		"NewReader":       reflect.ValueOf(pkg.NewReader),
 
 		// Consts
 
@@ -71,7 +71,7 @@ func init() {
 	registerTypes("bytes", map[string]reflect.Type{
 		// Non interfaces
 
-		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 		"Buffer": reflect.TypeOf((*pkg.Buffer)(nil)).Elem(),
+		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 	})
 }

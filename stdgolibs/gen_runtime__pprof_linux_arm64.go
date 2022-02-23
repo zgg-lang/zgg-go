@@ -9,12 +9,12 @@ import (
 func init() {
 	registerValues("runtime/pprof", map[string]reflect.Value{
 		// Functions
+		"SetGoroutineLabels": reflect.ValueOf(pkg.SetGoroutineLabels),
+		"Do":                 reflect.ValueOf(pkg.Do),
 		"WithLabels":         reflect.ValueOf(pkg.WithLabels),
 		"Labels":             reflect.ValueOf(pkg.Labels),
 		"Label":              reflect.ValueOf(pkg.Label),
 		"ForLabels":          reflect.ValueOf(pkg.ForLabels),
-		"SetGoroutineLabels": reflect.ValueOf(pkg.SetGoroutineLabels),
-		"Do":                 reflect.ValueOf(pkg.Do),
 		"NewProfile":         reflect.ValueOf(pkg.NewProfile),
 		"Lookup":             reflect.ValueOf(pkg.Lookup),
 		"Profiles":           reflect.ValueOf(pkg.Profiles),

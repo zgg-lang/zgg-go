@@ -31,7 +31,6 @@ func init() {
 	registerTypes("encoding/xml", map[string]reflect.Type{
 		// Non interfaces
 
-		"TagPathError":         reflect.TypeOf((*pkg.TagPathError)(nil)).Elem(),
 		"SyntaxError":          reflect.TypeOf((*pkg.SyntaxError)(nil)).Elem(),
 		"Name":                 reflect.TypeOf((*pkg.Name)(nil)).Elem(),
 		"Attr":                 reflect.TypeOf((*pkg.Attr)(nil)).Elem(),
@@ -45,5 +44,6 @@ func init() {
 		"Encoder":              reflect.TypeOf((*pkg.Encoder)(nil)).Elem(),
 		"UnsupportedTypeError": reflect.TypeOf((*pkg.UnsupportedTypeError)(nil)).Elem(),
 		"UnmarshalError":       reflect.TypeOf((*pkg.UnmarshalError)(nil)).Elem(),
+		"TagPathError":         reflect.TypeOf((*pkg.TagPathError)(nil)).Elem(),
 	})
 }

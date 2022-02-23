@@ -21,10 +21,10 @@ func init() {
 
 		"Cond":      reflect.TypeOf((*pkg.Cond)(nil)).Elem(),
 		"Map":       reflect.TypeOf((*pkg.Map)(nil)).Elem(),
-		"Once":      reflect.TypeOf((*pkg.Once)(nil)).Elem(),
 		"Pool":      reflect.TypeOf((*pkg.Pool)(nil)).Elem(),
 		"WaitGroup": reflect.TypeOf((*pkg.WaitGroup)(nil)).Elem(),
 		"Mutex":     reflect.TypeOf((*pkg.Mutex)(nil)).Elem(),
+		"Once":      reflect.TypeOf((*pkg.Once)(nil)).Elem(),
 		"RWMutex":   reflect.TypeOf((*pkg.RWMutex)(nil)).Elem(),
 	})
 }

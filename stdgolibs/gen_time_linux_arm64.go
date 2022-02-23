@@ -9,14 +9,6 @@ import (
 func init() {
 	registerValues("time", map[string]reflect.Value{
 		// Functions
-		"LoadLocationFromTZData": reflect.ValueOf(pkg.LoadLocationFromTZData),
-		"Parse":                  reflect.ValueOf(pkg.Parse),
-		"ParseInLocation":        reflect.ValueOf(pkg.ParseInLocation),
-		"ParseDuration":          reflect.ValueOf(pkg.ParseDuration),
-		"Sleep":                  reflect.ValueOf(pkg.Sleep),
-		"NewTimer":               reflect.ValueOf(pkg.NewTimer),
-		"After":                  reflect.ValueOf(pkg.After),
-		"AfterFunc":              reflect.ValueOf(pkg.AfterFunc),
 		"NewTicker":              reflect.ValueOf(pkg.NewTicker),
 		"Tick":                   reflect.ValueOf(pkg.Tick),
 		"Since":                  reflect.ValueOf(pkg.Since),
@@ -26,24 +18,17 @@ func init() {
 		"Date":                   reflect.ValueOf(pkg.Date),
 		"FixedZone":              reflect.ValueOf(pkg.FixedZone),
 		"LoadLocation":           reflect.ValueOf(pkg.LoadLocation),
+		"LoadLocationFromTZData": reflect.ValueOf(pkg.LoadLocationFromTZData),
+		"Parse":                  reflect.ValueOf(pkg.Parse),
+		"ParseInLocation":        reflect.ValueOf(pkg.ParseInLocation),
+		"ParseDuration":          reflect.ValueOf(pkg.ParseDuration),
+		"Sleep":                  reflect.ValueOf(pkg.Sleep),
+		"NewTimer":               reflect.ValueOf(pkg.NewTimer),
+		"After":                  reflect.ValueOf(pkg.After),
+		"AfterFunc":              reflect.ValueOf(pkg.AfterFunc),
 
 		// Consts
 
-		"ANSIC":       reflect.ValueOf(pkg.ANSIC),
-		"UnixDate":    reflect.ValueOf(pkg.UnixDate),
-		"RubyDate":    reflect.ValueOf(pkg.RubyDate),
-		"RFC822":      reflect.ValueOf(pkg.RFC822),
-		"RFC822Z":     reflect.ValueOf(pkg.RFC822Z),
-		"RFC850":      reflect.ValueOf(pkg.RFC850),
-		"RFC1123":     reflect.ValueOf(pkg.RFC1123),
-		"RFC1123Z":    reflect.ValueOf(pkg.RFC1123Z),
-		"RFC3339":     reflect.ValueOf(pkg.RFC3339),
-		"RFC3339Nano": reflect.ValueOf(pkg.RFC3339Nano),
-		"Kitchen":     reflect.ValueOf(pkg.Kitchen),
-		"Stamp":       reflect.ValueOf(pkg.Stamp),
-		"StampMilli":  reflect.ValueOf(pkg.StampMilli),
-		"StampMicro":  reflect.ValueOf(pkg.StampMicro),
-		"StampNano":   reflect.ValueOf(pkg.StampNano),
 		"January":     reflect.ValueOf(pkg.January),
 		"February":    reflect.ValueOf(pkg.February),
 		"March":       reflect.ValueOf(pkg.March),
@@ -69,6 +54,21 @@ func init() {
 		"Second":      reflect.ValueOf(pkg.Second),
 		"Minute":      reflect.ValueOf(pkg.Minute),
 		"Hour":        reflect.ValueOf(pkg.Hour),
+		"ANSIC":       reflect.ValueOf(pkg.ANSIC),
+		"UnixDate":    reflect.ValueOf(pkg.UnixDate),
+		"RubyDate":    reflect.ValueOf(pkg.RubyDate),
+		"RFC822":      reflect.ValueOf(pkg.RFC822),
+		"RFC822Z":     reflect.ValueOf(pkg.RFC822Z),
+		"RFC850":      reflect.ValueOf(pkg.RFC850),
+		"RFC1123":     reflect.ValueOf(pkg.RFC1123),
+		"RFC1123Z":    reflect.ValueOf(pkg.RFC1123Z),
+		"RFC3339":     reflect.ValueOf(pkg.RFC3339),
+		"RFC3339Nano": reflect.ValueOf(pkg.RFC3339Nano),
+		"Kitchen":     reflect.ValueOf(pkg.Kitchen),
+		"Stamp":       reflect.ValueOf(pkg.Stamp),
+		"StampMilli":  reflect.ValueOf(pkg.StampMilli),
+		"StampMicro":  reflect.ValueOf(pkg.StampMicro),
+		"StampNano":   reflect.ValueOf(pkg.StampNano),
 
 		// Variables
 
@@ -78,13 +78,13 @@ func init() {
 	registerTypes("time", map[string]reflect.Type{
 		// Non interfaces
 
-		"ParseError": reflect.TypeOf((*pkg.ParseError)(nil)).Elem(),
-		"Timer":      reflect.TypeOf((*pkg.Timer)(nil)).Elem(),
 		"Ticker":     reflect.TypeOf((*pkg.Ticker)(nil)).Elem(),
 		"Time":       reflect.TypeOf((*pkg.Time)(nil)).Elem(),
 		"Month":      reflect.TypeOf((*pkg.Month)(nil)).Elem(),
 		"Weekday":    reflect.TypeOf((*pkg.Weekday)(nil)).Elem(),
 		"Duration":   reflect.TypeOf((*pkg.Duration)(nil)).Elem(),
 		"Location":   reflect.TypeOf((*pkg.Location)(nil)).Elem(),
+		"ParseError": reflect.TypeOf((*pkg.ParseError)(nil)).Elem(),
+		"Timer":      reflect.TypeOf((*pkg.Timer)(nil)).Elem(),
 	})
 }

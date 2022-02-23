@@ -232,11 +232,12 @@ func init() {
 		// Non interfaces
 
 		"DecodeError":     reflect.TypeOf((*pkg.DecodeError)(nil)).Elem(),
+		"Attr":            reflect.TypeOf((*pkg.Attr)(nil)).Elem(),
+		"Tag":             reflect.TypeOf((*pkg.Tag)(nil)).Elem(),
 		"LineReader":      reflect.TypeOf((*pkg.LineReader)(nil)).Elem(),
 		"LineEntry":       reflect.TypeOf((*pkg.LineEntry)(nil)).Elem(),
 		"LineFile":        reflect.TypeOf((*pkg.LineFile)(nil)).Elem(),
 		"LineReaderPos":   reflect.TypeOf((*pkg.LineReaderPos)(nil)).Elem(),
-		"Data":            reflect.TypeOf((*pkg.Data)(nil)).Elem(),
 		"CommonType":      reflect.TypeOf((*pkg.CommonType)(nil)).Elem(),
 		"BasicType":       reflect.TypeOf((*pkg.BasicType)(nil)).Elem(),
 		"CharType":        reflect.TypeOf((*pkg.CharType)(nil)).Elem(),
@@ -260,12 +261,11 @@ func init() {
 		"DotDotDotType":   reflect.TypeOf((*pkg.DotDotDotType)(nil)).Elem(),
 		"TypedefType":     reflect.TypeOf((*pkg.TypedefType)(nil)).Elem(),
 		"UnsupportedType": reflect.TypeOf((*pkg.UnsupportedType)(nil)).Elem(),
-		"Attr":            reflect.TypeOf((*pkg.Attr)(nil)).Elem(),
-		"Tag":             reflect.TypeOf((*pkg.Tag)(nil)).Elem(),
 		"Entry":           reflect.TypeOf((*pkg.Entry)(nil)).Elem(),
 		"Field":           reflect.TypeOf((*pkg.Field)(nil)).Elem(),
 		"Class":           reflect.TypeOf((*pkg.Class)(nil)).Elem(),
 		"Offset":          reflect.TypeOf((*pkg.Offset)(nil)).Elem(),
 		"Reader":          reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
+		"Data":            reflect.TypeOf((*pkg.Data)(nil)).Elem(),
 	})
 }

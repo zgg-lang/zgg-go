@@ -9,15 +9,15 @@ import (
 func init() {
 	registerValues("encoding/binary", map[string]reflect.Value{
 		// Functions
-		"Read":        reflect.ValueOf(pkg.Read),
-		"Write":       reflect.ValueOf(pkg.Write),
-		"Size":        reflect.ValueOf(pkg.Size),
 		"PutUvarint":  reflect.ValueOf(pkg.PutUvarint),
 		"Uvarint":     reflect.ValueOf(pkg.Uvarint),
 		"PutVarint":   reflect.ValueOf(pkg.PutVarint),
 		"Varint":      reflect.ValueOf(pkg.Varint),
 		"ReadUvarint": reflect.ValueOf(pkg.ReadUvarint),
 		"ReadVarint":  reflect.ValueOf(pkg.ReadVarint),
+		"Read":        reflect.ValueOf(pkg.Read),
+		"Write":       reflect.ValueOf(pkg.Write),
+		"Size":        reflect.ValueOf(pkg.Size),
 
 		// Consts
 

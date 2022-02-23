@@ -9,6 +9,15 @@ import (
 func init() {
 	registerValues("fmt", map[string]reflect.Value{
 		// Functions
+		"Scan":     reflect.ValueOf(pkg.Scan),
+		"Scanln":   reflect.ValueOf(pkg.Scanln),
+		"Scanf":    reflect.ValueOf(pkg.Scanf),
+		"Sscan":    reflect.ValueOf(pkg.Sscan),
+		"Sscanln":  reflect.ValueOf(pkg.Sscanln),
+		"Sscanf":   reflect.ValueOf(pkg.Sscanf),
+		"Fscan":    reflect.ValueOf(pkg.Fscan),
+		"Fscanln":  reflect.ValueOf(pkg.Fscanln),
+		"Fscanf":   reflect.ValueOf(pkg.Fscanf),
 		"Errorf":   reflect.ValueOf(pkg.Errorf),
 		"Fprintf":  reflect.ValueOf(pkg.Fprintf),
 		"Printf":   reflect.ValueOf(pkg.Printf),
@@ -19,15 +28,6 @@ func init() {
 		"Fprintln": reflect.ValueOf(pkg.Fprintln),
 		"Println":  reflect.ValueOf(pkg.Println),
 		"Sprintln": reflect.ValueOf(pkg.Sprintln),
-		"Scan":     reflect.ValueOf(pkg.Scan),
-		"Scanln":   reflect.ValueOf(pkg.Scanln),
-		"Scanf":    reflect.ValueOf(pkg.Scanf),
-		"Sscan":    reflect.ValueOf(pkg.Sscan),
-		"Sscanln":  reflect.ValueOf(pkg.Sscanln),
-		"Sscanf":   reflect.ValueOf(pkg.Sscanf),
-		"Fscan":    reflect.ValueOf(pkg.Fscan),
-		"Fscanln":  reflect.ValueOf(pkg.Fscanln),
-		"Fscanf":   reflect.ValueOf(pkg.Fscanf),
 
 		// Consts
 

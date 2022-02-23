@@ -9,9 +9,9 @@ import (
 func init() {
 	registerValues("image/jpeg", map[string]reflect.Value{
 		// Functions
+		"Encode":       reflect.ValueOf(pkg.Encode),
 		"Decode":       reflect.ValueOf(pkg.Decode),
 		"DecodeConfig": reflect.ValueOf(pkg.DecodeConfig),
-		"Encode":       reflect.ValueOf(pkg.Encode),
 
 		// Consts
 
@@ -23,8 +23,8 @@ func init() {
 	registerTypes("image/jpeg", map[string]reflect.Type{
 		// Non interfaces
 
+		"Options":          reflect.TypeOf((*pkg.Options)(nil)).Elem(),
 		"FormatError":      reflect.TypeOf((*pkg.FormatError)(nil)).Elem(),
 		"UnsupportedError": reflect.TypeOf((*pkg.UnsupportedError)(nil)).Elem(),
-		"Options":          reflect.TypeOf((*pkg.Options)(nil)).Elem(),
 	})
 }

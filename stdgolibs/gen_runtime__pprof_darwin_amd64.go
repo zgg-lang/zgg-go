@@ -9,6 +9,8 @@ import (
 func init() {
 	registerValues("runtime/pprof", map[string]reflect.Value{
 		// Functions
+		"SetGoroutineLabels": reflect.ValueOf(pkg.SetGoroutineLabels),
+		"Do":                 reflect.ValueOf(pkg.Do),
 		"WithLabels":         reflect.ValueOf(pkg.WithLabels),
 		"Labels":             reflect.ValueOf(pkg.Labels),
 		"Label":              reflect.ValueOf(pkg.Label),
@@ -19,8 +21,6 @@ func init() {
 		"WriteHeapProfile":   reflect.ValueOf(pkg.WriteHeapProfile),
 		"StartCPUProfile":    reflect.ValueOf(pkg.StartCPUProfile),
 		"StopCPUProfile":     reflect.ValueOf(pkg.StopCPUProfile),
-		"SetGoroutineLabels": reflect.ValueOf(pkg.SetGoroutineLabels),
-		"Do":                 reflect.ValueOf(pkg.Do),
 
 		// Consts
 

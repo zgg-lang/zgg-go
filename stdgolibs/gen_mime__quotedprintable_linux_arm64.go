@@ -9,8 +9,8 @@ import (
 func init() {
 	registerValues("mime/quotedprintable", map[string]reflect.Value{
 		// Functions
-		"NewReader": reflect.ValueOf(pkg.NewReader),
 		"NewWriter": reflect.ValueOf(pkg.NewWriter),
+		"NewReader": reflect.ValueOf(pkg.NewReader),
 
 		// Consts
 
@@ -20,7 +20,7 @@ func init() {
 	registerTypes("mime/quotedprintable", map[string]reflect.Type{
 		// Non interfaces
 
-		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 		"Writer": reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
+		"Reader": reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 	})
 }

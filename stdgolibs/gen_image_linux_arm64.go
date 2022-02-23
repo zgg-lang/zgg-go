@@ -9,6 +9,11 @@ import (
 func init() {
 	registerValues("image", map[string]reflect.Value{
 		// Functions
+		"RegisterFormat": reflect.ValueOf(pkg.RegisterFormat),
+		"Decode":         reflect.ValueOf(pkg.Decode),
+		"DecodeConfig":   reflect.ValueOf(pkg.DecodeConfig),
+		"Pt":             reflect.ValueOf(pkg.Pt),
+		"Rect":           reflect.ValueOf(pkg.Rect),
 		"NewRGBA":        reflect.ValueOf(pkg.NewRGBA),
 		"NewRGBA64":      reflect.ValueOf(pkg.NewRGBA64),
 		"NewNRGBA":       reflect.ValueOf(pkg.NewNRGBA),
@@ -22,11 +27,6 @@ func init() {
 		"NewUniform":     reflect.ValueOf(pkg.NewUniform),
 		"NewYCbCr":       reflect.ValueOf(pkg.NewYCbCr),
 		"NewNYCbCrA":     reflect.ValueOf(pkg.NewNYCbCrA),
-		"RegisterFormat": reflect.ValueOf(pkg.RegisterFormat),
-		"Decode":         reflect.ValueOf(pkg.Decode),
-		"DecodeConfig":   reflect.ValueOf(pkg.DecodeConfig),
-		"Pt":             reflect.ValueOf(pkg.Pt),
-		"Rect":           reflect.ValueOf(pkg.Rect),
 
 		// Consts
 
@@ -39,17 +39,19 @@ func init() {
 
 		// Variables
 
+		"ErrFormat":   reflect.ValueOf(&pkg.ErrFormat),
+		"ZP":          reflect.ValueOf(&pkg.ZP),
+		"ZR":          reflect.ValueOf(&pkg.ZR),
 		"Black":       reflect.ValueOf(&pkg.Black),
 		"White":       reflect.ValueOf(&pkg.White),
 		"Transparent": reflect.ValueOf(&pkg.Transparent),
 		"Opaque":      reflect.ValueOf(&pkg.Opaque),
-		"ErrFormat":   reflect.ValueOf(&pkg.ErrFormat),
-		"ZP":          reflect.ValueOf(&pkg.ZP),
-		"ZR":          reflect.ValueOf(&pkg.ZR),
 	})
 	registerTypes("image", map[string]reflect.Type{
 		// Non interfaces
 
+		"Point":               reflect.TypeOf((*pkg.Point)(nil)).Elem(),
+		"Rectangle":           reflect.TypeOf((*pkg.Rectangle)(nil)).Elem(),
 		"Config":              reflect.TypeOf((*pkg.Config)(nil)).Elem(),
 		"RGBA":                reflect.TypeOf((*pkg.RGBA)(nil)).Elem(),
 		"RGBA64":              reflect.TypeOf((*pkg.RGBA64)(nil)).Elem(),
@@ -65,7 +67,5 @@ func init() {
 		"YCbCrSubsampleRatio": reflect.TypeOf((*pkg.YCbCrSubsampleRatio)(nil)).Elem(),
 		"YCbCr":               reflect.TypeOf((*pkg.YCbCr)(nil)).Elem(),
 		"NYCbCrA":             reflect.TypeOf((*pkg.NYCbCrA)(nil)).Elem(),
-		"Point":               reflect.TypeOf((*pkg.Point)(nil)).Elem(),
-		"Rectangle":           reflect.TypeOf((*pkg.Rectangle)(nil)).Elem(),
 	})
 }

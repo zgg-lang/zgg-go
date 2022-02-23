@@ -9,8 +9,6 @@ import (
 func init() {
 	registerValues("image", map[string]reflect.Value{
 		// Functions
-		"NewYCbCr":       reflect.ValueOf(pkg.NewYCbCr),
-		"NewNYCbCrA":     reflect.ValueOf(pkg.NewNYCbCrA),
 		"RegisterFormat": reflect.ValueOf(pkg.RegisterFormat),
 		"Decode":         reflect.ValueOf(pkg.Decode),
 		"DecodeConfig":   reflect.ValueOf(pkg.DecodeConfig),
@@ -27,6 +25,8 @@ func init() {
 		"NewCMYK":        reflect.ValueOf(pkg.NewCMYK),
 		"NewPaletted":    reflect.ValueOf(pkg.NewPaletted),
 		"NewUniform":     reflect.ValueOf(pkg.NewUniform),
+		"NewYCbCr":       reflect.ValueOf(pkg.NewYCbCr),
+		"NewNYCbCrA":     reflect.ValueOf(pkg.NewNYCbCrA),
 
 		// Consts
 
@@ -50,9 +50,6 @@ func init() {
 	registerTypes("image", map[string]reflect.Type{
 		// Non interfaces
 
-		"YCbCrSubsampleRatio": reflect.TypeOf((*pkg.YCbCrSubsampleRatio)(nil)).Elem(),
-		"YCbCr":               reflect.TypeOf((*pkg.YCbCr)(nil)).Elem(),
-		"NYCbCrA":             reflect.TypeOf((*pkg.NYCbCrA)(nil)).Elem(),
 		"Point":               reflect.TypeOf((*pkg.Point)(nil)).Elem(),
 		"Rectangle":           reflect.TypeOf((*pkg.Rectangle)(nil)).Elem(),
 		"Config":              reflect.TypeOf((*pkg.Config)(nil)).Elem(),
@@ -67,5 +64,8 @@ func init() {
 		"CMYK":                reflect.TypeOf((*pkg.CMYK)(nil)).Elem(),
 		"Paletted":            reflect.TypeOf((*pkg.Paletted)(nil)).Elem(),
 		"Uniform":             reflect.TypeOf((*pkg.Uniform)(nil)).Elem(),
+		"YCbCrSubsampleRatio": reflect.TypeOf((*pkg.YCbCrSubsampleRatio)(nil)).Elem(),
+		"YCbCr":               reflect.TypeOf((*pkg.YCbCr)(nil)).Elem(),
+		"NYCbCrA":             reflect.TypeOf((*pkg.NYCbCrA)(nil)).Elem(),
 	})
 }

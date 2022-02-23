@@ -9,16 +9,19 @@ import (
 func init() {
 	registerValues("image/color", map[string]reflect.Value{
 		// Functions
-		"ModelFunc":  reflect.ValueOf(pkg.ModelFunc),
 		"RGBToYCbCr": reflect.ValueOf(pkg.RGBToYCbCr),
 		"YCbCrToRGB": reflect.ValueOf(pkg.YCbCrToRGB),
 		"RGBToCMYK":  reflect.ValueOf(pkg.RGBToCMYK),
 		"CMYKToRGB":  reflect.ValueOf(pkg.CMYKToRGB),
+		"ModelFunc":  reflect.ValueOf(pkg.ModelFunc),
 
 		// Consts
 
 		// Variables
 
+		"YCbCrModel":   reflect.ValueOf(&pkg.YCbCrModel),
+		"NYCbCrAModel": reflect.ValueOf(&pkg.NYCbCrAModel),
+		"CMYKModel":    reflect.ValueOf(&pkg.CMYKModel),
 		"RGBAModel":    reflect.ValueOf(&pkg.RGBAModel),
 		"RGBA64Model":  reflect.ValueOf(&pkg.RGBA64Model),
 		"NRGBAModel":   reflect.ValueOf(&pkg.NRGBAModel),
@@ -31,13 +34,13 @@ func init() {
 		"White":        reflect.ValueOf(&pkg.White),
 		"Transparent":  reflect.ValueOf(&pkg.Transparent),
 		"Opaque":       reflect.ValueOf(&pkg.Opaque),
-		"YCbCrModel":   reflect.ValueOf(&pkg.YCbCrModel),
-		"NYCbCrAModel": reflect.ValueOf(&pkg.NYCbCrAModel),
-		"CMYKModel":    reflect.ValueOf(&pkg.CMYKModel),
 	})
 	registerTypes("image/color", map[string]reflect.Type{
 		// Non interfaces
 
+		"YCbCr":   reflect.TypeOf((*pkg.YCbCr)(nil)).Elem(),
+		"NYCbCrA": reflect.TypeOf((*pkg.NYCbCrA)(nil)).Elem(),
+		"CMYK":    reflect.TypeOf((*pkg.CMYK)(nil)).Elem(),
 		"RGBA":    reflect.TypeOf((*pkg.RGBA)(nil)).Elem(),
 		"RGBA64":  reflect.TypeOf((*pkg.RGBA64)(nil)).Elem(),
 		"NRGBA":   reflect.TypeOf((*pkg.NRGBA)(nil)).Elem(),
@@ -47,8 +50,5 @@ func init() {
 		"Gray":    reflect.TypeOf((*pkg.Gray)(nil)).Elem(),
 		"Gray16":  reflect.TypeOf((*pkg.Gray16)(nil)).Elem(),
 		"Palette": reflect.TypeOf((*pkg.Palette)(nil)).Elem(),
-		"YCbCr":   reflect.TypeOf((*pkg.YCbCr)(nil)).Elem(),
-		"NYCbCrA": reflect.TypeOf((*pkg.NYCbCrA)(nil)).Elem(),
-		"CMYK":    reflect.TypeOf((*pkg.CMYK)(nil)).Elem(),
 	})
 }

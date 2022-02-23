@@ -9,6 +9,7 @@ import (
 func init() {
 	registerValues("fmt", map[string]reflect.Value{
 		// Functions
+		"Errorf":   reflect.ValueOf(pkg.Errorf),
 		"Fprintf":  reflect.ValueOf(pkg.Fprintf),
 		"Printf":   reflect.ValueOf(pkg.Printf),
 		"Sprintf":  reflect.ValueOf(pkg.Sprintf),
@@ -27,7 +28,6 @@ func init() {
 		"Fscan":    reflect.ValueOf(pkg.Fscan),
 		"Fscanln":  reflect.ValueOf(pkg.Fscanln),
 		"Fscanf":   reflect.ValueOf(pkg.Fscanf),
-		"Errorf":   reflect.ValueOf(pkg.Errorf),
 
 		// Consts
 

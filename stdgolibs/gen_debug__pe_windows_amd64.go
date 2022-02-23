@@ -99,6 +99,9 @@ func init() {
 	registerTypes("debug/pe", map[string]reflect.Type{
 		// Non interfaces
 
+		"File":             reflect.TypeOf((*pkg.File)(nil)).Elem(),
+		"ImportDirectory":  reflect.TypeOf((*pkg.ImportDirectory)(nil)).Elem(),
+		"FormatError":      reflect.TypeOf((*pkg.FormatError)(nil)).Elem(),
 		"FileHeader":       reflect.TypeOf((*pkg.FileHeader)(nil)).Elem(),
 		"DataDirectory":    reflect.TypeOf((*pkg.DataDirectory)(nil)).Elem(),
 		"OptionalHeader32": reflect.TypeOf((*pkg.OptionalHeader32)(nil)).Elem(),
@@ -110,8 +113,5 @@ func init() {
 		"StringTable":      reflect.TypeOf((*pkg.StringTable)(nil)).Elem(),
 		"COFFSymbol":       reflect.TypeOf((*pkg.COFFSymbol)(nil)).Elem(),
 		"Symbol":           reflect.TypeOf((*pkg.Symbol)(nil)).Elem(),
-		"File":             reflect.TypeOf((*pkg.File)(nil)).Elem(),
-		"ImportDirectory":  reflect.TypeOf((*pkg.ImportDirectory)(nil)).Elem(),
-		"FormatError":      reflect.TypeOf((*pkg.FormatError)(nil)).Elem(),
 	})
 }

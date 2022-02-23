@@ -25,12 +25,12 @@ func init() {
 	registerTypes("net/textproto", map[string]reflect.Type{
 		// Non interfaces
 
+		"MIMEHeader":    reflect.TypeOf((*pkg.MIMEHeader)(nil)).Elem(),
 		"Pipeline":      reflect.TypeOf((*pkg.Pipeline)(nil)).Elem(),
 		"Reader":        reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
 		"Error":         reflect.TypeOf((*pkg.Error)(nil)).Elem(),
 		"ProtocolError": reflect.TypeOf((*pkg.ProtocolError)(nil)).Elem(),
 		"Conn":          reflect.TypeOf((*pkg.Conn)(nil)).Elem(),
 		"Writer":        reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
-		"MIMEHeader":    reflect.TypeOf((*pkg.MIMEHeader)(nil)).Elem(),
 	})
 }

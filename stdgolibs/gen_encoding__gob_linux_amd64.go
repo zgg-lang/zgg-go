@@ -9,10 +9,10 @@ import (
 func init() {
 	registerValues("encoding/gob", map[string]reflect.Value{
 		// Functions
-		"RegisterName": reflect.ValueOf(pkg.RegisterName),
-		"Register":     reflect.ValueOf(pkg.Register),
 		"NewDecoder":   reflect.ValueOf(pkg.NewDecoder),
 		"NewEncoder":   reflect.ValueOf(pkg.NewEncoder),
+		"RegisterName": reflect.ValueOf(pkg.RegisterName),
+		"Register":     reflect.ValueOf(pkg.Register),
 
 		// Consts
 
@@ -22,8 +22,8 @@ func init() {
 	registerTypes("encoding/gob", map[string]reflect.Type{
 		// Non interfaces
 
-		"CommonType": reflect.TypeOf((*pkg.CommonType)(nil)).Elem(),
 		"Decoder":    reflect.TypeOf((*pkg.Decoder)(nil)).Elem(),
 		"Encoder":    reflect.TypeOf((*pkg.Encoder)(nil)).Elem(),
+		"CommonType": reflect.TypeOf((*pkg.CommonType)(nil)).Elem(),
 	})
 }

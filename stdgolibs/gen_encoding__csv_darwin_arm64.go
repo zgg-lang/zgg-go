@@ -9,8 +9,8 @@ import (
 func init() {
 	registerValues("encoding/csv", map[string]reflect.Value{
 		// Functions
-		"NewReader": reflect.ValueOf(pkg.NewReader),
 		"NewWriter": reflect.ValueOf(pkg.NewWriter),
+		"NewReader": reflect.ValueOf(pkg.NewReader),
 
 		// Consts
 
@@ -24,8 +24,8 @@ func init() {
 	registerTypes("encoding/csv", map[string]reflect.Type{
 		// Non interfaces
 
+		"Writer":     reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
 		"ParseError": reflect.TypeOf((*pkg.ParseError)(nil)).Elem(),
 		"Reader":     reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
-		"Writer":     reflect.TypeOf((*pkg.Writer)(nil)).Elem(),
 	})
 }

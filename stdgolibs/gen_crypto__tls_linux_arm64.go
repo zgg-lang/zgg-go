@@ -9,10 +9,10 @@ import (
 func init() {
 	registerValues("crypto/tls", map[string]reflect.Value{
 		// Functions
-		"NewLRUClientSessionCache": reflect.ValueOf(pkg.NewLRUClientSessionCache),
 		"CipherSuites":             reflect.ValueOf(pkg.CipherSuites),
 		"InsecureCipherSuites":     reflect.ValueOf(pkg.InsecureCipherSuites),
 		"CipherSuiteName":          reflect.ValueOf(pkg.CipherSuiteName),
+		"NewLRUClientSessionCache": reflect.ValueOf(pkg.NewLRUClientSessionCache),
 		"Server":                   reflect.ValueOf(pkg.Server),
 		"Client":                   reflect.ValueOf(pkg.Client),
 		"NewListener":              reflect.ValueOf(pkg.NewListener),
@@ -24,6 +24,34 @@ func init() {
 
 		// Consts
 
+		"TLS_RSA_WITH_RC4_128_SHA":                      reflect.ValueOf(pkg.TLS_RSA_WITH_RC4_128_SHA),
+		"TLS_RSA_WITH_3DES_EDE_CBC_SHA":                 reflect.ValueOf(pkg.TLS_RSA_WITH_3DES_EDE_CBC_SHA),
+		"TLS_RSA_WITH_AES_128_CBC_SHA":                  reflect.ValueOf(pkg.TLS_RSA_WITH_AES_128_CBC_SHA),
+		"TLS_RSA_WITH_AES_256_CBC_SHA":                  reflect.ValueOf(pkg.TLS_RSA_WITH_AES_256_CBC_SHA),
+		"TLS_RSA_WITH_AES_128_CBC_SHA256":               reflect.ValueOf(pkg.TLS_RSA_WITH_AES_128_CBC_SHA256),
+		"TLS_RSA_WITH_AES_128_GCM_SHA256":               reflect.ValueOf(pkg.TLS_RSA_WITH_AES_128_GCM_SHA256),
+		"TLS_RSA_WITH_AES_256_GCM_SHA384":               reflect.ValueOf(pkg.TLS_RSA_WITH_AES_256_GCM_SHA384),
+		"TLS_ECDHE_ECDSA_WITH_RC4_128_SHA":              reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA),
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA":          reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA),
+		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA":          reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA),
+		"TLS_ECDHE_RSA_WITH_RC4_128_SHA":                reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_RC4_128_SHA),
+		"TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA":           reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA),
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA":            reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA),
+		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA":            reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA),
+		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256":       reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256),
+		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256":         reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256),
+		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256":         reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256),
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256":       reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256),
+		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384":         reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384),
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384":       reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384),
+		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256":   reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256),
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256": reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256),
+		"TLS_AES_128_GCM_SHA256":                        reflect.ValueOf(pkg.TLS_AES_128_GCM_SHA256),
+		"TLS_AES_256_GCM_SHA384":                        reflect.ValueOf(pkg.TLS_AES_256_GCM_SHA384),
+		"TLS_CHACHA20_POLY1305_SHA256":                  reflect.ValueOf(pkg.TLS_CHACHA20_POLY1305_SHA256),
+		"TLS_FALLBACK_SCSV":                             reflect.ValueOf(pkg.TLS_FALLBACK_SCSV),
+		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305":          reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305),
+		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305":        reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305),
 		"VersionTLS10":                                  reflect.ValueOf(pkg.VersionTLS10),
 		"VersionTLS11":                                  reflect.ValueOf(pkg.VersionTLS11),
 		"VersionTLS12":                                  reflect.ValueOf(pkg.VersionTLS12),
@@ -53,34 +81,6 @@ func init() {
 		"RenegotiateNever":                              reflect.ValueOf(pkg.RenegotiateNever),
 		"RenegotiateOnceAsClient":                       reflect.ValueOf(pkg.RenegotiateOnceAsClient),
 		"RenegotiateFreelyAsClient":                     reflect.ValueOf(pkg.RenegotiateFreelyAsClient),
-		"TLS_RSA_WITH_RC4_128_SHA":                      reflect.ValueOf(pkg.TLS_RSA_WITH_RC4_128_SHA),
-		"TLS_RSA_WITH_3DES_EDE_CBC_SHA":                 reflect.ValueOf(pkg.TLS_RSA_WITH_3DES_EDE_CBC_SHA),
-		"TLS_RSA_WITH_AES_128_CBC_SHA":                  reflect.ValueOf(pkg.TLS_RSA_WITH_AES_128_CBC_SHA),
-		"TLS_RSA_WITH_AES_256_CBC_SHA":                  reflect.ValueOf(pkg.TLS_RSA_WITH_AES_256_CBC_SHA),
-		"TLS_RSA_WITH_AES_128_CBC_SHA256":               reflect.ValueOf(pkg.TLS_RSA_WITH_AES_128_CBC_SHA256),
-		"TLS_RSA_WITH_AES_128_GCM_SHA256":               reflect.ValueOf(pkg.TLS_RSA_WITH_AES_128_GCM_SHA256),
-		"TLS_RSA_WITH_AES_256_GCM_SHA384":               reflect.ValueOf(pkg.TLS_RSA_WITH_AES_256_GCM_SHA384),
-		"TLS_ECDHE_ECDSA_WITH_RC4_128_SHA":              reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA),
-		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA":          reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA),
-		"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA":          reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA),
-		"TLS_ECDHE_RSA_WITH_RC4_128_SHA":                reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_RC4_128_SHA),
-		"TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA":           reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA),
-		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA":            reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA),
-		"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA":            reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA),
-		"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256":       reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256),
-		"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256":         reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256),
-		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256":         reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256),
-		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256":       reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256),
-		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384":         reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384),
-		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384":       reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384),
-		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256":   reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256),
-		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256": reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256),
-		"TLS_AES_128_GCM_SHA256":                        reflect.ValueOf(pkg.TLS_AES_128_GCM_SHA256),
-		"TLS_AES_256_GCM_SHA384":                        reflect.ValueOf(pkg.TLS_AES_256_GCM_SHA384),
-		"TLS_CHACHA20_POLY1305_SHA256":                  reflect.ValueOf(pkg.TLS_CHACHA20_POLY1305_SHA256),
-		"TLS_FALLBACK_SCSV":                             reflect.ValueOf(pkg.TLS_FALLBACK_SCSV),
-		"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305":          reflect.ValueOf(pkg.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305),
-		"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305":        reflect.ValueOf(pkg.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305),
 
 		// Variables
 
@@ -88,6 +88,7 @@ func init() {
 	registerTypes("crypto/tls", map[string]reflect.Type{
 		// Non interfaces
 
+		"CipherSuite":            reflect.TypeOf((*pkg.CipherSuite)(nil)).Elem(),
 		"CurveID":                reflect.TypeOf((*pkg.CurveID)(nil)).Elem(),
 		"ConnectionState":        reflect.TypeOf((*pkg.ConnectionState)(nil)).Elem(),
 		"ClientAuthType":         reflect.TypeOf((*pkg.ClientAuthType)(nil)).Elem(),
@@ -100,7 +101,6 @@ func init() {
 		"Certificate":            reflect.TypeOf((*pkg.Certificate)(nil)).Elem(),
 		"Conn":                   reflect.TypeOf((*pkg.Conn)(nil)).Elem(),
 		"RecordHeaderError":      reflect.TypeOf((*pkg.RecordHeaderError)(nil)).Elem(),
-		"CipherSuite":            reflect.TypeOf((*pkg.CipherSuite)(nil)).Elem(),
 		"Dialer":                 reflect.TypeOf((*pkg.Dialer)(nil)).Elem(),
 	})
 }

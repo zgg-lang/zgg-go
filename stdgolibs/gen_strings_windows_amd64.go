@@ -9,6 +9,8 @@ import (
 func init() {
 	registerValues("strings", map[string]reflect.Value{
 		// Functions
+		"Compare":        reflect.ValueOf(pkg.Compare),
+		"NewReader":      reflect.ValueOf(pkg.NewReader),
 		"NewReplacer":    reflect.ValueOf(pkg.NewReplacer),
 		"Count":          reflect.ValueOf(pkg.Count),
 		"Contains":       reflect.ValueOf(pkg.Contains),
@@ -54,8 +56,6 @@ func init() {
 		"ReplaceAll":     reflect.ValueOf(pkg.ReplaceAll),
 		"EqualFold":      reflect.ValueOf(pkg.EqualFold),
 		"Index":          reflect.ValueOf(pkg.Index),
-		"Compare":        reflect.ValueOf(pkg.Compare),
-		"NewReader":      reflect.ValueOf(pkg.NewReader),
 
 		// Consts
 
@@ -65,8 +65,8 @@ func init() {
 	registerTypes("strings", map[string]reflect.Type{
 		// Non interfaces
 
-		"Replacer": reflect.TypeOf((*pkg.Replacer)(nil)).Elem(),
 		"Builder":  reflect.TypeOf((*pkg.Builder)(nil)).Elem(),
 		"Reader":   reflect.TypeOf((*pkg.Reader)(nil)).Elem(),
+		"Replacer": reflect.TypeOf((*pkg.Replacer)(nil)).Elem(),
 	})
 }

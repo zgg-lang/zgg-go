@@ -51,9 +51,9 @@ func init() {
 		"JSStr":     reflect.TypeOf((*pkg.JSStr)(nil)).Elem(),
 		"URL":       reflect.TypeOf((*pkg.URL)(nil)).Elem(),
 		"Srcset":    reflect.TypeOf((*pkg.Srcset)(nil)).Elem(),
-		"Error":     reflect.TypeOf((*pkg.Error)(nil)).Elem(),
-		"ErrorCode": reflect.TypeOf((*pkg.ErrorCode)(nil)).Elem(),
 		"Template":  reflect.TypeOf((*pkg.Template)(nil)).Elem(),
 		"FuncMap":   reflect.TypeOf((*pkg.FuncMap)(nil)).Elem(),
+		"Error":     reflect.TypeOf((*pkg.Error)(nil)).Elem(),
+		"ErrorCode": reflect.TypeOf((*pkg.ErrorCode)(nil)).Elem(),
 	})
 }

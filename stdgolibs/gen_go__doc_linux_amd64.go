@@ -9,13 +9,13 @@ import (
 func init() {
 	registerValues("go/doc", map[string]reflect.Value{
 		// Functions
-		"ToHTML":        reflect.ValueOf(pkg.ToHTML),
-		"ToText":        reflect.ValueOf(pkg.ToText),
 		"New":           reflect.ValueOf(pkg.New),
 		"NewFromFiles":  reflect.ValueOf(pkg.NewFromFiles),
 		"Examples":      reflect.ValueOf(pkg.Examples),
 		"IsPredeclared": reflect.ValueOf(pkg.IsPredeclared),
 		"Synopsis":      reflect.ValueOf(pkg.Synopsis),
+		"ToHTML":        reflect.ValueOf(pkg.ToHTML),
+		"ToText":        reflect.ValueOf(pkg.ToText),
 
 		// Consts
 

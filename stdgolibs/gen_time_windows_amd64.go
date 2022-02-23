@@ -12,10 +12,6 @@ func init() {
 		"Parse":                  reflect.ValueOf(pkg.Parse),
 		"ParseInLocation":        reflect.ValueOf(pkg.ParseInLocation),
 		"ParseDuration":          reflect.ValueOf(pkg.ParseDuration),
-		"Sleep":                  reflect.ValueOf(pkg.Sleep),
-		"NewTimer":               reflect.ValueOf(pkg.NewTimer),
-		"After":                  reflect.ValueOf(pkg.After),
-		"AfterFunc":              reflect.ValueOf(pkg.AfterFunc),
 		"NewTicker":              reflect.ValueOf(pkg.NewTicker),
 		"Tick":                   reflect.ValueOf(pkg.Tick),
 		"Since":                  reflect.ValueOf(pkg.Since),
@@ -23,6 +19,10 @@ func init() {
 		"Now":                    reflect.ValueOf(pkg.Now),
 		"Unix":                   reflect.ValueOf(pkg.Unix),
 		"Date":                   reflect.ValueOf(pkg.Date),
+		"Sleep":                  reflect.ValueOf(pkg.Sleep),
+		"NewTimer":               reflect.ValueOf(pkg.NewTimer),
+		"After":                  reflect.ValueOf(pkg.After),
+		"AfterFunc":              reflect.ValueOf(pkg.AfterFunc),
 		"FixedZone":              reflect.ValueOf(pkg.FixedZone),
 		"LoadLocation":           reflect.ValueOf(pkg.LoadLocation),
 		"LoadLocationFromTZData": reflect.ValueOf(pkg.LoadLocationFromTZData),
@@ -79,12 +79,12 @@ func init() {
 		// Non interfaces
 
 		"ParseError": reflect.TypeOf((*pkg.ParseError)(nil)).Elem(),
-		"Timer":      reflect.TypeOf((*pkg.Timer)(nil)).Elem(),
 		"Ticker":     reflect.TypeOf((*pkg.Ticker)(nil)).Elem(),
 		"Time":       reflect.TypeOf((*pkg.Time)(nil)).Elem(),
 		"Month":      reflect.TypeOf((*pkg.Month)(nil)).Elem(),
 		"Weekday":    reflect.TypeOf((*pkg.Weekday)(nil)).Elem(),
 		"Duration":   reflect.TypeOf((*pkg.Duration)(nil)).Elem(),
+		"Timer":      reflect.TypeOf((*pkg.Timer)(nil)).Elem(),
 		"Location":   reflect.TypeOf((*pkg.Location)(nil)).Elem(),
 	})
 }

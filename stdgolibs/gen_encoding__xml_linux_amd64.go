@@ -9,7 +9,6 @@ import (
 func init() {
 	registerValues("encoding/xml", map[string]reflect.Value{
 		// Functions
-		"Unmarshal":       reflect.ValueOf(pkg.Unmarshal),
 		"CopyToken":       reflect.ValueOf(pkg.CopyToken),
 		"NewDecoder":      reflect.ValueOf(pkg.NewDecoder),
 		"NewTokenDecoder": reflect.ValueOf(pkg.NewTokenDecoder),
@@ -18,6 +17,7 @@ func init() {
 		"Marshal":         reflect.ValueOf(pkg.Marshal),
 		"MarshalIndent":   reflect.ValueOf(pkg.MarshalIndent),
 		"NewEncoder":      reflect.ValueOf(pkg.NewEncoder),
+		"Unmarshal":       reflect.ValueOf(pkg.Unmarshal),
 
 		// Consts
 
@@ -31,8 +31,6 @@ func init() {
 	registerTypes("encoding/xml", map[string]reflect.Type{
 		// Non interfaces
 
-		"UnmarshalError":       reflect.TypeOf((*pkg.UnmarshalError)(nil)).Elem(),
-		"TagPathError":         reflect.TypeOf((*pkg.TagPathError)(nil)).Elem(),
 		"SyntaxError":          reflect.TypeOf((*pkg.SyntaxError)(nil)).Elem(),
 		"Name":                 reflect.TypeOf((*pkg.Name)(nil)).Elem(),
 		"Attr":                 reflect.TypeOf((*pkg.Attr)(nil)).Elem(),
@@ -45,5 +43,7 @@ func init() {
 		"Decoder":              reflect.TypeOf((*pkg.Decoder)(nil)).Elem(),
 		"Encoder":              reflect.TypeOf((*pkg.Encoder)(nil)).Elem(),
 		"UnsupportedTypeError": reflect.TypeOf((*pkg.UnsupportedTypeError)(nil)).Elem(),
+		"UnmarshalError":       reflect.TypeOf((*pkg.UnmarshalError)(nil)).Elem(),
+		"TagPathError":         reflect.TypeOf((*pkg.TagPathError)(nil)).Elem(),
 	})
 }
