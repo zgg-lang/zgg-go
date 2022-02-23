@@ -8,10 +8,12 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -99,22 +101,78 @@ func dirExists(filepath string) (bool, error) {
 	return true, nil
 }
 
-func exportPkg(c *cli.Context, root, pkg string) (*exportInfo, error) {
+func exportGetFilesDirectly(cmdGo, dir, pkgName string) (string, error) {
+	getFilesCmd := exec.Command(cmdGo, "list", "-f", "{{range $i,$f := .GoFiles}}{{if $i}},{{end}}{{$f}}{{end}}")
+	getFilesCmd.Dir = dir
+	output, err := getFilesCmd.CombinedOutput()
+	return string(output), err
+}
+
+func exportGetFilesFromMktemp(cmdGo, dir, pkgName string) (string, error) {
+	tmpdir, err := os.MkdirTemp("", "")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(tmpdir)
+	//TODO copy files from dir to tmpdir
+	filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
+		if path == dir || walkErr != nil {
+			return nil
+		}
+		relativeName := path[len(dir)+1:]
+		// skip dir
+		if info.IsDir() {
+			return nil
+		}
+		// create dir
+		filedir := filepath.Dir(relativeName)
+		if err := os.MkdirAll(filepath.Join(tmpdir, filedir), info.Mode()); err != nil {
+			return nil
+		}
+		// copy file
+		src, err := os.Open(path)
+		if err != nil {
+			return nil
+		}
+		defer src.Close()
+		dst, err := os.Create(filepath.Join(tmpdir, relativeName))
+		if err != nil {
+			return nil
+		}
+		defer dst.Close()
+		io.Copy(dst, src)
+		return nil
+	})
+	//TODO create empty go.mod
+	gomod, err := os.Create(filepath.Join(tmpdir, "go.mod"))
+	if err != nil {
+		return "", err
+	}
+	defer gomod.Close()
+	return exportGetFilesDirectly(cmdGo, tmpdir, pkgName)
+}
+
+func exportGetFiles(cmdGo, dir, pkgName string) (string, error) {
+	output, err := exportGetFilesDirectly(cmdGo, dir, pkgName)
+	if err == nil {
+		return output, err
+	}
+	return exportGetFilesFromMktemp(cmdGo, dir, pkgName)
+}
+
+func exportPkg(c *cli.Context, dir, pkg string) (*exportInfo, error) {
 	fs := token.NewFileSet()
-	dir := path.Join(root, "src", pkg)
 	if exists, err := dirExists(dir); err != nil {
 		return nil, err
 	} else if !exists {
 		return nil, nil
 	}
-	getFilesCmd := exec.Command(c.String("go"), "list", "-f", "{{range $i,$f := .GoFiles}}{{if $i}},{{end}}{{$f}}{{end}}")
-	getFilesCmd.Dir = dir
 	srcFiles := map[string]bool{}
-	if output, err := getFilesCmd.CombinedOutput(); err != nil {
+	if output, err := exportGetFiles(c.String("go"), dir, pkg); err != nil {
 		return nil, fmt.Errorf("go list error: %s", err)
 	} else {
-		fmt.Fprintln(os.Stderr, string(output))
-		for _, f := range strings.Split(string(output), ",") {
+		fmt.Fprintln(os.Stderr, output)
+		for _, f := range strings.Split(output, ",") {
 			if f != "" {
 				srcFiles[strings.Trim(f, " \n\r\t")] = true
 			}
@@ -151,11 +209,19 @@ func exportPkg(c *cli.Context, root, pkg string) (*exportInfo, error) {
 
 func exportGoPkg(c *cli.Context) error {
 	pkgName := c.Args().First()
-	gopath := os.Getenv("GOPATH")
-	if root := c.String("root"); root != "" {
-		gopath = root
+	var paths []string
+	if pkgDir := c.String("dir"); pkgDir != "" {
+		paths = []string{pkgDir}
+	} else {
+		gopath := os.Getenv("GOPATH")
+		if root := c.String("root"); root != "" {
+			gopath = root
+		}
+		paths = strings.Split(gopath, ":")
+		for i, p := range paths {
+			paths[i] = path.Join(p, "src", pkgName)
+		}
 	}
-	paths := strings.Split(gopath, ":")
 	var info *exportInfo
 	var err error
 	for _, srcPath := range paths {
@@ -225,6 +291,10 @@ func init() {
 		Name:  "export",
 		Usage: "导出go模块符号",
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "dir",
+				Usage: "包存放路径",
+			},
 			&cli.StringFlag{
 				Name:  "root",
 				Usage: "搜索目录，分号分隔。默认为GOPATH",

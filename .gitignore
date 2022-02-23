@@ -10,5 +10,6 @@ pkg
 bin
 tests
 parser/ZggLexer.g4
+userlibs
 
 fabfile.py

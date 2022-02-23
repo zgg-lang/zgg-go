@@ -8,8 +8,8 @@ then
     name=$(basename "${path}")
 fi
 
-mkdir -p $name
-cd $name
+mkdir -p userlibs/$name
+cd userlibs/$name
 cp ../../go.mod .
 go get $path
 
