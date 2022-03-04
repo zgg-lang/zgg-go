@@ -70,7 +70,7 @@ func (c ConsoleReplContext) WriteResult(result string) {
 }
 
 func (c ConsoleReplContext) OnEnter() {
-	c.write("Welcome to Zgg REPL!")
+	c.write("Welcome to ZGG REPL!")
 }
 
 func (c ConsoleReplContext) OnExit() {

@@ -27,8 +27,8 @@ parser: lexer
 lexer:
 	python3 scripts/makelexer.py
 
-devtools:
-	$(GOBUILD) -o bin/devtools $@/*.go
+linuxdevtools:
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GOBUILD) -o bin/linux_amd64/devtools devtools/*.go
 
 stdgolibs: devtools
 	sh scripts/makegostd.sh
