@@ -365,6 +365,24 @@ var (
 		}
 		return rv
 	})
+	goAs = NewNativeFunction("go.as", func(c *Context, this Value, args []Value) Value {
+		gv, ok := Unbound(this).(GoValue)
+		if !ok {
+			return constNil
+		}
+		var targetType GoType
+		EnsureFuncParams(c, "as", args, ArgRuleRequired{"targetType", TypeGoType, &targetType})
+		return NewGoValue(gv.ReflectedValue().Convert(targetType.GoType()))
+	})
+	goIs = NewNativeFunction("go.is", func(c *Context, this Value, args []Value) Value {
+		gv, ok := Unbound(this).(GoValue)
+		if !ok {
+			return constNil
+		}
+		var targetType GoType
+		EnsureFuncParams(c, "as", args, ArgRuleRequired{"targetType", TypeGoType, &targetType})
+		return NewBool(gv.ReflectedValue().Type().ConvertibleTo(targetType.GoType()))
+	})
 )
 
 func (v GoValue) GetMember(key string, c *Context) Value {
@@ -439,6 +457,10 @@ func (v GoValue) GetMember(key string, c *Context) Value {
 		return makeMember(v, goFields)
 	case "sign":
 		return makeMember(v, goSign)
+	case "as":
+		return makeMember(v, goAs)
+	case "is":
+		return makeMember(v, goIs)
 	}
 	// isPtr := false
 	goval := v.v
