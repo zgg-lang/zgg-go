@@ -9,6 +9,9 @@ GOBUILD 	:= go build
 cmd:
 	$(GOBUILD) -o bin/zgg $@/*.go
 
+devtools:
+	$(GOBUILD) -o bin/$@ $@/*.go
+
 linuxamd64:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/linux_amd64/zgg cmd/*.go
 

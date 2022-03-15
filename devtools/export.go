@@ -149,6 +149,7 @@ func exportGetFilesFromMktemp(cmdGo, dir, pkgName string) (string, error) {
 		return "", err
 	}
 	defer gomod.Close()
+	fmt.Fprintf(gomod, "module %s\n", pkgName)
 	return exportGetFilesDirectly(cmdGo, tmpdir, pkgName)
 }
 
