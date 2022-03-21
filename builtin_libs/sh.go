@@ -1,6 +1,9 @@
 package builtin_libs
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"io"
 	"os/exec"
 
@@ -18,6 +21,36 @@ func libSh(c *Context) ValueObject {
 	return rv
 }
 
+func shGetCommandOutput(c *Context, cmds []*exec.Cmd) []byte {
+	numCmd := len(cmds)
+	if numCmd == 0 {
+		return nil
+	}
+	var inCmd = cmds[0]
+	closers := make([]io.Closer, 0, numCmd)
+	defer func() {
+		for _, c := range closers {
+			c.Close()
+		}
+	}()
+	for i := 1; i < numCmd; i++ {
+		pipe, _ := inCmd.StdoutPipe()
+		closers = append(closers, pipe)
+		cmds[i].Stdin = pipe
+		inCmd = cmds[i]
+	}
+	for _, cmd := range cmds[:numCmd-1] {
+		if err := cmd.Start(); err != nil {
+			c.OnRuntimeError("start command %s error %s", cmd, err)
+		}
+	}
+	outs, err := cmds[numCmd-1].CombinedOutput()
+	if err != nil {
+		c.OnRuntimeError("wait cmd %s error %s", cmds[numCmd-1], err)
+	}
+	return outs
+}
+
 func init() {
 	var shCommand ValueType
 	shCommand = NewClassBuilder("Command").
@@ -26,33 +59,38 @@ func init() {
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
 			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
-			numCmd := len(cmds)
-			if numCmd == 0 {
-				return NewStr("")
-			}
-			var inCmd = cmds[0]
-			closers := make([]io.Closer, 0, numCmd)
-			defer func() {
-				for _, c := range closers {
-					c.Close()
-				}
-			}()
-			for i := 1; i < numCmd; i++ {
-				pipe, _ := inCmd.StdoutPipe()
-				closers = append(closers, pipe)
-				cmds[i].Stdin = pipe
-				inCmd = cmds[i]
-			}
-			for _, cmd := range cmds[:numCmd-1] {
-				if err := cmd.Start(); err != nil {
-					c.OnRuntimeError("start command %s error %s", cmd, err)
-				}
-			}
-			outs, err := cmds[numCmd-1].CombinedOutput()
-			if err != nil {
-				c.OnRuntimeError("wait cmd %s error %s", cmds[numCmd-1], err)
-			}
+			outs := shGetCommandOutput(c, cmds)
 			return NewStr(string(outs))
+		}).
+		Method("text", func(c *Context, this ValueObject, args []Value) Value {
+			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
+			outs := shGetCommandOutput(c, cmds)
+			return NewStr(string(outs))
+		}).
+		Method("lines", func(c *Context, this ValueObject, args []Value) Value {
+			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
+			outs := shGetCommandOutput(c, cmds)
+			rd := bufio.NewReader(bytes.NewReader(outs))
+			rv := NewArray()
+			for {
+				line, err := rd.ReadString('\n')
+				if len(line) > 0 {
+					rv.PushBack(NewStr(line[:len(line)-1]))
+				}
+				if err != nil {
+					break
+				}
+			}
+			return rv
+		}).
+		Method("json", func(c *Context, this ValueObject, args []Value) Value {
+			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
+			outs := shGetCommandOutput(c, cmds)
+			var j interface{}
+			if err := json.Unmarshal(outs, &j); err != nil {
+				c.OnRuntimeError("Command.json(): decode json error %s", err)
+			}
+			return jsonToValue(j, c)
 		}).
 		Method("__bitOr__", func(c *Context, this ValueObject, args []Value) Value {
 			other := c.MustObject(args[0])
