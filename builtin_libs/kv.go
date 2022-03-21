@@ -204,11 +204,14 @@ func initKvRedisAdapter() {
 			conn := pool.Get()
 			defer conn.Close()
 			redisKey := prefix + key.Value()
-			if _, err := conn.Do("SET", redisKey, bs); err != nil {
-				c.OnRuntimeError("RedisAdapter.set: %s", err)
-			}
+			var err error
 			if ttl > 0 {
-				conn.Do("EXPIRE", redisKey, ttl)
+				_, err = conn.Do("SET", redisKey, bs, "EX", ttl)
+			} else {
+				_, err = conn.Do("SET", redisKey, bs)
+			}
+			if err != nil {
+				c.OnRuntimeError("RedisAdapter.set: %s", err)
 			}
 			return Undefined()
 		}).
