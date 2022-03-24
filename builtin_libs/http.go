@@ -828,10 +828,18 @@ func initHttpResponseClass() ValueType {
 			return NewBytes(bytes)
 		}).
 		Method("chunk", func(c *Context, this ValueObject, args []Value) Value {
+			var chunkSize ValueInt
+			EnsureFuncParams(c, "http.Response.chunk", args, ArgRuleOptional{"chunkSize", TypeInt, &chunkSize, NewInt(512 * 1024)})
 			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
-			var buf [512 * 1024]byte
+			var stackBuf [512 * 1024]byte
+			var buf []byte
+			if s := chunkSize.AsInt(); s <= len(stackBuf) {
+				buf = stackBuf[:s]
+			} else {
+				buf = make([]byte, s)
+			}
 			return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
-				n, err := resp.Body.Read(buf[:])
+				n, err := resp.Body.Read(buf)
 				if err == io.EOF {
 					return NewArrayByValues(NewBytes(buf[:n]), NewBool(false))
 				}

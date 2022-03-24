@@ -15,6 +15,9 @@ devtools:
 linuxamd64:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/linux_amd64/zgg cmd/*.go
 
+linuxcgo:
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-musl-gcc CGO_LDFLAGS="-static" $(GOBUILD) $(FLAGS) -o bin/linux_amd64/zgg cmd/*.go
+
 darwinamd64:
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/darwin_amd64/zgg cmd/*.go
 

@@ -130,7 +130,7 @@ func (v ValueArray) slice(i, j int) ValueArray {
 	return rv
 }
 
-func arrayFind(c *Context, arr ValueArray, predict ValueCallable, start int) (int, Value) {
+func arrayFindByPredictFunc(c *Context, arr ValueArray, predict ValueCallable, start int) (int, Value) {
 	items := *(arr.Values)
 	n := len(items)
 	for i := start; i < n; i++ {
@@ -140,6 +140,24 @@ func arrayFind(c *Context, arr ValueArray, predict ValueCallable, start int) (in
 		}
 	}
 	return -1, nil
+}
+
+func arrayFindByValue(c *Context, arr ValueArray, expected Value, start int) (int, Value) {
+	items := *(arr.Values)
+	n := len(items)
+	for i := start; i < n; i++ {
+		if c.ValuesEqual(items[i], expected) {
+			return i, items[i]
+		}
+	}
+	return -1, nil
+}
+
+func arrayFind(c *Context, arr ValueArray, predict Value, start int) (int, Value) {
+	if c.IsCallable(predict) {
+		return arrayFindByPredictFunc(c, arr, predict.(ValueCallable), start)
+	}
+	return arrayFindByValue(c, arr, predict, start)
 }
 
 var builtinArrayMethods = map[string]ValueCallable{
@@ -402,11 +420,11 @@ var builtinArrayMethods = map[string]ValueCallable{
 	}),
 	"find": NewNativeFunction("array.find", func(c *Context, this Value, args []Value) Value {
 		var (
-			predict ValueCallable
+			predict Value
 			start   ValueInt
 		)
 		EnsureFuncParams(c, "array.find", args,
-			ArgRuleRequired{"predict", TypeCallable, &predict},
+			ArgRuleRequired{"predict", TypeAny, &predict},
 			ArgRuleOptional{"start", TypeInt, &start, NewInt(0)},
 		)
 		thisArr := c.MustArray(this)
@@ -418,19 +436,16 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 	}, "predict", "start"),
 	"findIndex": NewNativeFunction("array.findIndex", func(c *Context, this Value, args []Value) Value {
+		var (
+			predict Value
+			start   ValueInt
+		)
+		EnsureFuncParams(c, "array.findIndex", args,
+			ArgRuleRequired{"predict", TypeAny, &predict},
+			ArgRuleOptional{"start", TypeInt, &start, NewInt(0)},
+		)
 		thisArr := c.MustArray(this)
-		start := 0
-		var predict ValueCallable
-		switch len(args) {
-		case 2:
-			start = int(c.MustInt(args[1]))
-			fallthrough
-		case 1:
-			predict = c.MustCallable(args[0])
-		default:
-			c.OnRuntimeError("array.find(predict[, start]) requires 1 or 2 argument")
-		}
-		index, _ := arrayFind(c, thisArr, predict, start)
+		index, _ := arrayFind(c, thisArr, predict, start.AsInt())
 		return NewInt(int64(index))
 	}),
 	"times": NewNativeFunction("array.times", func(c *Context, this Value, args []Value) Value {
