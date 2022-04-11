@@ -20,6 +20,7 @@ var (
 
 type (
 	dbDialect interface {
+		ShowTablesSQL() string
 		Quote(name string) string
 	}
 
@@ -28,7 +29,9 @@ type (
 )
 
 func (dbCommonDialect) Quote(name string) string { return name }
+func (dbCommonDialect) ShowTablesSQL() string    { return "SHOW TABLES" }
 func (dbMysqlDialect) Quote(name string) string  { return fmt.Sprintf("`%s`", name) }
+func (dbMysqlDialect) ShowTablesSQL() string     { return "SHOW TABLES" }
 
 var (
 	dbDialectMap = map[string]dbDialect{
@@ -97,6 +100,105 @@ func libDb(*Context) ValueObject {
 		return NewObjectAndInit(dbClass, c, NewGoValue(db), NewGoValue(dialect))
 	}), nil)
 	return lib
+}
+
+func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, cols []string) (ret ValueArray) {
+	var err error
+	if colTypes == nil {
+		colTypes, err = rows.ColumnTypes()
+		if err != nil {
+			c.OnRuntimeError("QueryResult.__init__ get column types error %s", err)
+			return
+		}
+	}
+	fields := make([]interface{}, len(colTypes))
+	for i, ct := range colTypes {
+		fields[i] = reflect.New(ct.ScanType()).Interface()
+	}
+	if err := rows.Scan(fields...); err != nil {
+		c.OnRuntimeError("QueryResult.next scan fields error %s", err)
+		return
+	}
+	item := NewArray()
+	for i := range cols {
+		if fields[i] == nil {
+			item.PushBack(Nil())
+			continue
+		}
+		set := false
+		switch fv := fields[i].(type) {
+		case *sql.NullInt32:
+			if fv.Valid {
+				item.PushBack(NewInt(int64(fv.Int32)))
+			} else {
+				item.PushBack(Nil())
+			}
+			set = true
+		case *sql.NullInt64:
+			if fv.Valid {
+				item.PushBack(NewInt(fv.Int64))
+			} else {
+				item.PushBack(Nil())
+			}
+			set = true
+		case *sql.NullFloat64:
+			if fv.Valid {
+				item.PushBack(NewFloat(fv.Float64))
+			} else {
+				item.PushBack(Nil())
+			}
+			set = true
+		case *sql.NullBool:
+			if fv.Valid {
+				item.PushBack(NewBool(fv.Bool))
+			} else {
+				item.PushBack(Nil())
+			}
+			set = true
+		case *sql.NullString:
+			if fv.Valid {
+				item.PushBack(NewStr(fv.String))
+			} else {
+				item.PushBack(Nil())
+			}
+			set = true
+		case *sql.NullTime:
+			if fv.Valid {
+				item.PushBack(NewObjectAndInit(timeClass, c, NewInt(fv.Time.UnixNano())))
+			} else {
+				item.PushBack(Nil())
+			}
+			set = true
+		case *sql.RawBytes:
+			switch colTypes[i].DatabaseTypeName() {
+			case "DECIMAL":
+				{
+					v, err := strconv.ParseFloat(string(*fv), 64)
+					if err != nil {
+						c.OnRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
+					}
+					item.PushBack(NewFloat(v))
+					set = true
+				}
+			case "BLOB":
+				{
+					item.PushBack(NewBytes([]byte(*fv)))
+					set = true
+				}
+			default:
+				{
+					item.PushBack(NewStr(string(*fv)))
+					set = true
+				}
+			}
+		default:
+		}
+		if !set {
+			item.PushBack(FromGoValue(reflect.ValueOf(fields[i]).Elem(), c))
+		}
+	}
+	ret = item
+	return
 }
 
 func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, cols []string) (ret ValueObject) {
@@ -261,6 +363,36 @@ func initQueryResultClass() ValueType {
 			}
 			return rv
 		}).
+		Method("allArray", func(c *Context, this ValueObject, args []Value) Value {
+			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cols, err := rows.Columns()
+			if err != nil {
+				c.OnRuntimeError("QueryResult.allArray get columns error %s", err)
+				return nil
+			}
+			rv := NewArray()
+			for rows.Next() {
+				row := dbScanRowsToArray(c, rows, cts, cols)
+				rv.PushBack(row)
+			}
+			return rv
+		}).
+		Method("allOne", func(c *Context, this ValueObject, args []Value) Value {
+			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cols, err := rows.Columns()
+			if err != nil {
+				c.OnRuntimeError("QueryResult.allOne get columns error %s", err)
+				return nil
+			}
+			rv := NewArray()
+			for rows.Next() {
+				row := dbScanRowsToArray(c, rows, cts, cols)
+				rv.PushBack(row.GetIndex(0, c))
+			}
+			return rv
+		}).
 		Method("next", func(c *Context, this ValueObject, args []Value) Value {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			if !rows.Next() {
@@ -273,6 +405,32 @@ func initQueryResultClass() ValueType {
 				return nil
 			}
 			return dbScanRowsToObject(c, rows, cts, cols)
+		}).
+		Method("nextArray", func(c *Context, this ValueObject, args []Value) Value {
+			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			if !rows.Next() {
+				return Nil()
+			}
+			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
+			cols, err := rows.Columns()
+			if err != nil {
+				c.OnRuntimeError("QueryResult.nextArray get columns error %s", err)
+				return nil
+			}
+			return dbScanRowsToArray(c, rows, cts, cols)
+		}).
+		Method("nextOne", func(c *Context, this ValueObject, args []Value) Value {
+			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			if !rows.Next() {
+				return Nil()
+			}
+			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
+			cols, err := rows.Columns()
+			if err != nil {
+				c.OnRuntimeError("QueryResult.nextArray get columns error %s", err)
+				return nil
+			}
+			return dbScanRowsToArray(c, rows, cts, cols).GetIndex(0, c)
 		}).
 		Method("toTable", func(c *Context, this ValueObject, args []Value) Value {
 			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
@@ -288,11 +446,11 @@ func initQueryResultClass() ValueType {
 			}
 			table := NewObjectAndInit(ptablePTableClass, c, colsValue...)
 			for rows.Next() {
-				row := dbScanRowsToObject(c, rows, cts, cols)
+				row := dbScanRowsToArray(c, rows, cts, cols)
 				c.InvokeMethod(table, "add", func() []Value {
 					r := make([]Value, len(cols))
-					for i, col := range cols {
-						r[i] = row.GetMember(col, c)
+					for i := range cols {
+						r[i] = row.GetIndex(i, c)
 					}
 					return r
 				})
@@ -350,6 +508,17 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 				return nil
 			}
 			return NewObjectAndInit(queryResultClass, c, NewGoValue(rows))
+		}).
+		Method("tables", func(c *Context, this ValueObject, args []Value) Value {
+			db := this.GetMember("_db", c)
+			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
+			rows, err := db.ToGoValue().(*sql.DB).Query(dialect.ShowTablesSQL())
+			if err != nil {
+				c.OnRuntimeError("Database.query query fail %s", err)
+				return nil
+			}
+			res := NewObjectAndInit(queryResultClass, c, NewGoValue(rows))
+			return c.InvokeMethod(res, "allOne", NoArgs)
 		}).
 		Method("execute", func(c *Context, this ValueObject, args []Value) Value {
 			var (
@@ -788,6 +957,20 @@ func initDatabaseActiveRecordClass() ValueType {
 		}).
 		Method("all", func(c *Context, this ValueObject, args []Value) Value {
 			return c.InvokeMethod(this, "find", Args(args...))
+		}).
+		Method("count", func(c *Context, this ValueObject, args []Value) Value {
+			var countField ValueStr
+			EnsureFuncParams(c, "ActiveRecord.count", args,
+				ArgRuleOptional{"countField", TypeStr, &countField, NewStr("(1)")},
+			)
+			args = []Value{countField}
+			res := doQuery(c, this, args)
+			records := c.InvokeMethod(res, "allArray", Args(args...))
+			c.InvokeMethod(res, "close", NoArgs)
+			if arr, ok := records.(ValueArray); ok && arr.Len() > 0 {
+				return arr.GetIndex(0, c).(ValueArray).GetIndex(0, c)
+			}
+			return NewInt(0)
 		}).
 		Method("toTable", func(c *Context, this ValueObject, args []Value) Value {
 			res := doQuery(c, this, args)
