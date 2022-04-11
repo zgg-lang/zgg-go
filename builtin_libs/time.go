@@ -62,6 +62,18 @@ func libTime(*Context) ValueObject {
 		time.Sleep(time.Duration(sleepSeconds * float64(time.Second)))
 		return Undefined()
 	}), nil)
+	lib.SetMember("timeit", NewNativeFunction("timeit", func(c *Context, this Value, args []Value) (rv Value) {
+		var callable ValueCallable
+		EnsureFuncParams(c, "timeit", args,
+			ArgRuleRequired{"callable", TypeCallable, &callable},
+		)
+		t0 := time.Now()
+		defer func() {
+			rv = NewInt(time.Now().UnixNano() - t0.UnixNano())
+		}()
+		c.Invoke(callable, nil, NoArgs)
+		return
+	}), nil)
 	return lib
 }
 

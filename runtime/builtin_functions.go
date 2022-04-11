@@ -681,7 +681,7 @@ var builtinFunctions = map[string]ValueCallable{
 			return NewStr(scanner.Text())
 		}
 		return constUndefined
-	}),
+	}, "prompt"),
 	"log": (func() ValueObject {
 		rv := NewObject()
 		const (

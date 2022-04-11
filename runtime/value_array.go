@@ -374,42 +374,55 @@ var builtinArrayMethods = map[string]ValueCallable{
 	}),
 	"toMap": NewNativeFunction("array.toMap", func(c *Context, this Value, args []Value) Value {
 		thisArr := c.MustArray(this)
-		switch len(args) {
-		case 0:
-			{
-				rv := NewObject()
-				for _, item := range *(thisArr.Values) {
-					rv.SetMember(item.ToString(c), item, c)
-				}
-				return rv
+		var (
+			getKey ValueCallable
+			getVal ValueCallable
+		)
+		EnsureFuncParams(c, "array.toMap", args,
+			ArgRuleOptional{"getKey", TypeCallable, &getKey, nil},
+			ArgRuleOptional{"getVal", TypeCallable, &getVal, nil},
+		)
+		rv := NewObject()
+		for _, item := range *(thisArr.Values) {
+			var (
+				k string
+				v Value
+			)
+			if getKey != nil {
+				c.Invoke(getKey, nil, func() []Value { return []Value{item} })
+				k = c.RetVal.ToString(c)
+			} else {
+				k = item.ToString(c)
 			}
-		case 1:
-			{
-				getkey := c.MustCallable(args[0], "getkey")
-				rv := NewObject()
-				for _, item := range *(thisArr.Values) {
-					c.Invoke(getkey, nil, func() []Value { return []Value{item} })
-					key := c.RetVal.ToString(c)
-					rv.SetMember(key, item, c)
-				}
-				return rv
+			if getVal != nil {
+				c.Invoke(getVal, nil, func() []Value { return []Value{item} })
+				v = c.RetVal
+			} else {
+				v = item
 			}
-		default:
-			c.OnRuntimeError("array.toMap requires 0 or 1 argument")
+			rv.SetMember(k, v, c)
 		}
-		return nil
+		return rv
 	}),
 	"toGroup": NewNativeFunction("array.toGroup", func(c *Context, this Value, args []Value) Value {
 		thisArr := c.MustArray(this)
-		if len(args) != 1 {
-			c.OnRuntimeError("array.toGroup requires 1 argument")
-		}
-		getkey := c.MustCallable(args[0], "getkey")
+		var (
+			getKey ValueCallable
+			getVal ValueCallable
+		)
+		EnsureFuncParams(c, "array.toGroup", args,
+			ArgRuleRequired{"getKey", TypeCallable, &getKey},
+			ArgRuleOptional{"getKey", TypeCallable, &getVal, nil},
+		)
 		rv := NewObject()
 		for _, item := range *(thisArr.Values) {
-			c.Invoke(getkey, nil, func() []Value { return []Value{item} })
+			c.Invoke(getKey, nil, func() []Value { return []Value{item} })
 			key := c.RetVal.ToString(c)
 			group := rv.GetMember(key, c)
+			if getVal != nil {
+				c.Invoke(getVal, nil, Args(item))
+				item = c.RetVal
+			}
 			if groupArr, ok := group.(ValueArray); ok {
 				groupArr.PushBack(item)
 			} else {
