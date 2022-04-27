@@ -109,8 +109,7 @@ func (v ValueObject) SetMember(name string, value Value, c *Context) {
 }
 
 func (v ValueObject) GetMember(name string, c *Context) Value {
-	obj := v
-	if val, found := obj.m.Load(name); found {
+	if val, found := v.m.Load(name); found {
 		return makeMember(v, val.(Value))
 	}
 	if member := v.t.findMember(name); member != nil {
@@ -261,20 +260,6 @@ var builtinObjMethods = map[string]*ValueBuiltinFunction{
 			})
 			return true
 		})
-		return constUndefined
-	}),
-	"remove": NewNativeFunction("object.remove", func(c *Context, this Value, args []Value) Value {
-		o := c.MustObject(this)
-		if len(args) < 1 {
-			c.OnRuntimeError("object.remove requires at lease 1 argument")
-		}
-		o.sizeLock.Lock()
-		defer o.sizeLock.Unlock()
-		*o.size -= len(args)
-		for _, k := range args {
-			key := k.ToString(c)
-			o.m.Delete(key)
-		}
 		return constUndefined
 	}),
 }
