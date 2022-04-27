@@ -8,6 +8,9 @@ import (
 
 func libRandom(*Context) ValueObject {
 	lib := NewObject()
+	//DOC random() 		返回[0, 1)范围内的一个随机浮点数
+	//DOC random(end)	返回[0, end)范围内的一个随机整数，当end<=0或者end非整数时抛出异常
+	//DOC random(a, b)	返回[a, b)范围内的一个随机整数，当a或者b非整数，或者a>=b时抛出异常
 	lib.SetMember("random", NewNativeFunction("random", func(c *Context, this Value, args []Value) Value {
 		switch len(args) {
 		case 0:
@@ -30,6 +33,7 @@ func libRandom(*Context) ValueObject {
 		}
 		return nil
 	}), nil)
+	//DOC choice(array) 	返回array内的一个随机元素，当array非数组或者数组为空时抛出异常
 	lib.SetMember("choice", NewNativeFunction("choice", func(c *Context, this Value, args []Value) Value {
 		var choices ValueArray
 		EnsureFuncParams(c, "random.choice", args,
@@ -42,6 +46,7 @@ func libRandom(*Context) ValueObject {
 		n := rand.Intn(choices.Len())
 		return choices.GetIndex(n, c)
 	}), nil)
+	//DOC shuffle(array) 	打算array内元素顺序，当array非数组时抛出异常
 	lib.SetMember("shuffle", NewNativeFunction("shuffle", func(c *Context, this Value, args []Value) Value {
 		var (
 			arr ValueArray
