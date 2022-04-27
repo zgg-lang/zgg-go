@@ -56,8 +56,13 @@ type ValueConditionInRange struct {
 }
 
 func (vc *ValueConditionInRange) IsMatch(c *runtime.Context, v runtime.Value) bool {
-	vc.Min.Eval(c)
-	min := c.RetVal
+	var min, max runtime.Value
+	if v := vc.Min; v != nil {
+		v.Eval(c)
+		min = c.RetVal
+	} else {
+		min = runtime.Undefined()
+	}
 	if _, isUndefined := min.(runtime.ValueUndefined); !isUndefined {
 		if c.ValuesLess(v, min) {
 			return false
@@ -66,8 +71,12 @@ func (vc *ValueConditionInRange) IsMatch(c *runtime.Context, v runtime.Value) bo
 			return false
 		}
 	}
-	vc.Max.Eval(c)
-	max := c.RetVal
+	if v := vc.Max; v != nil {
+		v.Eval(c)
+		max = c.RetVal
+	} else {
+		max = runtime.Undefined()
+	}
 	if _, isUndefined := max.(runtime.ValueUndefined); !isUndefined {
 		if c.ValuesGreater(v, max) {
 			return false

@@ -206,12 +206,15 @@ func (v *ParseVisitor) VisitWhenConditionInList(ctx *WhenConditionInListContext)
 }
 
 func (v *ParseVisitor) VisitWhenConditionInRange(ctx *WhenConditionInRangeContext) interface{} {
-	all := ctx.AllExpr()
 	rv := &ast.ValueConditionInRange{
 		IncludeMin: true,
 		IncludeMax: ctx.RANGE_WITH_END() != nil,
-		Min:        all[0].Accept(v).(ast.Expr),
-		Max:        all[1].Accept(v).(ast.Expr),
+	}
+	if lb := ctx.GetLowerBound(); lb != nil {
+		rv.Min = lb.Accept(v).(ast.Expr)
+	}
+	if ub := ctx.GetUpperBound(); ub != nil {
+		rv.Max = ub.Accept(v).(ast.Expr)
 	}
 	return rv
 }
