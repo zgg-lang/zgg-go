@@ -848,7 +848,33 @@ func initHttpResponseClass() ValueType {
 				}
 				return NewArrayByValues(NewBytes(buf[:n]), NewBool(true))
 			})
-		}).
+		}, "chunkSize").
+		Method("iterChunk", func(c *Context, this ValueObject, args []Value) Value {
+			var chunkSize ValueInt
+			EnsureFuncParams(c, "http.Response.iterChunk", args, ArgRuleOptional{"chunkSize", TypeInt, &chunkSize, NewInt(512 * 1024)})
+			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			var stackBuf [512 * 1024]byte
+			var buf []byte
+			if s := chunkSize.AsInt(); s <= len(stackBuf) {
+				buf = stackBuf[:s]
+			} else {
+				buf = make([]byte, s)
+			}
+			rv := NewObject()
+			rv.SetMember("__iter__", NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
+				return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
+					n, err := resp.Body.Read(buf)
+					if err == io.EOF {
+						return NewArrayByValues(NewBytes(buf[:n]), NewBool(false))
+					}
+					if err != nil {
+						c.OnRuntimeError("Read chunk error: %s", err)
+					}
+					return NewArrayByValues(NewBytes(buf[:n]), NewBool(true))
+				})
+			}), c)
+			return rv
+		}, "chunkSize").
 		Method("text", func(c *Context, this ValueObject, args []Value) Value {
 			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
 			bytes, err := ioutil.ReadAll(resp.Body)
