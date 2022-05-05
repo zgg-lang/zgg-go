@@ -214,7 +214,23 @@ literal
       | IDENTIFIER
       ) '=>' codeBlock  # LiteralLambdaBlock
     | L_CURLY (objItem (',' objItem)* ','?)? R_CURLY                                      # LiteralObject
+    | '{'
+          keyExpr=expr ':' valueExpr=expr
+          FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER IN
+          begin=expr ( ('..'|'..<') end=expr)?
+          (
+              IF filter=expr
+          )?
+      '}'                                      # ObjectComprehension
     | '[' (arrayItem (',' arrayItem)* ','? )? ']'                                 # LiteralArray
+    | '['
+          itemExpr=expr
+          FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER IN
+          begin=expr ( ('..'|'..<') end=expr)?
+          (
+              IF filter=expr
+          )?
+      ']'                                 # ArrayComprehension
     ;
 
 arrayItem

@@ -296,8 +296,14 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#LiteralObject.
 	VisitLiteralObject(ctx *LiteralObjectContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#ObjectComprehension.
+	VisitObjectComprehension(ctx *ObjectComprehensionContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#LiteralArray.
 	VisitLiteralArray(ctx *LiteralArrayContext) interface{}
+
+	// Visit a parse tree produced by ZggParser#ArrayComprehension.
+	VisitArrayComprehension(ctx *ArrayComprehensionContext) interface{}
 
 	// Visit a parse tree produced by ZggParser#arrayItem.
 	VisitArrayItem(ctx *ArrayItemContext) interface{}

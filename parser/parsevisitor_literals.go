@@ -259,3 +259,48 @@ func (v *ParseVisitor) VisitArrayItem(ctx *ArrayItemContext) interface{} {
 		ShouldExpand: ctx.MORE_ARGS() != nil,
 	}
 }
+
+func (v *ParseVisitor) VisitArrayComprehension(ctx *ArrayComprehensionContext) interface{} {
+	rv := &ast.ArrayComprehension{
+		ItemExpr: ctx.GetItemExpr().Accept(v).(ast.Expr),
+	}
+	rv.ValueName = ctx.GetValue().GetText()
+	if t := ctx.GetIndexer(); t != nil {
+		rv.IndexerName = t.GetText()
+	}
+	begin := ctx.GetBegin().Accept(v).(ast.Expr)
+	if t := ctx.GetEnd(); t != nil {
+		rv.RangeBegin = begin
+		rv.RangeEnd = t.Accept(v).(ast.Expr)
+		rv.RangeIncludingEnd = ctx.RANGE_WITH_END() != nil
+	} else {
+		rv.Iterable = begin
+	}
+	if t := ctx.GetFilter(); t != nil {
+		rv.FilterExpr = t.Accept(v).(ast.Expr)
+	}
+	return rv
+}
+
+func (v *ParseVisitor) VisitObjectComprehension(ctx *ObjectComprehensionContext) interface{} {
+	rv := &ast.ObjectComprehension{
+		KeyExpr:   ctx.GetKeyExpr().Accept(v).(ast.Expr),
+		ValueExpr: ctx.GetValueExpr().Accept(v).(ast.Expr),
+	}
+	rv.ValueName = ctx.GetValue().GetText()
+	if t := ctx.GetIndexer(); t != nil {
+		rv.IndexerName = t.GetText()
+	}
+	begin := ctx.GetBegin().Accept(v).(ast.Expr)
+	if t := ctx.GetEnd(); t != nil {
+		rv.RangeBegin = begin
+		rv.RangeEnd = t.Accept(v).(ast.Expr)
+		rv.RangeIncludingEnd = ctx.RANGE_WITH_END() != nil
+	} else {
+		rv.Iterable = begin
+	}
+	if t := ctx.GetFilter(); t != nil {
+		rv.FilterExpr = t.Accept(v).(ast.Expr)
+	}
+	return rv
+}

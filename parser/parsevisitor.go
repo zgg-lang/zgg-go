@@ -166,6 +166,10 @@ func (v *ParseVisitor) VisitExprLiteral(ctx *ExprLiteralContext) interface{} {
 		return v.VisitLiteralArray(c)
 	case *LiteralBigNumContext:
 		return v.VisitLiteralBigNum(c)
+	case *ArrayComprehensionContext:
+		return v.VisitArrayComprehension(c)
+	case *ObjectComprehensionContext:
+		return v.VisitObjectComprehension(c)
 	}
 	panic("should not reach this line")
 }

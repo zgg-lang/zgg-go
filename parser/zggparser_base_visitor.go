@@ -392,7 +392,15 @@ func (v *BaseZggParserVisitor) VisitLiteralObject(ctx *LiteralObjectContext) int
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitObjectComprehension(ctx *ObjectComprehensionContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitLiteralArray(ctx *LiteralArrayContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseZggParserVisitor) VisitArrayComprehension(ctx *ArrayComprehensionContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
