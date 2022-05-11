@@ -36,13 +36,13 @@ func (expr *ExprCall) GetArgs(c *runtime.Context, callable runtime.ValueCallable
 					args = append(args, moreArgs.GetIndex(i, c))
 				}
 			default:
-				c.OnRuntimeError("more args must be array")
+				c.RaiseRuntimeError("more args must be array")
 				return nil
 			}
 		} else if arg.Keyword != "" {
 			pos, found := argPos[arg.Keyword]
 			if !found {
-				c.OnRuntimeError("'%s' is an invalid keyword argument for %s", arg.Keyword, callable.GetName())
+				c.RaiseRuntimeError("'%s' is an invalid keyword argument for %s", arg.Keyword, callable.GetName())
 			}
 			if _, isUndefined := argVal.(runtime.ValueUndefined); !isUndefined {
 				if pos < len(args) {
@@ -71,7 +71,7 @@ func (expr *ExprCall) Eval(c *runtime.Context) {
 		if expr.Optional {
 			c.RetVal = runtime.Undefined()
 		} else {
-			c.OnRuntimeError(fmt.Sprintf("%s is not callable", calleeVal.Type().Name))
+			c.RaiseRuntimeError(fmt.Sprintf("%s is not callable", calleeVal.Type().Name))
 		}
 	}
 }

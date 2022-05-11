@@ -580,15 +580,15 @@ var ptableFromCsvFile = NewNativeFunction("ptable.fromCsvFile", func(c *Context,
 	name := filename.Value()
 	f, err := os.Open(name)
 	if err != nil {
-		c.OnRuntimeError("open csv file %s error %s", name, err)
+		c.RaiseRuntimeError("open csv file %s error %s", name, err)
 	}
 	defer f.Close()
 	rows, err := csv.NewReader(f).ReadAll()
 	if err != nil {
-		c.OnRuntimeError("read csv file %s error %s", name, err)
+		c.RaiseRuntimeError("read csv file %s error %s", name, err)
 	}
 	if len(rows) == 0 {
-		c.OnRuntimeError("read csv file %s empty", name)
+		c.RaiseRuntimeError("read csv file %s empty", name)
 	}
 	tableArgs := make([]Value, 0, len(rows[0]))
 	for _, v := range rows[0] {
@@ -622,24 +622,24 @@ var ptableFromCsv = NewNativeFunction("ptable.fromCsv", func(c *Context, this Va
 	} else if url := argUrl.Value(); url != "" {
 		r, err := http.Get(url)
 		if err != nil {
-			c.OnRuntimeError("load csv from url %s error %s", url, err)
+			c.RaiseRuntimeError("load csv from url %s error %s", url, err)
 		}
 		defer r.Body.Close()
 		contentReader = r.Body
 	} else if name := argFilename.Value(); name != "" {
 		f, err := os.Open(name)
 		if err != nil {
-			c.OnRuntimeError("open csv file %s error %s", name, err)
+			c.RaiseRuntimeError("open csv file %s error %s", name, err)
 		}
 		defer f.Close()
 		contentReader = f
 	}
 	rows, err := csv.NewReader(contentReader).ReadAll()
 	if err != nil {
-		c.OnRuntimeError("read csv error %s", err)
+		c.RaiseRuntimeError("read csv error %s", err)
 	}
 	if len(rows) == 0 {
-		c.OnRuntimeError("read csv empty")
+		c.RaiseRuntimeError("read csv empty")
 	}
 	tableArgs := make([]Value, 0, len(rows[0]))
 	for _, v := range rows[0] {

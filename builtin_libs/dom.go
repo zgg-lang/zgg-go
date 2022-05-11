@@ -11,7 +11,7 @@ func domLoadFromUrl(c *Context, this Value, args []Value) Value {
 	EnsureFuncParams(c, "fromUrl", args, ArgRuleRequired{"url", TypeStr, &url})
 	doc, err := goquery.NewDocument(url.Value())
 	if err != nil {
-		c.OnRuntimeError("dom.fromUrl: load from url fail: %s", err)
+		c.RaiseRuntimeError("dom.fromUrl: load from url fail: %s", err)
 	}
 	return NewGoValue(doc)
 }

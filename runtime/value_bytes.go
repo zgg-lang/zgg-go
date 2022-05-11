@@ -36,12 +36,12 @@ func (v ValueBytes) SetIndex(index int, value Value, c *Context) {
 		index += v.Len()
 	}
 	if index < 0 || index >= v.Len() {
-		c.OnRuntimeError(fmt.Sprintf("set bytes item error: Out of bound length %d index %d", v.Len(), index))
+		c.RaiseRuntimeError(fmt.Sprintf("set bytes item error: Out of bound length %d index %d", v.Len(), index))
 		return
 	}
 	iv := c.MustInt(value)
 	if iv < 0 || iv > 255 {
-		c.OnRuntimeError("set bytes item error: value must between 0 and 255, not %d", iv)
+		c.RaiseRuntimeError("set bytes item error: value must between 0 and 255, not %d", iv)
 		return
 	}
 	v.v[index] = byte(iv)
@@ -120,7 +120,7 @@ var builtinBytesMethods = map[string]ValueCallable{
 				{
 					endVal, ok := args[1].(ValueInt)
 					if !ok {
-						c.OnRuntimeError("bytes.slice arguments 1 must be an integer")
+						c.RaiseRuntimeError("bytes.slice arguments 1 must be an integer")
 						return nil
 					}
 					end = int(endVal.Value())
@@ -133,7 +133,7 @@ var builtinBytesMethods = map[string]ValueCallable{
 				{
 					beginVal, ok := args[0].(ValueInt)
 					if !ok {
-						c.OnRuntimeError("bytes.slice arguments 0 must be an integer")
+						c.RaiseRuntimeError("bytes.slice arguments 0 must be an integer")
 						return nil
 					}
 					begin = int(beginVal.Value())
@@ -142,7 +142,7 @@ var builtinBytesMethods = map[string]ValueCallable{
 					}
 				}
 			default:
-				c.OnRuntimeError("bytes.slice requires 0~2 arguments")
+				c.RaiseRuntimeError("bytes.slice requires 0~2 arguments")
 				return nil
 			}
 			if begin < 0 {

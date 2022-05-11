@@ -20,7 +20,7 @@ func (v *LvalById) Eval(c *runtime.Context) {
 	val, found := c.FindValue(v.Name)
 	if found {
 		if val == nil {
-			c.OnRuntimeError(fmt.Sprintf("use variable %s before initialized", v.Name))
+			c.RaiseRuntimeError(fmt.Sprintf("use variable %s before initialized", v.Name))
 			return
 		} else {
 			c.RetVal = val

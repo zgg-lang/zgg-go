@@ -25,7 +25,7 @@ func (e *ExprNegative) Eval(c *runtime.Context) {
 		c.RetVal = runtime.NewBigNum(r)
 		return
 	}
-	c.OnRuntimeError("type error")
+	c.RaiseRuntimeError("type error")
 }
 
 type ExprIncDec struct {
@@ -57,7 +57,7 @@ func (e *ExprBitNot) Eval(c *runtime.Context) {
 		c.RetVal = runtime.NewInt(^v.Value())
 		return
 	}
-	c.OnRuntimeError("type error")
+	c.RaiseRuntimeError("type error")
 }
 
 type ExprUse struct {
@@ -76,7 +76,7 @@ func (e *ExprUse) Eval(c *runtime.Context) {
 		if closer := v.GetMember(e.Identifier, c); c.IsCallable(closer) {
 			c.AddBlockDefer(closer, []runtime.Value{}, true)
 		} else {
-			c.OnRuntimeError("use value without close/Close method")
+			c.RaiseRuntimeError("use value without close/Close method")
 		}
 	} else {
 		if closer := v.GetMember("close", c); c.IsCallable(closer) {
@@ -84,7 +84,7 @@ func (e *ExprUse) Eval(c *runtime.Context) {
 		} else if closer := v.GetMember("Close", c); c.IsCallable(closer) {
 			c.AddBlockDefer(closer, []runtime.Value{}, true)
 		} else {
-			c.OnRuntimeError("use value without close/Close method")
+			c.RaiseRuntimeError("use value without close/Close method")
 		}
 	}
 }
@@ -101,7 +101,7 @@ func (e *ExprAssertError) Eval(c *runtime.Context) {
 		if n > 0 {
 			last := rs.GetIndex(n-1, c)
 			if err, isErr := last.ToGoValue().(error); isErr {
-				c.OnRuntimeError("assert error fail! %s", err)
+				c.RaiseRuntimeError("assert error fail! %s", err)
 			} else {
 				n--
 			}
@@ -120,7 +120,7 @@ func (e *ExprAssertError) Eval(c *runtime.Context) {
 		}
 	} else if err, isErr := r.ToGoValue().(error); isErr {
 		if err != nil {
-			c.OnRuntimeError("assert error fail! %s", err)
+			c.RaiseRuntimeError("assert error fail! %s", err)
 		} else {
 			c.RetVal = runtime.Undefined()
 		}

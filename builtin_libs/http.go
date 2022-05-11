@@ -60,7 +60,7 @@ func libHttp(*Context) ValueObject {
 		a := args[0].ToString(c)
 		rv, err := url.QueryUnescape(a)
 		if err != nil {
-			c.OnRuntimeError("unescape %s error: %s", a, err)
+			c.RaiseRuntimeError("unescape %s error: %s", a, err)
 		}
 		return NewStr(rv)
 	}), nil)
@@ -68,7 +68,7 @@ func libHttp(*Context) ValueObject {
 	lib.SetMember("createServer", httpCreateServer, nil)
 	lib.SetMember("serve", NewNativeFunction("serve", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 2 {
-			c.OnRuntimeError("http: serve requires 2 arguments")
+			c.RaiseRuntimeError("http: serve requires 2 arguments")
 			return nil
 		}
 		addr := c.MustStr(args[0], "http.serve(addr, handleFunc): addr")
@@ -117,7 +117,7 @@ var httpGetJson = NewNativeFunction("getJson", func(c *Context, thisArg Value, a
 	url := c.MustStr(args[0])
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		c.OnRuntimeError("http.getJson: make request error %s", err)
+		c.RaiseRuntimeError("http.getJson: make request error %s", err)
 		return nil
 	}
 	if len(args) > 1 {
@@ -129,13 +129,13 @@ var httpGetJson = NewNativeFunction("getJson", func(c *Context, thisArg Value, a
 	}
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		c.OnRuntimeError("http.getJson: " + err.Error())
+		c.RaiseRuntimeError("http.getJson: " + err.Error())
 	}
 	defer resp.Body.Close()
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	var j interface{}
 	if err := json.Unmarshal(respBytes, &j); err != nil {
-		c.OnRuntimeError("http.getJson: " + err.Error())
+		c.RaiseRuntimeError("http.getJson: " + err.Error())
 	}
 	return jsonToValue(j, c)
 }, "url", "headers")
@@ -159,7 +159,7 @@ var httpPostForm = NewNativeFunction("postForm", func(c *Context, this Value, ar
 	bodyReader := strings.NewReader(form.Encode())
 	request, err := http.NewRequest("POST", postUrl, bodyReader)
 	if err != nil {
-		c.OnRuntimeError("http.postForm: make request error %s", err)
+		c.RaiseRuntimeError("http.postForm: make request error %s", err)
 		return nil
 	}
 	if len(args) > 2 {
@@ -172,13 +172,13 @@ var httpPostForm = NewNativeFunction("postForm", func(c *Context, this Value, ar
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		c.OnRuntimeError("http.postForm: request error %s", err)
+		c.RaiseRuntimeError("http.postForm: request error %s", err)
 		return nil
 	}
 	defer resp.Body.Close()
 	content, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		c.OnRuntimeError("http.postForm: read response error %s", err)
+		c.RaiseRuntimeError("http.postForm: read response error %s", err)
 		return nil
 	}
 	return NewBytes(content)
@@ -190,13 +190,13 @@ var httpPostJson = NewNativeFunction("postJson", func(c *Context, this Value, ar
 	content := args[1]
 	contentBytes, err := json.Marshal(content.ToGoValue())
 	if err != nil {
-		c.OnRuntimeError("http.postJson::content encode to json error %s", err)
+		c.RaiseRuntimeError("http.postJson::content encode to json error %s", err)
 		return nil
 	}
 	bodyReader := bytes.NewReader(contentBytes)
 	request, err := http.NewRequest("POST", postUrl, bodyReader)
 	if err != nil {
-		c.OnRuntimeError("http.postJson: make request error %s", err)
+		c.RaiseRuntimeError("http.postJson: make request error %s", err)
 		return nil
 	}
 	if len(args) > 2 {
@@ -209,13 +209,13 @@ var httpPostJson = NewNativeFunction("postJson", func(c *Context, this Value, ar
 	request.Header.Add("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		c.OnRuntimeError("http.postJson: request error %s", err)
+		c.RaiseRuntimeError("http.postJson: request error %s", err)
 		return nil
 	}
 	defer resp.Body.Close()
 	rspContent, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		c.OnRuntimeError("http.postJson: read response error %s", err)
+		c.RaiseRuntimeError("http.postJson: read response error %s", err)
 		return nil
 	}
 	return NewBytes(rspContent)
@@ -255,7 +255,7 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 	}
 	rv.SetMember("route", NewNativeFunction("route", func(c *Context, thisArg Value, args []Value) Value {
 		if len(args) < 2 {
-			c.OnRuntimeError("http.server: route requires at least 2 arguments")
+			c.RaiseRuntimeError("http.server: route requires at least 2 arguments")
 			return nil
 		}
 		path := c.MustStr(args[0], "http.server.route(path, handleFunc): path")
@@ -298,12 +298,12 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 	}, "path", "handleFunc"), nil)
 	rv.SetMember("serve", NewNativeFunction("serve", func(c *Context, thisArgs Value, args []Value) Value {
 		if len(args) != 1 {
-			c.OnRuntimeError("http.server: serve requires 1 argument")
+			c.RaiseRuntimeError("http.server: serve requires 1 argument")
 			return nil
 		}
 		addr := c.MustStr(args[0], "http.server.serve(listenAddr): listenAddr")
 		if err := http.ListenAndServe(addr, svr); err != nil {
-			c.OnRuntimeError("http.server.serve fail: " + err.Error())
+			c.RaiseRuntimeError("http.server.serve fail: " + err.Error())
 			return nil
 		}
 		return Undefined()
@@ -327,7 +327,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				c.OnRuntimeError("%s.getData error %s", className, err)
+				c.RaiseRuntimeError("%s.getData error %s", className, err)
 				return nil
 			}
 			return NewBytes(body)
@@ -399,7 +399,7 @@ func initHttpRequestContextClass() ValueType {
 				ArgRuleOptional{"index", TypeInt, &index, NewInt(0)},
 			)
 			if r.MultipartForm == nil {
-				c.OnRuntimeError("RequestContext.file: cannot get file without parseMultipartForm")
+				c.RaiseRuntimeError("RequestContext.file: cannot get file without parseMultipartForm")
 			}
 			fhs := r.MultipartForm.File[name.Value()]
 			if len(fhs) <= index.AsInt() {
@@ -419,7 +419,7 @@ func initHttpRequestContextClass() ValueType {
 				ArgRuleOptional{"index", TypeInt, &index, NewInt(0)},
 			)
 			if r.MultipartForm == nil {
-				c.OnRuntimeError("RequestContext.file: cannot get file without parseMultipartForm")
+				c.RaiseRuntimeError("RequestContext.file: cannot get file without parseMultipartForm")
 			}
 			fhs := r.MultipartForm.File[name.Value()]
 			rv := NewArray(len(fhs))
@@ -460,7 +460,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				c.OnRuntimeError("%s.getData error %s", className, err)
+				c.RaiseRuntimeError("%s.getData error %s", className, err)
 				return nil
 			}
 			return NewStr(string(body))
@@ -493,7 +493,7 @@ func initHttpRequestContextClass() ValueType {
 		}).
 		Method("write", func(c *Context, this ValueObject, args []Value) Value {
 			if len(args) < 1 {
-				c.OnRuntimeError("http.RequestContext.write requires at least one argument")
+				c.RaiseRuntimeError("http.RequestContext.write requires at least one argument")
 				return nil
 			}
 			statusCode := c.MustInt(args[0])
@@ -537,10 +537,10 @@ func initHttpRequestContextClass() ValueType {
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(statusCode)
 				if err := json.NewEncoder(w).Encode(args[contentAt].ToGoValue()); err != nil {
-					c.OnRuntimeError("writeJson: encode to json error %s", err)
+					c.RaiseRuntimeError("writeJson: encode to json error %s", err)
 				}
 			default:
-				c.OnRuntimeError("writeJson usage: writeJson([statusCode,] contentValue)")
+				c.RaiseRuntimeError("writeJson usage: writeJson([statusCode,] contentValue)")
 			}
 			return Undefined()
 		}).
@@ -613,7 +613,7 @@ func initHttpRequestContextClass() ValueType {
 			}
 			request, err := http.NewRequest(r.Method, targetUrl, reqBody)
 			if err != nil {
-				c.OnRuntimeError("make forward request error: %s", err)
+				c.RaiseRuntimeError("make forward request error: %s", err)
 			}
 			for field, values := range r.Header {
 				if strings.ToLower(field) == "host" {
@@ -626,7 +626,7 @@ func initHttpRequestContextClass() ValueType {
 			}
 			response, err := http.DefaultClient.Do(request)
 			if err != nil {
-				c.OnRuntimeError("do forward request error: %s", err)
+				c.RaiseRuntimeError("do forward request error: %s", err)
 			}
 			defer response.Body.Close()
 			respHeader := w.Header()
@@ -663,7 +663,7 @@ func initWebsocketContextClass() ValueType {
 			conn := this.GetMember("_conn", c).ToGoValue().(*websocket.Conn)
 			mt, pkg, err := conn.ReadMessage()
 			if err != nil {
-				c.OnRuntimeError("websocket read message error %s", err)
+				c.RaiseRuntimeError("websocket read message error %s", err)
 			}
 			switch mt {
 			case websocket.TextMessage:
@@ -686,7 +686,7 @@ func initWebsocketContextClass() ValueType {
 					err = conn.WriteMessage(websocket.TextMessage, []byte(pkg.ToString(c)))
 				}
 				if err != nil {
-					c.OnRuntimeError("websocket write message error %s", err)
+					c.RaiseRuntimeError("websocket write message error %s", err)
 				}
 			}
 			return Undefined()
@@ -752,7 +752,7 @@ func initHttpRequestClass() ValueType {
 				headers.PushBack(NewArrayByValues(args[0], args[1]))
 				return this
 			}
-			c.OnRuntimeError("Request.header: invalid argument(s)")
+			c.RaiseRuntimeError("Request.header: invalid argument(s)")
 			return nil
 		}).
 		Method("call", func(c *Context, this ValueObject, args []Value) Value {
@@ -777,7 +777,7 @@ func initHttpRequestClass() ValueType {
 			url := c.MustStr(this.GetMember("url", c))
 			req, err := http.NewRequest(method, url, reqBody)
 			if err != nil {
-				c.OnRuntimeError("Request.build: make request error %s", err)
+				c.RaiseRuntimeError("Request.build: make request error %s", err)
 			}
 			headers := this.GetMember("__headers", c).(ValueArray)
 			for i := 0; i < headers.Len(); i++ {
@@ -788,7 +788,7 @@ func initHttpRequestClass() ValueType {
 			}
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
-				c.OnRuntimeError("http.Request.call: do request error %s", err)
+				c.RaiseRuntimeError("http.Request.call: do request error %s", err)
 			}
 			return NewObjectAndInit(httpResponseClass, c, NewGoValue(resp))
 			// return NewGoValue(resp)
@@ -823,7 +823,7 @@ func initHttpResponseClass() ValueType {
 			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
 			bytes, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				c.OnRuntimeError("http.Response.bytes: read body error %s", err)
+				c.RaiseRuntimeError("http.Response.bytes: read body error %s", err)
 			}
 			return NewBytes(bytes)
 		}).
@@ -844,7 +844,7 @@ func initHttpResponseClass() ValueType {
 					return NewArrayByValues(NewBytes(buf[:n]), NewBool(false))
 				}
 				if err != nil {
-					c.OnRuntimeError("Read chunk error: %s", err)
+					c.RaiseRuntimeError("Read chunk error: %s", err)
 				}
 				return NewArrayByValues(NewBytes(buf[:n]), NewBool(true))
 			})
@@ -868,7 +868,7 @@ func initHttpResponseClass() ValueType {
 						return NewArrayByValues(NewBytes(buf[:n]), NewBool(false))
 					}
 					if err != nil {
-						c.OnRuntimeError("Read chunk error: %s", err)
+						c.RaiseRuntimeError("Read chunk error: %s", err)
 					}
 					return NewArrayByValues(NewBytes(buf[:n]), NewBool(true))
 				})
@@ -879,7 +879,7 @@ func initHttpResponseClass() ValueType {
 			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
 			bytes, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				c.OnRuntimeError("http.Response.text: read body error %s", err)
+				c.RaiseRuntimeError("http.Response.text: read body error %s", err)
 			}
 			return NewStr(string(bytes))
 		}).
@@ -888,7 +888,7 @@ func initHttpResponseClass() ValueType {
 			var o interface{}
 			dec := json.NewDecoder(resp.Body)
 			if err := dec.Decode(&o); err != nil {
-				c.OnRuntimeError("http.Response.json: decode body error %s", err)
+				c.RaiseRuntimeError("http.Response.json: decode body error %s", err)
 			}
 			return jsonToValue(o, c)
 		}).
@@ -911,12 +911,12 @@ func initHttpFormFileClass() ValueType {
 			fh := this.GetMember("_fh", c).ToGoValue().(*multipart.FileHeader)
 			file, err := fh.Open()
 			if err != nil {
-				c.OnRuntimeError("FormFile.bytes: open file error %s", err)
+				c.RaiseRuntimeError("FormFile.bytes: open file error %s", err)
 			}
 			defer file.Close()
 			fileBs, err := ioutil.ReadAll(file)
 			if err != nil {
-				c.OnRuntimeError("FormFile.bytes: read file error %s", err)
+				c.RaiseRuntimeError("FormFile.bytes: read file error %s", err)
 			}
 			bs := NewBytes(fileBs)
 			this.SetMember("_bytes", bs, c)

@@ -32,7 +32,7 @@ func libTime(*Context) ValueObject {
 			mod = 1e9
 		case "":
 		default:
-			c.OnRuntimeError("Invalid time type %s", asType)
+			c.RaiseRuntimeError("Invalid time type %s", asType)
 		}
 		now := NewObjectAndInit(timeClass, c, NewInt(nowTs-nowTs%mod))
 		if asType != "" {
@@ -49,13 +49,13 @@ func libTime(*Context) ValueObject {
 		var gt GoValue
 		EnsureFuncParams(c, "time.fromGoTime", args, ArgRuleRequired{"time", TypeGoValue, &gt})
 		if _, ok := gt.ToGoValue().(time.Time); !ok {
-			c.OnRuntimeError("Not a time.Time!")
+			c.RaiseRuntimeError("Not a time.Time!")
 		}
 		return NewObjectAndInit(timeClass, c, gt)
 	}, "time"), nil)
 	lib.SetMember("sleep", NewNativeFunction("time", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 1 {
-			c.OnRuntimeError("sleep: requires 1 argument")
+			c.RaiseRuntimeError("sleep: requires 1 argument")
 			return nil
 		}
 		sleepSeconds := c.MustFloat(args[0])
@@ -97,7 +97,7 @@ func initTimeClass() {
 					case time.Time:
 						_t = gv
 					default:
-						c.OnRuntimeError("Time.__init__: invalid arg %v", gv)
+						c.RaiseRuntimeError("Time.__init__: invalid arg %v", gv)
 					}
 				case ValueStr:
 					{
@@ -116,11 +116,11 @@ func initTimeClass() {
 							layout = "2006-01-02 15:04:05"
 							as = "second"
 						default:
-							c.OnRuntimeError("Time.__init__: invalid time str %s", v.Value())
+							c.RaiseRuntimeError("Time.__init__: invalid time str %s", v.Value())
 						}
 						t, err := time.Parse(layout, v.Value())
 						if err != nil {
-							c.OnRuntimeError("Time.__init__: parse time error %s", err)
+							c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 						}
 						// ts = t.UnixNano()
 						_t = t
@@ -159,7 +159,7 @@ func initTimeClass() {
 					)
 				}
 			default:
-				c.OnRuntimeError("Time.__init__: invalid args")
+				c.RaiseRuntimeError("Time.__init__: invalid args")
 			}
 			thisObj.SetMember("__t", NewGoValue(_t), c)
 			if as != "" {
@@ -195,7 +195,7 @@ func initTimeClass() {
 			EnsureFuncParams(c, "Time.add", args, ArgRuleRequired{"duration", TypeStr, &duration})
 			d, err := time.ParseDuration(duration.Value())
 			if err != nil {
-				c.OnRuntimeError("Invalid duration %s", duration.Value())
+				c.RaiseRuntimeError("Invalid duration %s", duration.Value())
 			}
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			rt := t.Add(d)
@@ -248,7 +248,7 @@ func initTimeClass() {
 					return r
 				}
 			}
-			c.OnRuntimeError("Time object cannot get __next__ without specialized time type")
+			c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 			return nil
 		}).
 		Method("format", func(c *Context, this ValueObject, args []Value) Value {
@@ -283,7 +283,7 @@ func initTimeClass() {
 			if tz := timezone.Value(); tz != "" {
 				loc, err := time.LoadLocation(tz)
 				if err != nil {
-					c.OnRuntimeError("Invalid timezone %s", tz)
+					c.RaiseRuntimeError("Invalid timezone %s", tz)
 				}
 				t = t.In(loc)
 			}
@@ -311,7 +311,7 @@ func initTimeClass() {
 					return r
 				}
 			}
-			c.OnRuntimeError("Time object cannot get __next__ without specialized time type")
+			c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 			return nil
 		}).
 		Method("__sub__", func(c *Context, this ValueObject, args []Value) Value {
@@ -336,7 +336,7 @@ func initTimeClass() {
 					return r
 				}
 			}
-			c.OnRuntimeError("Time object cannot get __next__ without specialized time type")
+			c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 			return nil
 		}).
 		Method("timetuple", func(c *Context, this ValueObject, args []Value) Value {

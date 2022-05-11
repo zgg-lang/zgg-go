@@ -53,7 +53,7 @@ func libRegexInner(c *Context, libName string, regexMakeMatchGroup func(*Context
 		)
 		re, err := regexp.Compile(pattern.Value())
 		if err != nil {
-			c.OnRuntimeError(libName + ".findAll: pattern error " + err.Error())
+			c.RaiseRuntimeError(libName + ".findAll: pattern error " + err.Error())
 			return nil
 		}
 		s := text.Value()
@@ -85,7 +85,7 @@ func libRegexInner(c *Context, libName string, regexMakeMatchGroup func(*Context
 		)
 		re, err := regexp.Compile(pattern.Value())
 		if err != nil {
-			c.OnRuntimeError(libName + ".find: pattern error " + err.Error())
+			c.RaiseRuntimeError(libName + ".find: pattern error " + err.Error())
 			return nil
 		}
 		n := offset.AsInt()
@@ -128,7 +128,7 @@ func libRegexInner(c *Context, libName string, regexMakeMatchGroup func(*Context
 		)
 		p, err := regexp.Compile(pattern.Value())
 		if err != nil {
-			c.OnRuntimeError("invalid regexp %s", pattern.Value())
+			c.RaiseRuntimeError("invalid regexp %s", pattern.Value())
 		}
 		return NewStr(p.ReplaceAllString(src.Value(), repl.Value()))
 	}, "pattern", "src", "repl"), nil)

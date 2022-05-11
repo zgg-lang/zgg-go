@@ -229,7 +229,7 @@ func (c *Context) ModifyValue(name string, value Value) {
 			return
 		}
 	}
-	c.OnRuntimeError("variable %s not exists", name)
+	c.RaiseRuntimeError("variable %s not exists", name)
 }
 
 func (c *Context) SetLocalValue(name string, value Value) {
@@ -237,7 +237,7 @@ func (c *Context) SetLocalValue(name string, value Value) {
 		return
 	}
 	if _, found := (*c.curFrame.variables).Load(name); found {
-		c.OnRuntimeError(fmt.Sprintf("variable %s redefined", name))
+		c.RaiseRuntimeError(fmt.Sprintf("variable %s redefined", name))
 	} else {
 		(*c.curFrame.variables).Store(name, value)
 	}
@@ -281,7 +281,7 @@ func (c *Context) RunDefers() {
 		for i := n - 1; i >= 0; i-- {
 			call := frame.defers[i]
 			if !c.Invoke(call.callee, nil, func() []Value { return call.args }) && !call.optional {
-				c.OnRuntimeError("defer call not callable")
+				c.RaiseRuntimeError("defer call not callable")
 				return
 			}
 		}
@@ -309,7 +309,7 @@ func (c *Context) PopStack() {
 	}
 }
 
-func (c *Context) OnRuntimeError(msg string, args ...interface{}) {
+func (c *Context) RaiseRuntimeError(msg string, args ...interface{}) {
 	if len(args) > 0 {
 		msg = fmt.Sprintf(msg, args...)
 	}
@@ -389,7 +389,7 @@ const (
 func (c *Context) ImportModule(modPath string, forceReload bool, importType string) Value {
 	modVal, thisTime, success := c.ImportFunc(c, modPath, "", importType, forceReload)
 	if !success {
-		c.OnRuntimeError("ImportError: module %s not exists", modPath)
+		c.RaiseRuntimeError("ImportError: module %s not exists", modPath)
 		return constUndefined
 	}
 	if _, isUndefined := modVal.(ValueUndefined); !isUndefined {
@@ -405,18 +405,18 @@ func (c *Context) ReturnTrue() bool {
 
 func (c *Context) throwValueTypeError(v Value, wanted string, name []string) {
 	if len(name) > 0 {
-		c.OnRuntimeError("%s requires %s, got %s", wanted, v.Type().Name)
+		c.RaiseRuntimeError("%s requires %s, got %s", wanted, v.Type().Name)
 	} else {
-		c.OnRuntimeError("value requires %s, got %s", wanted, v.Type().Name)
+		c.RaiseRuntimeError("value requires %s, got %s", wanted, v.Type().Name)
 	}
 }
 
 func (c *Context) AssertArgNum(num, min, max int, funcName string) {
 	if num < min || num > max {
 		if min == max {
-			c.OnRuntimeError("%s requires %d argument(s)", funcName, min)
+			c.RaiseRuntimeError("%s requires %d argument(s)", funcName, min)
 		} else {
-			c.OnRuntimeError("%s requires %d ~ %d argument(s)", funcName, min, max)
+			c.RaiseRuntimeError("%s requires %d ~ %d argument(s)", funcName, min, max)
 		}
 	}
 }
@@ -599,11 +599,11 @@ func (c *Context) CloneFrames() (cur, funcRoot, root *contextFrame) {
 
 func (c *Context) Eval(code string, force bool) Value {
 	if !force && !c.CanEval {
-		c.OnRuntimeError("eval is forbidden!")
+		c.RaiseRuntimeError("eval is forbidden!")
 	}
 	val, _, ok := c.ImportFunc(c, "", code, ImportTypeScript, true)
 	if !ok {
-		c.OnRuntimeError("eval error")
+		c.RaiseRuntimeError("eval error")
 		return nil
 	}
 	return val

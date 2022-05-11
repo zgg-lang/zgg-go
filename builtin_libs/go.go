@@ -58,7 +58,7 @@ func libGo(c *Context) ValueObject {
 	}), c)
 	lib.SetMember("append", NewNativeFunction("go.append", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 2 {
-			c.OnRuntimeError("go.append requires at least 2 arguments")
+			c.RaiseRuntimeError("go.append requires at least 2 arguments")
 		}
 		slice := args[0].(GoValue).ReflectedValue()
 		toAppend := make([]reflect.Value, len(args)-1)
@@ -110,7 +110,7 @@ func libGo(c *Context) ValueObject {
 			)
 			mapType = mapGoType.GoType()
 			if mapType.Kind() != reflect.Map {
-				c.OnRuntimeError("makeMap: arg mapType is not map")
+				c.RaiseRuntimeError("makeMap: arg mapType is not map")
 			}
 		} else {
 			var (
@@ -155,7 +155,7 @@ func libGo(c *Context) ValueObject {
 			ArgRuleRequired{"t", TypeGoValue, &t},
 		)
 		if tt, ok = t.ToGoValue().(reflect.Type); !ok {
-			c.OnRuntimeError("go.type require reflect.Type")
+			c.RaiseRuntimeError("go.type require reflect.Type")
 		}
 		return NewGoType(tt)
 	}), c)

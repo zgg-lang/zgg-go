@@ -180,11 +180,11 @@ func toGoValue(c *Context, v Value, goVal reflect.Value) {
 			goIntr := goVal.Addr().Interface()
 			jsonBs, err := json.Marshal(buildJson(v, c))
 			if err != nil {
-				c.OnRuntimeError("value %s to go value error: " + err.Error())
+				c.RaiseRuntimeError("value %s to go value error: " + err.Error())
 				return
 			}
 			if err := json.Unmarshal(jsonBs, goIntr); err != nil {
-				c.OnRuntimeError("value %s, to go value %s error: %s", v.ToString(c), goVal.Type().String(), err.Error())
+				c.RaiseRuntimeError("value %s, to go value %s error: %s", v.ToString(c), goVal.Type().String(), err.Error())
 				return
 			}
 		}
@@ -201,7 +201,7 @@ func WrapGoFunction(f interface{}) *ValueBuiltinFunction {
 		name: fTyp.Name(),
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != fTyp.NumIn() {
-				c.OnRuntimeError(fmt.Sprintf("%s arguments requires %d get %d", fTyp.Name(), fTyp.NumIn(), len(args)))
+				c.RaiseRuntimeError(fmt.Sprintf("%s arguments requires %d get %d", fTyp.Name(), fTyp.NumIn(), len(args)))
 				return nil
 			}
 			in := make([]reflect.Value, len(args))

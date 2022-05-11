@@ -38,11 +38,11 @@ func getKvManagerClass() ValueType {
 			if adapterScheme, ok := adapter.(ValueStr); ok {
 				u, err := url.Parse(adapterScheme.Value())
 				if err != nil {
-					c.OnRuntimeError("parse adapter scheme error %s", err)
+					c.RaiseRuntimeError("parse adapter scheme error %s", err)
 				}
 				adapterClass, found := kvAdapterSchemeMap[u.Scheme]
 				if !found {
-					c.OnRuntimeError("unknown adapter scheme %s", u.Scheme)
+					c.RaiseRuntimeError("unknown adapter scheme %s", u.Scheme)
 				}
 				adapter = NewObjectAndInit(adapterClass, c, NewGoValue(u))
 			}
@@ -92,7 +92,7 @@ func initKvFileSystemAdapter() {
 				if os.IsNotExist(err) {
 					return Nil()
 				}
-				c.OnRuntimeError("FileSystemAdapter.get: read file %s error %s", filename, err)
+				c.RaiseRuntimeError("FileSystemAdapter.get: read file %s error %s", filename, err)
 			}
 			return NewBytes(bs)
 		}).
@@ -115,7 +115,7 @@ func initKvFileSystemAdapter() {
 				bs = []byte(data.ToString(c))
 			}
 			if err := ioutil.WriteFile(filename, bs, 0600); err != nil {
-				c.OnRuntimeError("FileSystemAdapter.set: write file %s error %s", filename, err)
+				c.RaiseRuntimeError("FileSystemAdapter.set: write file %s error %s", filename, err)
 			}
 			return Undefined()
 		}).
@@ -130,7 +130,7 @@ func initKvRedisAdapter() {
 			q := u.Query()
 			var host string
 			if h, p, err := net.SplitHostPort(u.Host); err != nil {
-				c.OnRuntimeError("RedisAdapter.__init__: invalid url %s: %s", u, err)
+				c.RaiseRuntimeError("RedisAdapter.__init__: invalid url %s: %s", u, err)
 			} else {
 				if p == "" {
 					p = "6379"
@@ -179,7 +179,7 @@ func initKvRedisAdapter() {
 				if err == redis.ErrNil {
 					return Nil()
 				}
-				c.OnRuntimeError("RedisAdapter.get: %s", err)
+				c.RaiseRuntimeError("RedisAdapter.get: %s", err)
 			}
 			return NewBytes(bs)
 		}).
@@ -211,7 +211,7 @@ func initKvRedisAdapter() {
 				_, err = conn.Do("SET", redisKey, bs)
 			}
 			if err != nil {
-				c.OnRuntimeError("RedisAdapter.set: %s", err)
+				c.RaiseRuntimeError("RedisAdapter.set: %s", err)
 			}
 			return Undefined()
 		}).
@@ -229,11 +229,11 @@ func initKvRedisHashAdapter() {
 				hashkey = hashkey[1:]
 			}
 			if hashkey == "" {
-				c.OnRuntimeError("RedisHashAdapter.__init__: hashkey cannot be empty")
+				c.RaiseRuntimeError("RedisHashAdapter.__init__: hashkey cannot be empty")
 			}
 			var host string
 			if h, p, err := net.SplitHostPort(u.Host); err != nil {
-				c.OnRuntimeError("RedisHashAdapter.__init__: invalid url %s: %s", u, err)
+				c.RaiseRuntimeError("RedisHashAdapter.__init__: invalid url %s: %s", u, err)
 			} else {
 				if p == "" {
 					p = "6379"
@@ -279,7 +279,7 @@ func initKvRedisHashAdapter() {
 				if err == redis.ErrNil {
 					return Nil()
 				}
-				c.OnRuntimeError("RedisHashAdapter.get: %s", err)
+				c.RaiseRuntimeError("RedisHashAdapter.get: %s", err)
 			}
 			return NewBytes(bs)
 		}).
@@ -304,7 +304,7 @@ func initKvRedisHashAdapter() {
 			conn := pool.Get()
 			defer conn.Close()
 			if _, err := conn.Do("HSET", hashkey.ToString(c), prefix+key.Value(), bs); err != nil {
-				c.OnRuntimeError("RedisHashAdapter.set: %s", err)
+				c.RaiseRuntimeError("RedisHashAdapter.set: %s", err)
 			}
 			return Undefined()
 		}).

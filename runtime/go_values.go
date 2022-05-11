@@ -113,11 +113,11 @@ func (v GoValue) canBeNil() bool {
 
 func (v GoValue) SetMember(key string, val Value, c *Context) {
 	if v.v.Kind() != reflect.Struct {
-		c.OnRuntimeError("cannot set member on non-struct go value. value kind is %s", v.v.Kind())
+		c.RaiseRuntimeError("cannot set member on non-struct go value. value kind is %s", v.v.Kind())
 	}
 	_, fieldFound := v.v.Type().FieldByName(key)
 	if !fieldFound {
-		c.OnRuntimeError("cannot set member %s: not exists", key)
+		c.RaiseRuntimeError("cannot set member %s: not exists", key)
 	}
 	fieldVal := v.v.FieldByName(key)
 	if gv, ok := val.(GoValue); ok {
@@ -172,7 +172,7 @@ var (
 	gomapEach = NewNativeFunction("gomap.each", func(c *Context, this Value, args []Value) Value {
 		m := this.(GoValue).ReflectedValue()
 		if m.Kind() != reflect.Map {
-			c.OnRuntimeError("cannot invoke each from a non-map go value. value kind is %s", m.Kind())
+			c.RaiseRuntimeError("cannot invoke each from a non-map go value. value kind is %s", m.Kind())
 		}
 		callback := c.MustCallable(args[0], "callback")
 		keys := m.MapKeys()
@@ -185,7 +185,7 @@ var (
 	gomapGet = NewNativeFunction("gomap.get", func(c *Context, this Value, args []Value) Value {
 		m := this.(GoValue).ReflectedValue()
 		if m.Kind() != reflect.Map {
-			c.OnRuntimeError("cannot get from a non-map go value")
+			c.RaiseRuntimeError("cannot get from a non-map go value")
 		}
 		key := MakeGoValueByArg(c, args[0], m.Type().Key())
 		val := m.MapIndex(key)
@@ -197,7 +197,7 @@ var (
 	gomapSet = NewNativeFunction("gomap.set", func(c *Context, this Value, args []Value) Value {
 		m := this.(GoValue).ReflectedValue()
 		if m.Kind() != reflect.Map {
-			c.OnRuntimeError("cannot set a non-map go value")
+			c.RaiseRuntimeError("cannot set a non-map go value")
 		}
 		key := MakeGoValueByArg(c, args[0], m.Type().Key())
 		val := MakeGoValueByArg(c, args[1], m.Type().Elem())
@@ -207,7 +207,7 @@ var (
 	gomapDelete = NewNativeFunction("gomap.delete", func(c *Context, this Value, args []Value) Value {
 		m := this.(GoValue).ReflectedValue()
 		if m.Kind() != reflect.Map {
-			c.OnRuntimeError("cannot delete from a non-map go value")
+			c.RaiseRuntimeError("cannot delete from a non-map go value")
 		}
 		key := MakeGoValueByArg(c, args[0], m.Type().Key())
 		val := reflect.Zero(m.Type().Elem())
@@ -217,12 +217,12 @@ var (
 	gochanRecv = NewNativeFunction("gochan.recv", func(c *Context, this Value, args []Value) Value {
 		m := this.(GoValue).ReflectedValue()
 		if m.Kind() != reflect.Chan {
-			c.OnRuntimeError("cannot await from a non-chan go value")
+			c.RaiseRuntimeError("cannot await from a non-chan go value")
 		}
 		if len(args) > 0 {
 			timeout, ok := gochanGetTimeout(args[0])
 			if !ok {
-				c.OnRuntimeError("invalid timeout argument %s", args[0].ToString(c))
+				c.RaiseRuntimeError("invalid timeout argument %s", args[0].ToString(c))
 			}
 			if timeout <= 0 {
 				v, ok := m.TryRecv()
@@ -245,13 +245,13 @@ var (
 	gochanSend = NewNativeFunction("gochan.send", func(c *Context, this Value, args []Value) Value {
 		m := this.(GoValue).ReflectedValue()
 		if m.Kind() != reflect.Chan {
-			c.OnRuntimeError("cannot send to a non-chan go value")
+			c.RaiseRuntimeError("cannot send to a non-chan go value")
 		}
 		v := MakeGoValueByArg(c, args[0], m.Type().Elem())
 		if len(args) > 1 {
 			timeout, ok := gochanGetTimeout(args[1])
 			if !ok {
-				c.OnRuntimeError("invalid timeout argument %s", args[1].ToString(c))
+				c.RaiseRuntimeError("invalid timeout argument %s", args[1].ToString(c))
 			}
 			if timeout <= 0 {
 				return NewBool(m.TrySend(v))
@@ -400,7 +400,7 @@ func (v GoValue) GetMember(key string, c *Context) Value {
 		case reflect.Float32, reflect.Float64:
 			return NewInt(int64(v.v.Float()))
 		default:
-			c.OnRuntimeError("cannot convert type %s to int", v.v.Kind())
+			c.RaiseRuntimeError("cannot convert type %s to int", v.v.Kind())
 		}
 	case "float":
 		switch v.v.Kind() {
@@ -411,7 +411,7 @@ func (v GoValue) GetMember(key string, c *Context) Value {
 		case reflect.Float32, reflect.Float64:
 			return NewFloat(float64(v.v.Float()))
 		default:
-			c.OnRuntimeError("cannot convert type %s to float", v.v.Kind())
+			c.RaiseRuntimeError("cannot convert type %s to float", v.v.Kind())
 		}
 	case "str":
 		return NewStr(fmt.Sprint(v.v.Interface()))
@@ -422,7 +422,7 @@ func (v GoValue) GetMember(key string, c *Context) Value {
 		case reflect.Bool:
 			return NewBool(v.v.Bool())
 		default:
-			c.OnRuntimeError("cannot convert type %s to bool", v.v.Kind())
+			c.RaiseRuntimeError("cannot convert type %s to bool", v.v.Kind())
 		}
 	case "bytes":
 		if bs, ok := v.v.Interface().([]byte); ok {
@@ -527,10 +527,10 @@ func (v GoFunc) Invoke(c *Context, this Value, args []Value) {
 	numArgs := method.NumIn()
 	if len(args) != numArgs {
 		if numArgs == 0 {
-			c.OnRuntimeError("invoke %s fail: argument num not match. required %d got %d", v.GetName(), numArgs, len(args))
+			c.RaiseRuntimeError("invoke %s fail: argument num not match. required %d got %d", v.GetName(), numArgs, len(args))
 			return
 		} else if len(args) < numArgs-1 || !method.IsVariadic() {
-			c.OnRuntimeError("invoke %s fail: argument num not match. required %d got %d", v.GetName(), numArgs, len(args))
+			c.RaiseRuntimeError("invoke %s fail: argument num not match. required %d got %d", v.GetName(), numArgs, len(args))
 			return
 		}
 	}

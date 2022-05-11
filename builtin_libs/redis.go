@@ -27,7 +27,7 @@ func libRedis(*Context) ValueObject {
 		)
 		conn, err := redis.Dial("tcp", redisAddr.Value(), redis.DialDatabase(int(initDB.Value())))
 		if err != nil {
-			c.OnRuntimeError("redis.open error: %s", err)
+			c.RaiseRuntimeError("redis.open error: %s", err)
 			return nil
 		}
 		return NewObjectAndInit(redisClientClass, c, NewGoValue(conn))
@@ -79,13 +79,13 @@ func initRedisClientClass() ValueType {
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
 			conn := this.GetMember("_conn", c).ToGoValue().(redis.Conn)
 			if err := conn.Close(); err != nil {
-				c.OnRuntimeError("RedisClient.close fail on close: %s", err)
+				c.RaiseRuntimeError("RedisClient.close fail on close: %s", err)
 			}
 			return Undefined()
 		}).
 		Method("exec", func(c *Context, this ValueObject, args []Value) Value {
 			if len(args) < 1 {
-				c.OnRuntimeError("RedisClient.exec requires at least 1 argument")
+				c.RaiseRuntimeError("RedisClient.exec requires at least 1 argument")
 				return nil
 			}
 			conn := this.GetMember("_conn", c).ToGoValue().(redis.Conn)
@@ -112,17 +112,17 @@ func initRedisClientClass() ValueType {
 						cmdName = cmd.ToString(c)
 					}
 					if err := conn.Send(cmdName, cmdArgs...); err != nil {
-						c.OnRuntimeError("redis.exec: send piped command error: %s", err)
+						c.RaiseRuntimeError("redis.exec: send piped command error: %s", err)
 					}
 				}
 				if err := conn.Flush(); err != nil {
-					c.OnRuntimeError("redis.exec: flush piped command error: %s", err)
+					c.RaiseRuntimeError("redis.exec: flush piped command error: %s", err)
 				}
 				rv := NewArray(n)
 				for i := 0; i < n; i++ {
 					rsp, err := conn.Receive()
 					if err != nil {
-						c.OnRuntimeError("redis.exec: receive piped command error: %s", err)
+						c.RaiseRuntimeError("redis.exec: receive piped command error: %s", err)
 					}
 					if rsp == nil {
 						rv.PushBack(Nil())
@@ -143,7 +143,7 @@ func initRedisClientClass() ValueType {
 					if err == redis.ErrNil {
 						return Nil()
 					}
-					c.OnRuntimeError("RedisClient.exec error %s", err)
+					c.RaiseRuntimeError("RedisClient.exec error %s", err)
 					return nil
 				}
 				if rsp == nil {
@@ -161,18 +161,18 @@ func initRedisClientClass() ValueType {
 			conn := this.GetMember("_conn", c).ToGoValue().(redis.Conn)
 			for _, cmd := range cmds {
 				if err := conn.Send(cmd.cmd, cmd.args...); err != nil {
-					c.OnRuntimeError("redis.pipe: send piped command error: %s", err)
+					c.RaiseRuntimeError("redis.pipe: send piped command error: %s", err)
 				}
 			}
 			if err := conn.Flush(); err != nil {
-				c.OnRuntimeError("redis.pipe: flush piped command error: %s", err)
+				c.RaiseRuntimeError("redis.pipe: flush piped command error: %s", err)
 			}
 			n := len(cmds)
 			rv := NewArray(n)
 			for i := 0; i < n; i++ {
 				rsp, err := conn.Receive()
 				if err != nil {
-					c.OnRuntimeError("redis.exec: receive piped command error: %s", err)
+					c.RaiseRuntimeError("redis.exec: receive piped command error: %s", err)
 				}
 				if rsp == nil {
 					rv.PushBack(Nil())
@@ -197,7 +197,7 @@ func initRedisClientClass() ValueType {
 						if err == redis.ErrNil {
 							return Nil()
 						}
-						c.OnRuntimeError("RedisClient.exec error %s", err)
+						c.RaiseRuntimeError("RedisClient.exec error %s", err)
 						return nil
 					}
 					if rsp == nil {

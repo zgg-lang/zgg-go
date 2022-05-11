@@ -39,7 +39,7 @@ func cronGetAppClass() ValueType {
 					newContext.Invoke(callback, nil, Args(this))
 				})
 				if err != nil {
-					c.OnRuntimeError("CronApp.add: add callback error: %s", err)
+					c.RaiseRuntimeError("CronApp.add: add callback error: %s", err)
 				}
 				return NewInt(int64(id))
 			}).

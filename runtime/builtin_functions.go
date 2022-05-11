@@ -156,7 +156,7 @@ func mustGetArgStr(c *Context, name string, args []Value, n int) string {
 	if s, ok := getArgStr(args, n); ok {
 		return s
 	}
-	c.OnRuntimeError("get string argument at position %d fail", n)
+	c.RaiseRuntimeError("get string argument at position %d fail", n)
 	return ""
 }
 
@@ -164,7 +164,7 @@ func mustGetArgInt(c *Context, name string, args []Value, n int) int {
 	if s, ok := getArgInt(args, n); ok {
 		return s
 	}
-	c.OnRuntimeError("get string argument at position %d fail", n)
+	c.RaiseRuntimeError("get string argument at position %d fail", n)
 	return -1
 }
 
@@ -184,7 +184,7 @@ var builtinFunctions = map[string]ValueCallable{
 		name: "printf",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) < 1 {
-				c.OnRuntimeError("printf requires at least 1 argument")
+				c.RaiseRuntimeError("printf requires at least 1 argument")
 				return nil
 			}
 			printFmt := args[0].ToString(c)
@@ -201,7 +201,7 @@ var builtinFunctions = map[string]ValueCallable{
 		name: "sprintf",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) < 1 {
-				c.OnRuntimeError("printf requires at least 1 argument")
+				c.RaiseRuntimeError("printf requires at least 1 argument")
 				return nil
 			}
 			printFmt := args[0].ToString(c)
@@ -322,7 +322,7 @@ var builtinFunctions = map[string]ValueCallable{
 			if v, ok := args[0].(CanLen); ok {
 				return NewInt(int64(v.Len()))
 			}
-			c.OnRuntimeError("len function's argument cannot be %s", args[0].Type().Name)
+			c.RaiseRuntimeError("len function's argument cannot be %s", args[0].Type().Name)
 			return nil
 		},
 	},
@@ -334,37 +334,37 @@ var builtinFunctions = map[string]ValueCallable{
 			switch len(args) {
 			case 3:
 				if step, ok = getInt(args[2]); !ok {
-					c.OnRuntimeError("range arg 2 must be an integer")
+					c.RaiseRuntimeError("range arg 2 must be an integer")
 					return nil
 				}
 				if step == 0 {
-					c.OnRuntimeError("range argument step cannot be 0")
+					c.RaiseRuntimeError("range argument step cannot be 0")
 					return nil
 				}
 				fallthrough
 			case 2:
 				if begin, ok = getInt(args[0]); !ok {
-					c.OnRuntimeError("range arg 0 must be an integer")
+					c.RaiseRuntimeError("range arg 0 must be an integer")
 					return nil
 				}
 				if end, ok = getInt(args[1]); !ok {
-					c.OnRuntimeError("range arg 1 must be an integer")
+					c.RaiseRuntimeError("range arg 1 must be an integer")
 					return nil
 				}
 			case 1:
 				if end, ok = getInt(args[0]); !ok {
-					c.OnRuntimeError("range arg 0 must be an integer")
+					c.RaiseRuntimeError("range arg 0 must be an integer")
 					return nil
 				}
 			}
 			if step < 0 {
 				if begin <= end {
-					c.OnRuntimeError("range when step < 0, begin must be greater than end")
+					c.RaiseRuntimeError("range when step < 0, begin must be greater than end")
 					return nil
 				}
 			} else {
 				if begin >= end {
-					c.OnRuntimeError("range when step > 0, begin must be less than end")
+					c.RaiseRuntimeError("range when step > 0, begin must be less than end")
 					return nil
 				}
 			}
@@ -377,7 +377,7 @@ var builtinFunctions = map[string]ValueCallable{
 	},
 	"seq": NewNativeFunction("seq", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 2 {
-			c.OnRuntimeError("seq requires 2 arguments")
+			c.RaiseRuntimeError("seq requires 2 arguments")
 			return nil
 		}
 		next := args[0]
@@ -387,7 +387,7 @@ var builtinFunctions = map[string]ValueCallable{
 		for {
 			nextFn := next.GetMember("__next__", c)
 			if !c.IsCallable(nextFn) {
-				c.OnRuntimeError("not all the items in seq has __next__ method")
+				c.RaiseRuntimeError("not all the items in seq has __next__ method")
 			}
 			c.Invoke(nextFn, next, Args())
 			next = c.RetVal
@@ -402,7 +402,7 @@ var builtinFunctions = map[string]ValueCallable{
 		name: "sha1",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("sha1 requires only one argument")
+				c.RaiseRuntimeError("sha1 requires only one argument")
 				return nil
 			}
 			var bs []byte
@@ -412,7 +412,7 @@ var builtinFunctions = map[string]ValueCallable{
 			case ValueBytes:
 				bs = arg.Value()
 			default:
-				c.OnRuntimeError("sha1 module arg must be a string or bytes")
+				c.RaiseRuntimeError("sha1 module arg must be a string or bytes")
 				return nil
 			}
 			res := sha1.Sum(bs)
@@ -423,7 +423,7 @@ var builtinFunctions = map[string]ValueCallable{
 		name: "sha256",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("sha256 requires only one argument")
+				c.RaiseRuntimeError("sha256 requires only one argument")
 				return nil
 			}
 			var bs []byte
@@ -433,7 +433,7 @@ var builtinFunctions = map[string]ValueCallable{
 			case ValueBytes:
 				bs = arg.Value()
 			default:
-				c.OnRuntimeError("sha256 module arg must be a string or bytes")
+				c.RaiseRuntimeError("sha256 module arg must be a string or bytes")
 				return nil
 			}
 			res := sha256.Sum256(bs)
@@ -444,7 +444,7 @@ var builtinFunctions = map[string]ValueCallable{
 		name: "md5",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("md5 requires only one argument")
+				c.RaiseRuntimeError("md5 requires only one argument")
 				return nil
 			}
 			var bs []byte
@@ -454,7 +454,7 @@ var builtinFunctions = map[string]ValueCallable{
 			case ValueBytes:
 				bs = arg.Value()
 			default:
-				c.OnRuntimeError("md5 module arg must be a string or bytes")
+				c.RaiseRuntimeError("md5 module arg must be a string or bytes")
 				return nil
 			}
 			res := md5.Sum(bs)
@@ -475,7 +475,7 @@ var builtinFunctions = map[string]ValueCallable{
 		case 1:
 			modName = c.MustStr(args[0], "import modName")
 		default:
-			c.OnRuntimeError("import requires only one or two argument(s)")
+			c.RaiseRuntimeError("import requires only one or two argument(s)")
 			return nil
 		}
 		return c.ImportModule(modName, forceReload, importType)
@@ -484,7 +484,7 @@ var builtinFunctions = map[string]ValueCallable{
 		name: "isUndefined",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("isUndefined requires only one argument")
+				c.RaiseRuntimeError("isUndefined requires only one argument")
 				return nil
 			}
 			_, rv := args[0].(ValueUndefined)
@@ -495,7 +495,7 @@ var builtinFunctions = map[string]ValueCallable{
 		name: "isCallable",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("isCallable requires only one argument")
+				c.RaiseRuntimeError("isCallable requires only one argument")
 				return nil
 			}
 			return NewBool(c.IsCallable(args[0]))
@@ -526,7 +526,7 @@ var builtinFunctions = map[string]ValueCallable{
 			if l > 0 {
 				lastVal := arr.GetIndex(l-1, c)
 				if err, isErr := lastVal.ToGoValue().(error); isErr {
-					c.OnRuntimeError("assertError failed: %s", err)
+					c.RaiseRuntimeError("assertError failed: %s", err)
 					return nil
 				}
 				l--
@@ -544,7 +544,7 @@ var builtinFunctions = map[string]ValueCallable{
 			}
 		}
 		if err, isErr := args[0].ToGoValue().(error); isErr {
-			c.OnRuntimeError("assertError failed: %s", err)
+			c.RaiseRuntimeError("assertError failed: %s", err)
 			return nil
 		}
 		return args[0]
@@ -559,12 +559,12 @@ var builtinFunctions = map[string]ValueCallable{
 				if maxVal, isInt := args[0].(ValueInt); isInt {
 					max := int(maxVal.Value())
 					if max <= 0 {
-						c.OnRuntimeError(fmt.Sprintf("rand(n): expected n > 0, got %d", max))
+						c.RaiseRuntimeError(fmt.Sprintf("rand(n): expected n > 0, got %d", max))
 						return nil
 					}
 					return NewInt(int64(rand.Intn(max)))
 				} else {
-					c.OnRuntimeError("rand(n): n must be an integer")
+					c.RaiseRuntimeError("rand(n): n must be an integer")
 					return nil
 				}
 			case 2:
@@ -573,24 +573,24 @@ var builtinFunctions = map[string]ValueCallable{
 					if minVal, isInt := args[0].(ValueInt); isInt {
 						min = int(minVal.Value())
 					} else {
-						c.OnRuntimeError("rand(m, n): m must be an integer")
+						c.RaiseRuntimeError("rand(m, n): m must be an integer")
 						return nil
 					}
 					if maxVal, isInt := args[1].(ValueInt); isInt {
 						max = int(maxVal.Value())
 					} else {
-						c.OnRuntimeError("rand(m, n): n must be an integer")
+						c.RaiseRuntimeError("rand(m, n): n must be an integer")
 						return nil
 					}
 					if max <= min {
-						c.OnRuntimeError(fmt.Sprintf("rand(m, n): expected n > m, got m=%d, n=%d", min, max))
+						c.RaiseRuntimeError(fmt.Sprintf("rand(m, n): expected n > m, got m=%d, n=%d", min, max))
 						return nil
 					}
 					rv := rand.Intn(max-min) + min
 					return NewInt(int64(rv))
 				}
 			default:
-				c.OnRuntimeError("rand requires 0 or 1 or 2 argument")
+				c.RaiseRuntimeError("rand requires 0 or 1 or 2 argument")
 				return nil
 			}
 		},
@@ -610,19 +610,19 @@ var builtinFunctions = map[string]ValueCallable{
 					evalCtx.ForceSetLocalValue(k, v)
 				})
 			} else {
-				c.OnRuntimeError("eval(code, [sandbox]): sandbox must be an object")
+				c.RaiseRuntimeError("eval(code, [sandbox]): sandbox must be an object")
 			}
 			fallthrough
 		case 1:
 			code = args[0].ToString(c)
 		default:
-			c.OnRuntimeError("eval requires 1 argument")
+			c.RaiseRuntimeError("eval requires 1 argument")
 		}
 		return evalCtx.Eval(code, false)
 	}),
 	"bind": NewNativeFunction("bind", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 1 {
-			c.OnRuntimeError("bind requires at least 1 argument")
+			c.RaiseRuntimeError("bind requires at least 1 argument")
 		}
 		f := c.MustCallable(args[0])
 		args = args[1:]

@@ -92,7 +92,7 @@ func (e *ExprFunc) Eval(c *runtime.Context) {
 // expExpr.Eval(c)
 // expObj, isObj := c.RetVal.(runtime.ValueObject)
 // if !isObj {
-// c.OnRuntimeError("object: expand item must be an object")
+// c.RaiseRuntimeError("object: expand item must be an object")
 // return
 // }
 // expObj.Iterate(func(k string, v runtime.Value) {
@@ -128,7 +128,7 @@ func (e *ExprObject) Eval(c *runtime.Context) {
 			it.Obj.Eval(c)
 			o, ok := c.RetVal.(runtime.ValueObject)
 			if !ok {
-				c.OnRuntimeError("object: expand item must be an object")
+				c.RaiseRuntimeError("object: expand item must be an object")
 			}
 			o.Iterate(func(k string, v runtime.Value) {
 				rv.SetMember(k, v, c)
@@ -156,7 +156,7 @@ func (e *ExprArray) Eval(c *runtime.Context) {
 		if item.ShouldExpand {
 			expanded, isArr := val.(runtime.ValueArray)
 			if !isArr {
-				c.OnRuntimeError("array: expanded item must be an array")
+				c.RaiseRuntimeError("array: expanded item must be an array")
 				return
 			}
 			for i := 0; i < expanded.Len(); i++ {

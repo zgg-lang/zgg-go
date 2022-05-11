@@ -107,10 +107,10 @@ var builtinIntMethods = map[string]ValueCallable{
 	"times": NewNativeFunction("times", func(c *Context, this Value, args []Value) Value {
 		times := c.MustInt(this)
 		if times < 0 {
-			c.OnRuntimeError("int.times times must not less than 0, but got %d", times)
+			c.RaiseRuntimeError("int.times times must not less than 0, but got %d", times)
 		}
 		if len(args) != 1 {
-			c.OnRuntimeError("int.times requires 1 argument")
+			c.RaiseRuntimeError("int.times requires 1 argument")
 		}
 		callback := c.MustCallable(args[0])
 		for i := int64(0); i < times; i++ {

@@ -25,7 +25,7 @@ var nsqConsumerClass = NewClassBuilder("nsq.Consumer").
 			ArgRuleRequired{"addr", TypeStr, &addr},
 		)
 		if dt := dType.Value(); dt != "nsqd" && dt != "nsqlookupd" {
-			c.OnRuntimeError("nsq.Consumer.__init__ invalid dType %s", dt)
+			c.RaiseRuntimeError("nsq.Consumer.__init__ invalid dType %s", dt)
 		}
 		this.SetMember("_dType", dType, c)
 		this.SetMember("_addr", addr, c)
@@ -48,7 +48,7 @@ var nsqConsumerClass = NewClassBuilder("nsq.Consumer").
 		conf.LookupdPollInterval = 60 * time.Second
 		consumer, err := nsq.NewConsumer(topic.Value(), channel.Value(), conf)
 		if err != nil {
-			c.OnRuntimeError("create nsq consumer error %s", err)
+			c.RaiseRuntimeError("create nsq consumer error %s", err)
 		}
 		consumer.AddHandler(nsq.HandlerFunc(func(msg *nsq.Message) error {
 			newC := c.Clone()
@@ -64,10 +64,10 @@ var nsqConsumerClass = NewClassBuilder("nsq.Consumer").
 		case "nsqlookupd":
 			err = consumer.ConnectToNSQLookupd(addr)
 		default:
-			c.OnRuntimeError("invalid nsq dtype %s", dType)
+			c.RaiseRuntimeError("invalid nsq dtype %s", dType)
 		}
 		if err != nil {
-			c.OnRuntimeError("nsq consumer connect to lookupd err %s", err)
+			c.RaiseRuntimeError("nsq consumer connect to lookupd err %s", err)
 		}
 		consumers := c.MustArray(this.GetMember("_consumers", c))
 		consumers.PushBack(NewGoValue(consumer))

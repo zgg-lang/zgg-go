@@ -20,7 +20,7 @@ func libUrl(c *Context) ValueObject {
 		ev := encoded.Value()
 		r, err := url.QueryUnescape(ev)
 		if err != nil {
-			c.OnRuntimeError("decodeURIComponent: decode error! input \"%s\", error: %s", ev, err)
+			c.RaiseRuntimeError("decodeURIComponent: decode error! input \"%s\", error: %s", ev, err)
 		}
 		return NewStr(r)
 	}, "encoded"), c)
@@ -45,7 +45,7 @@ func libUrl(c *Context) ValueObject {
 		EnsureFuncParams(c, "decodeForm", args, ArgRuleRequired{"form", TypeStr, &formStr})
 		form, err := url.ParseQuery(formStr.Value())
 		if err != nil {
-			c.OnRuntimeError("decodeForm parse error: %s", err)
+			c.RaiseRuntimeError("decodeForm parse error: %s", err)
 		}
 		return FromGoValue(reflect.ValueOf(form), c)
 	}), c)

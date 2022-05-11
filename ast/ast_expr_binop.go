@@ -116,7 +116,7 @@ func (n *ExprPlus) Eval(c *runtime.Context) {
 			}
 		}
 	}
-	c.OnRuntimeError(fmt.Sprintf("Cannot plus between %s and %s", left.Type().Name, right.Type().Name))
+	c.RaiseRuntimeError(fmt.Sprintf("Cannot plus between %s and %s", left.Type().Name, right.Type().Name))
 }
 
 type ExprMinus struct {
@@ -183,7 +183,7 @@ func (n *ExprMinus) Eval(c *runtime.Context) {
 			}
 		}
 	}
-	c.OnRuntimeError(fmt.Sprintf("Cannot minus between %s and %s", left.Type().Name, right.Type().Name))
+	c.RaiseRuntimeError(fmt.Sprintf("Cannot minus between %s and %s", left.Type().Name, right.Type().Name))
 }
 
 type ExprTimes struct {
@@ -277,7 +277,7 @@ func (n *ExprTimes) Eval(c *runtime.Context) {
 			}
 		}
 	}
-	c.OnRuntimeError(fmt.Sprintf("Cannot times between %s and %s", left.Type().Name, right.Type().Name))
+	c.RaiseRuntimeError(fmt.Sprintf("Cannot times between %s and %s", left.Type().Name, right.Type().Name))
 }
 
 type ExprDiv struct {
@@ -291,14 +291,14 @@ func (n *ExprDiv) Eval(c *runtime.Context) {
 		switch val2 := right.(type) {
 		case runtime.ValueInt:
 			if val2.Value() == 0 {
-				c.OnRuntimeError("division by zero")
+				c.RaiseRuntimeError("division by zero")
 				return
 			}
 			c.RetVal = runtime.NewInt(val1.Value() / val2.Value())
 			return
 		case runtime.ValueFloat:
 			if val2.Value() == 0 {
-				c.OnRuntimeError("Div by zero!")
+				c.RaiseRuntimeError("Div by zero!")
 				return
 			}
 			c.RetVal = runtime.NewFloat(float64(val1.Value()) / val2.Value())
@@ -314,14 +314,14 @@ func (n *ExprDiv) Eval(c *runtime.Context) {
 		switch val2 := right.(type) {
 		case runtime.ValueInt:
 			if val2.Value() == 0 {
-				c.OnRuntimeError("Div by zero!")
+				c.RaiseRuntimeError("Div by zero!")
 				return
 			}
 			c.RetVal = runtime.NewFloat(val1.Value() / float64(val2.Value()))
 			return
 		case runtime.ValueFloat:
 			if val2.Value() == 0 {
-				c.OnRuntimeError("Div by zero!")
+				c.RaiseRuntimeError("Div by zero!")
 				return
 			}
 			c.RetVal = runtime.NewFloat(val1.Value() / val2.Value())
@@ -361,7 +361,7 @@ func (n *ExprDiv) Eval(c *runtime.Context) {
 			}
 		}
 	}
-	c.OnRuntimeError(fmt.Sprintf("Cannot div between %s and %s", left.Type().Name, right.Type().Name))
+	c.RaiseRuntimeError(fmt.Sprintf("Cannot div between %s and %s", left.Type().Name, right.Type().Name))
 }
 
 type ExprMod struct {
@@ -375,7 +375,7 @@ func (n *ExprMod) Eval(c *runtime.Context) {
 		switch val2 := right.(type) {
 		case runtime.ValueInt:
 			if val2.Value() == 0 {
-				c.OnRuntimeError("Div by zero!")
+				c.RaiseRuntimeError("Div by zero!")
 				return
 			}
 			c.RetVal = runtime.NewInt(val1.Value() % val2.Value())
@@ -389,7 +389,7 @@ func (n *ExprMod) Eval(c *runtime.Context) {
 			}
 		}
 	}
-	c.OnRuntimeError(fmt.Sprintf("Cannot mod between %s and %s", left.Type().Name, right.Type().Name))
+	c.RaiseRuntimeError(fmt.Sprintf("Cannot mod between %s and %s", left.Type().Name, right.Type().Name))
 }
 
 type ExprPow struct {
@@ -429,7 +429,7 @@ func (n *ExprPow) Eval(c *runtime.Context) {
 			}
 		}
 	}
-	c.OnRuntimeError(fmt.Sprintf("Cannot pow between %s and %s", left.Type().Name, right.Type().Name))
+	c.RaiseRuntimeError(fmt.Sprintf("Cannot pow between %s and %s", left.Type().Name, right.Type().Name))
 }
 
 type ExprAssign struct {
@@ -496,7 +496,7 @@ func (assign *ExprLocalAssign) Eval(c *runtime.Context) {
 				if item.ShouldExpand {
 					itemArr, isArr := itemVal.(runtime.ValueArray)
 					if !isArr {
-						c.OnRuntimeError("expand value must be an array")
+						c.RaiseRuntimeError("expand value must be an array")
 						return
 					}
 					for k := 0; k < itemArr.Len(); k++ {
@@ -558,7 +558,7 @@ type ExprCompare struct {
 
 func (expr *ExprCompare) Eval(c *runtime.Context) {
 	if len(expr.Ops) != len(expr.Targets) {
-		c.OnRuntimeError("invalid compare!")
+		c.RaiseRuntimeError("invalid compare!")
 	}
 	expr.First.Eval(c)
 	v1 := ensureZgg(c.RetVal, c)
@@ -580,7 +580,7 @@ func (expr *ExprCompare) Eval(c *runtime.Context) {
 		case CompareOpGE:
 			overridedMethod = "__ge__"
 		default:
-			c.OnRuntimeError("invalid compare op %d", op)
+			c.RaiseRuntimeError("invalid compare op %d", op)
 		}
 		if opFn, ok := v1.GetMember(overridedMethod, c).(runtime.ValueCallable); ok {
 			c.Invoke(opFn, v1, runtime.Args(v2))
@@ -606,7 +606,7 @@ func (expr *ExprCompare) Eval(c *runtime.Context) {
 		case CompareOpGE:
 			isTrue = (comp & (runtime.CompareResultGreater | runtime.CompareResultEqual)) != 0
 		default:
-			c.OnRuntimeError("invalid compare op %d", op)
+			c.RaiseRuntimeError("invalid compare op %d", op)
 		}
 		if !isTrue {
 			c.RetVal = runtime.NewBool(false)

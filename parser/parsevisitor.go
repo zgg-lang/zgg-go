@@ -333,7 +333,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 	if name == "" {
 		node, errs := ParseReplFromString(code, true)
 		if len(errs) > 0 || node == nil {
-			c.OnRuntimeError("parse code %s fail", code)
+			c.RaiseRuntimeError("parse code %s fail", code)
 			return
 		}
 		node.Eval(c)
@@ -347,17 +347,17 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 		if lib, found := stdgolibs.FindLib(c, goName); found {
 			return lib, 0, true
 		}
-		c.OnRuntimeError("import: cannot find module file %s", name)
+		c.RaiseRuntimeError("import: cannot find module file %s", name)
 		return
 	}
 	filename := GetModulePath(c, name)
 	if filename == "" {
-		c.OnRuntimeError("import: cannot find module file %s", name)
+		c.RaiseRuntimeError("import: cannot find module file %s", name)
 		return
 	}
 	fi, err := os.Stat(filename)
 	if err != nil {
-		c.OnRuntimeError("import: stat file %s err %s", name, err)
+		c.RaiseRuntimeError("import: stat file %s err %s", name, err)
 		return
 	}
 	var lastTime int64
@@ -376,12 +376,12 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 	if strings.ToLower(filepath.Ext(filename)) == ".so" {
 		p, err := plugin.Open(filename)
 		if err != nil {
-			c.OnRuntimeError("import: load %s in %s error %s", name, filename, err)
+			c.RaiseRuntimeError("import: load %s in %s error %s", name, filename, err)
 			return
 		}
 		s, err := p.Lookup("New")
 		if err != nil {
-			c.OnRuntimeError("import: load %s find entry error %s", name, err)
+			c.RaiseRuntimeError("import: load %s find entry error %s", name, err)
 			return
 		}
 		switch newFn := s.(type) {
@@ -404,7 +404,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 					if initScript, ok := initSymbol.(*string); ok {
 						modAst, errs := ParseFromString(filename, *initScript, true)
 						if len(errs) > 0 || modAst == nil {
-							c.OnRuntimeError("parse module %s initScript fail", name)
+							c.RaiseRuntimeError("parse module %s initScript fail", name)
 							return
 						}
 						modC := c.Clone()
@@ -419,12 +419,12 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 				return
 			}
 		default:
-			c.OnRuntimeError("import: load %s find entry error", name)
+			c.RaiseRuntimeError("import: load %s find entry error", name)
 		}
 	}
 	codeBs, err := ioutil.ReadFile(filename)
 	if err != nil {
-		c.OnRuntimeError("import: read file %s err %s", filename, err)
+		c.RaiseRuntimeError("import: read file %s err %s", filename, err)
 		return
 	}
 	defer func() {
@@ -439,7 +439,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 	case runtime.ImportTypeScript:
 		modAst, errs := ParseFromString(filename, string(codeBs), true)
 		if len(errs) > 0 || modAst == nil {
-			c.OnRuntimeError("parse module %s fail", name)
+			c.RaiseRuntimeError("parse module %s fail", name)
 			return
 		}
 		modC := c.Clone()
@@ -458,7 +458,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 			rd := csv.NewReader(bytes.NewReader(codeBs))
 			all, err := rd.ReadAll()
 			if err != nil {
-				c.OnRuntimeError("read csv %s fail: %s", name, err)
+				c.RaiseRuntimeError("read csv %s fail: %s", name, err)
 			}
 			rows := runtime.NewArray(len(all))
 			for _, row := range all {
@@ -475,7 +475,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 		{
 			var r interface{}
 			if err := json.Unmarshal(codeBs, &r); err != nil {
-				c.OnRuntimeError("read json %s fail: %s", name, err)
+				c.RaiseRuntimeError("read json %s fail: %s", name, err)
 			}
 			modVal, success = runtime.FromGoValue(reflect.ValueOf(r), c), true
 			return

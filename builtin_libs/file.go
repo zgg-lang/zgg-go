@@ -18,39 +18,39 @@ func libFile(*Context) ValueObject {
 	lib := NewObject()
 	lib.SetMember("readBytes", NewNativeFunction("file.readBytes", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 1 {
-			c.OnRuntimeError("file.readBytes requires 1 argument")
+			c.RaiseRuntimeError("file.readBytes requires 1 argument")
 			return nil
 		}
 		filename := c.MustStr(args[0])
 		bytes, err := ioutil.ReadFile(filename)
 		if err != nil {
-			c.OnRuntimeError("read file error: %s", err.Error())
+			c.RaiseRuntimeError("read file error: %s", err.Error())
 			return nil
 		}
 		return NewBytes(bytes)
 	}), nil)
 	lib.SetMember("readString", NewNativeFunction("file.readString", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 1 {
-			c.OnRuntimeError("file.readString requires 1 argument")
+			c.RaiseRuntimeError("file.readString requires 1 argument")
 			return nil
 		}
 		filename := c.MustStr(args[0])
 		bytes, err := ioutil.ReadFile(filename)
 		if err != nil {
-			c.OnRuntimeError("read file error: %s", err.Error())
+			c.RaiseRuntimeError("read file error: %s", err.Error())
 			return nil
 		}
 		return NewStr(string(bytes))
 	}), nil)
 	lib.SetMember("readLines", NewNativeFunction("file.readLines", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 1 {
-			c.OnRuntimeError("file.readLines requires 1 argument")
+			c.RaiseRuntimeError("file.readLines requires 1 argument")
 			return nil
 		}
 		filename := c.MustStr(args[0])
 		file, err := os.Open(filename)
 		if err != nil {
-			c.OnRuntimeError("open file error: %s", err.Error())
+			c.RaiseRuntimeError("open file error: %s", err.Error())
 			return nil
 		}
 		defer file.Close()
@@ -64,20 +64,20 @@ func libFile(*Context) ValueObject {
 				rv.PushBack(NewStr(line))
 				break
 			} else {
-				c.OnRuntimeError("read lines error %s", err)
+				c.RaiseRuntimeError("read lines error %s", err)
 			}
 		}
 		return rv
 	}), nil)
 	lib.SetMember("rewrite", NewNativeFunction("file.rewrite", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 1 {
-			c.OnRuntimeError("file.rewrite requires at lease 1 argument")
+			c.RaiseRuntimeError("file.rewrite requires at lease 1 argument")
 			return nil
 		}
 		filename := c.MustStr(args[0])
 		file, err := os.Create(filename)
 		if err != nil {
-			c.OnRuntimeError("create file error: %s", err.Error())
+			c.RaiseRuntimeError("create file error: %s", err.Error())
 			return nil
 		}
 		defer file.Close()
@@ -93,7 +93,7 @@ func libFile(*Context) ValueObject {
 			for written := 0; written < len(bs); {
 				n, err := file.Write(bs[written:])
 				if err != nil {
-					c.OnRuntimeError("write file error: %s", err)
+					c.RaiseRuntimeError("write file error: %s", err)
 					return nil
 				}
 				written += n
@@ -104,13 +104,13 @@ func libFile(*Context) ValueObject {
 	}), nil)
 	lib.SetMember("append", NewNativeFunction("file.append", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 1 {
-			c.OnRuntimeError("file.append requires at lease 1 argument")
+			c.RaiseRuntimeError("file.append requires at lease 1 argument")
 			return nil
 		}
 		filename := c.MustStr(args[0])
 		file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE, 0666)
 		if err != nil {
-			c.OnRuntimeError("create file error: %s", err.Error())
+			c.RaiseRuntimeError("create file error: %s", err.Error())
 			return nil
 		}
 		defer file.Close()
@@ -126,7 +126,7 @@ func libFile(*Context) ValueObject {
 			for written := 0; written < len(bs); {
 				n, err := file.Write(bs[written:])
 				if err != nil {
-					c.OnRuntimeError("write file error: %s", err)
+					c.RaiseRuntimeError("write file error: %s", err)
 					return nil
 				}
 				written += n

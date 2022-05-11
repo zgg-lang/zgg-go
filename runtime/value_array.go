@@ -44,7 +44,7 @@ func (v ValueArray) SetIndex(index int, value Value, c *Context) {
 		index += v.Len()
 	}
 	if index < 0 || index >= v.Len() {
-		c.OnRuntimeError(fmt.Sprintf("set array item error: Out of bound length %d index %d", v.Len(), index))
+		c.RaiseRuntimeError(fmt.Sprintf("set array item error: Out of bound length %d index %d", v.Len(), index))
 		return
 	}
 	(*v.Values)[index] = value
@@ -205,12 +205,12 @@ var builtinArrayMethods = map[string]ValueCallable{
 	"filter": &ValueBuiltinFunction{
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("array.filter: arguments length must be 1")
+				c.RaiseRuntimeError("array.filter: arguments length must be 1")
 				return nil
 			}
 			f, isCallable := args[0].(ValueCallable)
 			if !isCallable {
-				c.OnRuntimeError("array.filter: argument 0 must be callable")
+				c.RaiseRuntimeError("array.filter: argument 0 must be callable")
 				return nil
 			}
 			thisArr := thisArg.(ValueArray)
@@ -235,7 +235,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 			}
 			f, isCallable := args[0].(ValueCallable)
 			if !isCallable {
-				c.OnRuntimeError("array.reduce: argument 0 must be callable")
+				c.RaiseRuntimeError("array.reduce: argument 0 must be callable")
 				return nil
 			}
 			var initVal Value
@@ -260,12 +260,12 @@ var builtinArrayMethods = map[string]ValueCallable{
 	"each": &ValueBuiltinFunction{
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("array.each: arguments length must be 1")
+				c.RaiseRuntimeError("array.each: arguments length must be 1")
 				return nil
 			}
 			f, isCallable := args[0].(ValueCallable)
 			if !isCallable {
-				c.OnRuntimeError("array.each: argument 0 must be callable")
+				c.RaiseRuntimeError("array.each: argument 0 must be callable")
 				return nil
 			}
 			rv := NewArray()
@@ -297,7 +297,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 				{
 					endArg, isInt := args[1].(ValueInt)
 					if !isInt {
-						c.OnRuntimeError("array.slice arg 1 must be int")
+						c.RaiseRuntimeError("array.slice arg 1 must be int")
 						return nil
 					}
 					end = int(endArg.Value())
@@ -310,7 +310,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 				{
 					beginArg, isInt := args[0].(ValueInt)
 					if !isInt {
-						c.OnRuntimeError("array.slice arg 0 must be int")
+						c.RaiseRuntimeError("array.slice arg 0 must be int")
 						return nil
 					}
 					begin = int(beginArg.Value())
@@ -320,7 +320,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 				}
 			case 0:
 			default:
-				c.OnRuntimeError("array.slice arguments num error")
+				c.RaiseRuntimeError("array.slice arguments num error")
 				return nil
 			}
 			if end > arrLen {
@@ -338,7 +338,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 	"sort": NewNativeFunction("array.sort", func(c *Context, thisArg Value, args []Value) Value {
 		thisArr, isArr := thisArg.(ValueArray)
 		if !isArr {
-			c.OnRuntimeError("array.sort: not an array")
+			c.RaiseRuntimeError("array.sort: not an array")
 			return nil
 		}
 		var (
@@ -467,18 +467,18 @@ var builtinArrayMethods = map[string]ValueCallable{
 			return constUndefined
 		}
 		if len(args) != 1 {
-			c.OnRuntimeError("array.times requires 1 argument")
+			c.RaiseRuntimeError("array.times requires 1 argument")
 		}
 		cb := c.MustCallable(args[0])
 		ends := make([]int, thisArr.Len())
 		for i := range ends {
 			nv, ok := thisArr.GetIndex(i, c).(ValueInt)
 			if !ok {
-				c.OnRuntimeError("array.times: all arguments must be integer")
+				c.RaiseRuntimeError("array.times: all arguments must be integer")
 			}
 			n := nv.AsInt()
 			if n < 1 {
-				c.OnRuntimeError("array.times: all arguments must be positive number")
+				c.RaiseRuntimeError("array.times: all arguments must be positive number")
 			}
 			ends[i] = n
 		}

@@ -176,9 +176,9 @@ func EnsureFuncParams(c *Context, funcName string, args []Value, rules ...ArgRul
 			funcName += r.name()
 		}
 		if minArgs == len(rules) {
-			c.OnRuntimeError("%s) requires %d argument(s), but got %d", funcName, len(rules), len(args))
+			c.RaiseRuntimeError("%s) requires %d argument(s), but got %d", funcName, len(rules), len(args))
 		} else {
-			c.OnRuntimeError("%s) requires at least %d argument(s), but got %d", funcName, minArgs, len(args))
+			c.RaiseRuntimeError("%s) requires at least %d argument(s), but got %d", funcName, minArgs, len(args))
 		}
 		return
 	}
@@ -191,7 +191,7 @@ func EnsureFuncParams(c *Context, funcName string, args []Value, rules ...ArgRul
 				}
 				funcName += r.name()
 			}
-			c.OnRuntimeError("%s) arg %s should be a(n) %s", funcName, rule.name(), rule.expectedTypeName())
+			c.RaiseRuntimeError("%s) arg %s should be a(n) %s", funcName, rule.name(), rule.expectedTypeName())
 			return
 		}
 	}
@@ -251,7 +251,7 @@ func GetValueByPath(c *Context, v Value, path string) Value {
 		if m := pathIndex.FindStringSubmatch(path); len(m) == 2 {
 			index, err := strconv.Atoi(m[1])
 			if err != nil {
-				c.OnRuntimeError("invalud index %s", m[1])
+				c.RaiseRuntimeError("invalud index %s", m[1])
 			}
 			if index < 0 {
 				if clv, ok := v.(CanLen); ok {

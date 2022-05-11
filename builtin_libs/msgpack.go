@@ -14,12 +14,12 @@ func libMsgpack(*Context) ValueObject {
 		"msgpack.encode",
 		func(c *Context, this Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("msgpack.encode: requires 1 argument")
+				c.RaiseRuntimeError("msgpack.encode: requires 1 argument")
 				return nil
 			}
 			bs, err := msgpack.Marshal(args[0].ToGoValue())
 			if err != nil {
-				c.OnRuntimeError("msgpack.encode: " + err.Error())
+				c.RaiseRuntimeError("msgpack.encode: " + err.Error())
 				return nil
 			}
 			return NewBytes(bs)
@@ -29,7 +29,7 @@ func libMsgpack(*Context) ValueObject {
 		"msgpack.decode",
 		func(c *Context, this Value, args []Value) Value {
 			if len(args) != 1 {
-				c.OnRuntimeError("msgpack.decode: requires 1 argument")
+				c.RaiseRuntimeError("msgpack.decode: requires 1 argument")
 				return nil
 			}
 			var bs []byte
@@ -39,12 +39,12 @@ func libMsgpack(*Context) ValueObject {
 			case ValueBytes:
 				bs = arg.Value()
 			default:
-				c.OnRuntimeError("msgpack.decode: argument must be a string or a bytes")
+				c.RaiseRuntimeError("msgpack.decode: argument must be a string or a bytes")
 				return nil
 			}
 			var j interface{}
 			if err := msgpack.Unmarshal(bs, &j); err != nil {
-				c.OnRuntimeError("msgpack.decode: " + err.Error())
+				c.RaiseRuntimeError("msgpack.decode: " + err.Error())
 				return nil
 			}
 			return FromGoValue(reflect.ValueOf(j), c)

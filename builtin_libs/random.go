@@ -18,18 +18,18 @@ func libRandom(*Context) ValueObject {
 		case 1:
 			n := c.MustInt(args[0], "random:end")
 			if n <= 0 {
-				c.OnRuntimeError("random(end): end must > 0")
+				c.RaiseRuntimeError("random(end): end must > 0")
 			}
 			return NewInt(rand.Int63n(n))
 		case 2:
 			m := c.MustInt(args[0], "random:began")
 			n := c.MustInt(args[1], "random:end")
 			if n <= m {
-				c.OnRuntimeError("random(begin, end): end must > begin")
+				c.RaiseRuntimeError("random(begin, end): end must > begin")
 			}
 			return NewInt(rand.Int63n(n-m) + m)
 		default:
-			c.OnRuntimeError("random: requires 0/1/2 argument(s)")
+			c.RaiseRuntimeError("random: requires 0/1/2 argument(s)")
 		}
 		return nil
 	}), nil)
@@ -40,7 +40,7 @@ func libRandom(*Context) ValueObject {
 			ArgRuleRequired{"choices", TypeArray, &choices},
 		)
 		if choices.Len() < 1 {
-			c.OnRuntimeError("random.choice(arr): arr cannot be empty")
+			c.RaiseRuntimeError("random.choice(arr): arr cannot be empty")
 			return nil
 		}
 		n := rand.Intn(choices.Len())

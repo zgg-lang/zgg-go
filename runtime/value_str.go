@@ -100,7 +100,7 @@ var builtinStrMethods = map[string]ValueCallable{
 				{
 					endVal, ok := args[1].(ValueInt)
 					if !ok {
-						c.OnRuntimeError("str.substr arguments 1 must be an integer")
+						c.RaiseRuntimeError("str.substr arguments 1 must be an integer")
 						return nil
 					}
 					end = int(endVal.Value())
@@ -113,7 +113,7 @@ var builtinStrMethods = map[string]ValueCallable{
 				{
 					beginVal, ok := args[0].(ValueInt)
 					if !ok {
-						c.OnRuntimeError("str.substr arguments 0 must be an integer")
+						c.RaiseRuntimeError("str.substr arguments 0 must be an integer")
 						return nil
 					}
 					begin = int(beginVal.Value())
@@ -122,7 +122,7 @@ var builtinStrMethods = map[string]ValueCallable{
 					}
 				}
 			default:
-				c.OnRuntimeError("str.substr requires 0~2 arguments")
+				c.RaiseRuntimeError("str.substr requires 0~2 arguments")
 				return nil
 			}
 			if begin < 0 {
@@ -169,18 +169,18 @@ var builtinStrMethods = map[string]ValueCallable{
 			start := 0
 			ok := true
 			if pattern, ok = getArgStr(args, 0); !ok {
-				c.OnRuntimeError("str.find argument 0 pattern error")
+				c.RaiseRuntimeError("str.find argument 0 pattern error")
 				return nil
 			}
 			if len(args) > 1 {
 				if start, ok = getArgInt(args, 1); !ok {
-					c.OnRuntimeError("str.find argument 1 startPos error")
+					c.RaiseRuntimeError("str.find argument 1 startPos error")
 					return nil
 				}
 			}
 			re, err := regexp.Compile(pattern)
 			if err != nil {
-				c.OnRuntimeError("str.find argument 0 pattern error: %s", err)
+				c.RaiseRuntimeError("str.find argument 0 pattern error: %s", err)
 				return nil
 			}
 			return NewStr(re.FindString(this[start:]))
@@ -206,7 +206,7 @@ var builtinStrMethods = map[string]ValueCallable{
 		case 1:
 			sp = c.MustStr(args[0], "str.split argument sp")
 		default:
-			c.OnRuntimeError("str.split usage: split(sp[, limit=-1])")
+			c.RaiseRuntimeError("str.split usage: split(sp[, limit=-1])")
 		}
 		items := strings.SplitN(str, sp, limit)
 		rv := NewArray(len(items))
@@ -277,7 +277,7 @@ var builtinStrMethods = map[string]ValueCallable{
 		)
 		p, err := regexp.Compile(pattern.Value())
 		if err != nil {
-			c.OnRuntimeError("str.replace: regexp %s is invalid: %s", pattern.Value(), err)
+			c.RaiseRuntimeError("str.replace: regexp %s is invalid: %s", pattern.Value(), err)
 		}
 		switch replType {
 		case 1: // By Callable
@@ -320,7 +320,7 @@ var builtinStrMethods = map[string]ValueCallable{
 		str := c.MustStr(thisArg)
 		bs, err := hex.DecodeString(str)
 		if err != nil {
-			c.OnRuntimeError("str.decodeHex decode failed: %s", err)
+			c.RaiseRuntimeError("str.decodeHex decode failed: %s", err)
 		}
 		return NewBytes(bs)
 	}),
@@ -328,7 +328,7 @@ var builtinStrMethods = map[string]ValueCallable{
 		str := c.MustStr(thisArg)
 		bs, err := base64.StdEncoding.DecodeString(str)
 		if err != nil {
-			c.OnRuntimeError("str.decodeBase64 decode failed: %s", err)
+			c.RaiseRuntimeError("str.decodeBase64 decode failed: %s", err)
 		}
 		return NewBytes(bs)
 	}),

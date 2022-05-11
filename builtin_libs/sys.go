@@ -44,14 +44,14 @@ func libSys(c *Context) ValueObject {
 			os.Setenv(args[0].ToString(c), args[1].ToString(c))
 			return args[1]
 		}
-		c.OnRuntimeError("sys.env: invalid parameters")
+		c.RaiseRuntimeError("sys.env: invalid parameters")
 		return nil
 	}), nil)
 	lib.SetMember("Command", sysCommandClass, c)
 	lib.SetMember("createTempFile", NewNativeFunction("sys.createTempFile", func(c *Context, this Value, args []Value) Value {
 		file, err := ioutil.TempFile("", "")
 		if err != nil {
-			c.OnRuntimeError("sys.createTempFile: create fail %s", err.Error())
+			c.RaiseRuntimeError("sys.createTempFile: create fail %s", err.Error())
 			return nil
 		}
 		file.Close()
@@ -65,7 +65,7 @@ func libSys(c *Context) ValueObject {
 	}), nil)
 	lib.SetMember("getResult", NewNativeFunction("sys.getResult", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 1 {
-			c.OnRuntimeError("sys.getResult requires at least 1 argument")
+			c.RaiseRuntimeError("sys.getResult requires at least 1 argument")
 		}
 		name := args[0].ToString(c)
 		cmdArgs := make([]string, len(args)-1)
@@ -75,7 +75,7 @@ func libSys(c *Context) ValueObject {
 		cmd := exec.Command(name, cmdArgs...)
 		bs, err := cmd.CombinedOutput()
 		if err != nil {
-			c.OnRuntimeError("sys.getResult: command %s error %s", name, err)
+			c.RaiseRuntimeError("sys.getResult: command %s error %s", name, err)
 		}
 		return NewStr(string(bs))
 	}), nil)
@@ -97,7 +97,7 @@ var sysCommandClass = func() ValueType {
 	return NewClassBuilder("sys.Command").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
 			if len(args) < 1 {
-				c.OnRuntimeError("sys.Command.__init__(cmd, ...args) requires at lease 1 argument(s)")
+				c.RaiseRuntimeError("sys.Command.__init__(cmd, ...args) requires at lease 1 argument(s)")
 				return
 			}
 			name := args[0].ToString(c)
@@ -118,10 +118,10 @@ var sysCommandClass = func() ValueType {
 			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
-				c.OnRuntimeError("sys.Command,input get stdin pipe error %s", err)
+				c.RaiseRuntimeError("sys.Command,input get stdin pipe error %s", err)
 			}
 			if err := cmd.Start(); err != nil {
-				c.OnRuntimeError("sys.Command.start: command %s start fail %s", name.ToString(c), err)
+				c.RaiseRuntimeError("sys.Command.start: command %s start fail %s", name.ToString(c), err)
 				return nil
 			}
 			this.SetMember("_input", NewGoValue(stdin), c)
@@ -142,7 +142,7 @@ var sysCommandClass = func() ValueType {
 					c.DebugLog("stdin %+v, bs %+v", stdin, bs)
 					n, err := stdin.Write(bs[i:])
 					if err != nil {
-						c.OnRuntimeError("sys.Command.input write arg into stdin error %s", err)
+						c.RaiseRuntimeError("sys.Command.input write arg into stdin error %s", err)
 					}
 					i += n
 				}
@@ -154,13 +154,13 @@ var sysCommandClass = func() ValueType {
 			EnsureFuncParams(c, "sys.Command.onStdout", args, ArgRuleRequired{"callback", TypeFunc, &callback})
 			stdoutCallback := this.GetMember("_onStdout", c)
 			if _, isUndefined := stdoutCallback.(ValueUndefined); !isUndefined {
-				c.OnRuntimeError("sys.Command.onStdout: stdoutCallback already set")
+				c.RaiseRuntimeError("sys.Command.onStdout: stdoutCallback already set")
 				return nil
 			}
 			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
-				c.OnRuntimeError("sys.Command.onStdout: get stdout pipe error %s", err)
+				c.RaiseRuntimeError("sys.Command.onStdout: get stdout pipe error %s", err)
 			}
 			go captureOutput(stdout, callback, c)
 			this.SetMember("_onStdout", callback, c)
@@ -171,13 +171,13 @@ var sysCommandClass = func() ValueType {
 			EnsureFuncParams(c, "sys.Command.onStderr", args, ArgRuleRequired{"callback", TypeFunc, &callback})
 			stderrCallback := this.GetMember("_onStderr", c)
 			if _, isUndefined := stderrCallback.(ValueUndefined); !isUndefined {
-				c.OnRuntimeError("sys.Command.onStderr: stderrCallback already set")
+				c.RaiseRuntimeError("sys.Command.onStderr: stderrCallback already set")
 				return nil
 			}
 			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
 			stderr, err := cmd.StderrPipe()
 			if err != nil {
-				c.OnRuntimeError("sys.Command.onStderr: get stderr pipe error %s", err)
+				c.RaiseRuntimeError("sys.Command.onStderr: get stderr pipe error %s", err)
 			}
 			go captureOutput(stderr, callback, c)
 			this.SetMember("_onStderr", callback, c)
@@ -189,7 +189,7 @@ var sysCommandClass = func() ValueType {
 			started := c.MustBool(this.GetMember("_started", c))
 			if !started {
 				if err := cmd.Start(); err != nil {
-					c.OnRuntimeError("sys.Command.start: command %s start fail %s", name.ToString(c), err)
+					c.RaiseRuntimeError("sys.Command.start: command %s start fail %s", name.ToString(c), err)
 					return nil
 				}
 				this.SetMember("_started", NewBool(true), c)
@@ -198,7 +198,7 @@ var sysCommandClass = func() ValueType {
 				if ee, ok := err.(*exec.ExitError); ok {
 					return NewInt(int64(ee.ExitCode()))
 				}
-				c.OnRuntimeError("sys.Command.wait: command %s error %s", name.ToString(c), err)
+				c.RaiseRuntimeError("sys.Command.wait: command %s error %s", name.ToString(c), err)
 				return nil
 			}
 			return NewInt(0)
@@ -208,7 +208,7 @@ var sysCommandClass = func() ValueType {
 			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
 			bs, err := cmd.CombinedOutput()
 			if err != nil {
-				c.OnRuntimeError("sys.Command.waitOutput: command %s error %s", name.ToString(c), err)
+				c.RaiseRuntimeError("sys.Command.waitOutput: command %s error %s", name.ToString(c), err)
 				return nil
 			}
 			return NewBytes(bs)

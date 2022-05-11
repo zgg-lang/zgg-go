@@ -43,7 +43,7 @@ func (e *basicComprehension) evalWithCustomIterable(c *runtime.Context, getIter 
 	c.Invoke(getIter.(runtime.ValueCallable), nil, runtime.NoArgs)
 	iter := c.RetVal
 	if !c.IsCallable(iter) {
-		c.OnRuntimeError("__iter__ should return a callable value")
+		c.RaiseRuntimeError("__iter__ should return a callable value")
 	}
 	iterFn := iter.(runtime.ValueCallable)
 	for i := 0; ; i++ {
@@ -94,13 +94,13 @@ func (e *basicComprehension) evalWithRange(c *runtime.Context, setResult SetResu
 	current := c.RetVal
 	curInt, isInt := current.(runtime.ValueInt)
 	if !isInt {
-		c.OnRuntimeError("array comprehension: range begin must be an integer")
+		c.RaiseRuntimeError("array comprehension: range begin must be an integer")
 	}
 	e.RangeEnd.Eval(c)
 	end := c.RetVal
 	endInt, isInt := end.(runtime.ValueInt)
 	if !isInt {
-		c.OnRuntimeError("array comprehension: range end must be an integer")
+		c.RaiseRuntimeError("array comprehension: range end must be an integer")
 	}
 	i := -1
 	ci, ei := curInt.Value(), endInt.Value()

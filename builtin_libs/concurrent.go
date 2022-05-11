@@ -11,12 +11,12 @@ func libConcurrent(*Context) ValueObject {
 	lib := NewObject()
 	lib.SetMember("start", NewNativeFunction("start", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 1 {
-			c.OnRuntimeError("concurrent.start: requires at least 1 argument")
+			c.RaiseRuntimeError("concurrent.start: requires at least 1 argument")
 			return nil
 		}
 		callee, isCallable := args[0].(ValueCallable)
 		if !isCallable {
-			c.OnRuntimeError("concurrent.start: argument 0 must callable")
+			c.RaiseRuntimeError("concurrent.start: argument 0 must callable")
 			return nil
 		}
 		c.StartThread(callee, nil, args[1:])
@@ -27,7 +27,7 @@ func libConcurrent(*Context) ValueObject {
 		for i, arg := range args {
 			callee, isCallable := arg.(ValueCallable)
 			if !isCallable {
-				c.OnRuntimeError("concurrent.all: argument %d must callable", i)
+				c.RaiseRuntimeError("concurrent.all: argument %d must callable", i)
 				return nil
 			}
 			c.StartThread(callee, nil, []Value{})
@@ -62,11 +62,11 @@ func libConcurrent(*Context) ValueObject {
 				switch len(args) {
 				case 1:
 					if !c.IsCallable(args[0]) {
-						c.OnRuntimeError("run: first argument must callable")
+						c.RaiseRuntimeError("run: first argument must callable")
 						return nil
 					}
 				default:
-					c.OnRuntimeError("run: requires 1 argument(s)")
+					c.RaiseRuntimeError("run: requires 1 argument(s)")
 					return nil
 				}
 				lockVal := this.GetMember("__lock", c).ToGoValue().(*sync.Mutex)
@@ -118,13 +118,13 @@ func libConcurrent(*Context) ValueObject {
 		objLimiter := NewClassBuilder("Limiter").
 			Constructor(func(c *Context, this ValueObject, args []Value) {
 				if len(args) > 1 {
-					c.OnRuntimeError("Excutor.__init__: requires 0 or 1 argument(s)")
+					c.RaiseRuntimeError("Excutor.__init__: requires 0 or 1 argument(s)")
 				}
 				max := 1
 				if len(args) == 1 {
 					max = int(c.MustInt(args[0], "Limiter.__init__(maxConcurrent): maxConcurrent"))
 					if max < 1 {
-						c.OnRuntimeError("Limiter.__init__(maxConcurrent): maxConcurrent must > 0")
+						c.RaiseRuntimeError("Limiter.__init__(maxConcurrent): maxConcurrent must > 0")
 					}
 				}
 				ch := make(chan bool, max)
@@ -134,11 +134,11 @@ func libConcurrent(*Context) ValueObject {
 				switch len(args) {
 				case 1:
 					if !c.IsCallable(args[0]) {
-						c.OnRuntimeError("run: first argument must callable")
+						c.RaiseRuntimeError("run: first argument must callable")
 						return nil
 					}
 				default:
-					c.OnRuntimeError("run: requires 1 argument(s)")
+					c.RaiseRuntimeError("run: requires 1 argument(s)")
 					return nil
 				}
 				ch := this.GetMember("__ch", c).ToGoValue().(*chan bool)

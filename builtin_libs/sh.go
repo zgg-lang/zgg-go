@@ -41,12 +41,12 @@ func shGetCommandOutput(c *Context, cmds []*exec.Cmd) []byte {
 	}
 	for _, cmd := range cmds[:numCmd-1] {
 		if err := cmd.Start(); err != nil {
-			c.OnRuntimeError("start command %s error %s", cmd, err)
+			c.RaiseRuntimeError("start command %s error %s", cmd, err)
 		}
 	}
 	outs, err := cmds[numCmd-1].CombinedOutput()
 	if err != nil {
-		c.OnRuntimeError("wait cmd %s error %s", cmds[numCmd-1], err)
+		c.RaiseRuntimeError("wait cmd %s error %s", cmds[numCmd-1], err)
 	}
 	return outs
 }
@@ -88,7 +88,7 @@ func init() {
 			outs := shGetCommandOutput(c, cmds)
 			var j interface{}
 			if err := json.Unmarshal(outs, &j); err != nil {
-				c.OnRuntimeError("Command.json(): decode json error %s", err)
+				c.RaiseRuntimeError("Command.json(): decode json error %s", err)
 			}
 			return jsonToValue(j, c)
 		}).
@@ -110,7 +110,7 @@ func init() {
 				// cmd := exec.Command(name, cmdArgs...)
 				// bs, err := cmd.CombinedOutput()
 				// if err != nil {
-				// 	c.OnRuntimeError("sh command %s error %s", name, err)
+				// 	c.RaiseRuntimeError("sh command %s error %s", name, err)
 				// }
 				// return NewStr(string(bs))
 				cmd := exec.Command(name, cmdArgs...)

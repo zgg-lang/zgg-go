@@ -54,7 +54,7 @@ func libDb(*Context) ValueObject {
 			dsn := args[0].ToString(c)
 			dsnUrl, err := url.Parse(dsn)
 			if err != nil {
-				c.OnRuntimeError("db.open parse dsn error %s", err)
+				c.RaiseRuntimeError("db.open parse dsn error %s", err)
 				return nil
 			}
 			engine = NewStr(dsnUrl.Scheme)
@@ -85,12 +85,12 @@ func libDb(*Context) ValueObject {
 			}
 		}
 		if !driverFound {
-			c.OnRuntimeError("db.open unexpected driver %s", engine.Value())
+			c.RaiseRuntimeError("db.open unexpected driver %s", engine.Value())
 			return nil
 		}
 		db, err := sql.Open(engine.Value(), uri.Value())
 		if err != nil {
-			c.OnRuntimeError("db.open fail %s", err)
+			c.RaiseRuntimeError("db.open fail %s", err)
 			return nil
 		}
 		dialect, dialectFound := dbDialectMap[engine.Value()]
@@ -107,7 +107,7 @@ func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, c
 	if colTypes == nil {
 		colTypes, err = rows.ColumnTypes()
 		if err != nil {
-			c.OnRuntimeError("QueryResult.__init__ get column types error %s", err)
+			c.RaiseRuntimeError("QueryResult.__init__ get column types error %s", err)
 			return
 		}
 	}
@@ -116,7 +116,7 @@ func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, c
 		fields[i] = reflect.New(ct.ScanType()).Interface()
 	}
 	if err := rows.Scan(fields...); err != nil {
-		c.OnRuntimeError("QueryResult.next scan fields error %s", err)
+		c.RaiseRuntimeError("QueryResult.next scan fields error %s", err)
 		return
 	}
 	item := NewArray()
@@ -175,7 +175,7 @@ func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, c
 				{
 					v, err := strconv.ParseFloat(string(*fv), 64)
 					if err != nil {
-						c.OnRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
+						c.RaiseRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
 					}
 					item.PushBack(NewFloat(v))
 					set = true
@@ -206,7 +206,7 @@ func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, 
 	if colTypes == nil {
 		colTypes, err = rows.ColumnTypes()
 		if err != nil {
-			c.OnRuntimeError("QueryResult.__init__ get column types error %s", err)
+			c.RaiseRuntimeError("QueryResult.__init__ get column types error %s", err)
 			return
 		}
 	}
@@ -215,7 +215,7 @@ func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, 
 		fields[i] = reflect.New(ct.ScanType()).Interface()
 	}
 	if err := rows.Scan(fields...); err != nil {
-		c.OnRuntimeError("QueryResult.next scan fields error %s", err)
+		c.RaiseRuntimeError("QueryResult.next scan fields error %s", err)
 		return
 	}
 	item := NewObject()
@@ -274,7 +274,7 @@ func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, 
 				{
 					v, err := strconv.ParseFloat(string(*fv), 64)
 					if err != nil {
-						c.OnRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
+						c.RaiseRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
 					}
 					item.SetMember(colName, NewFloat(v), c)
 					set = true
@@ -306,7 +306,7 @@ func initQueryResultClass() ValueType {
 			rows := args[0].ToGoValue().(*sql.Rows)
 			colTypes, err := rows.ColumnTypes()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.__init__ get column types error %s", err)
+				c.RaiseRuntimeError("QueryResult.__init__ get column types error %s", err)
 				return
 			}
 			thisObj.SetMember("_rows", args[0], c)
@@ -320,7 +320,7 @@ func initQueryResultClass() ValueType {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.next get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
 				return nil
 			}
 			// for i, ct := range cts {
@@ -337,7 +337,7 @@ func initQueryResultClass() ValueType {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.next get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
 				return nil
 			}
 			return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
@@ -353,7 +353,7 @@ func initQueryResultClass() ValueType {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.next get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
 				return nil
 			}
 			rv := NewArray()
@@ -368,7 +368,7 @@ func initQueryResultClass() ValueType {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.allArray get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.allArray get columns error %s", err)
 				return nil
 			}
 			rv := NewArray()
@@ -383,7 +383,7 @@ func initQueryResultClass() ValueType {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.allOne get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.allOne get columns error %s", err)
 				return nil
 			}
 			rv := NewArray()
@@ -401,7 +401,7 @@ func initQueryResultClass() ValueType {
 			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.next get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
 				return nil
 			}
 			return dbScanRowsToObject(c, rows, cts, cols)
@@ -414,7 +414,7 @@ func initQueryResultClass() ValueType {
 			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.nextArray get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.nextArray get columns error %s", err)
 				return nil
 			}
 			return dbScanRowsToArray(c, rows, cts, cols)
@@ -427,7 +427,7 @@ func initQueryResultClass() ValueType {
 			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.nextArray get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.nextArray get columns error %s", err)
 				return nil
 			}
 			return dbScanRowsToArray(c, rows, cts, cols).GetIndex(0, c)
@@ -437,7 +437,7 @@ func initQueryResultClass() ValueType {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
-				c.OnRuntimeError("QueryResult.next get columns error %s", err)
+				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
 				return nil
 			}
 			colsValue := make([]Value, len(cols))
@@ -460,7 +460,7 @@ func initQueryResultClass() ValueType {
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
 			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
 			if err := rows.Close(); err != nil {
-				c.OnRuntimeError("QeuryResult.close error %s", err)
+				c.RaiseRuntimeError("QeuryResult.close error %s", err)
 				return nil
 			}
 			return Undefined()
@@ -504,7 +504,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			}
 			rows, err := db.ToGoValue().(*sql.DB).Query(querySql.Value(), queryArgs...)
 			if err != nil {
-				c.OnRuntimeError("Database.query query fail %s", err)
+				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
 			}
 			return NewObjectAndInit(queryResultClass, c, NewGoValue(rows))
@@ -514,7 +514,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
 			rows, err := db.ToGoValue().(*sql.DB).Query(dialect.ShowTablesSQL())
 			if err != nil {
-				c.OnRuntimeError("Database.query query fail %s", err)
+				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
 			}
 			res := NewObjectAndInit(queryResultClass, c, NewGoValue(rows))
@@ -534,18 +534,18 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			}
 			res, err := db.ToGoValue().(*sql.DB).Exec(execSql.Value(), execArgs...)
 			if err != nil {
-				c.OnRuntimeError("Database.execute execute fail %s", err)
+				c.RaiseRuntimeError("Database.execute execute fail %s", err)
 				return nil
 			}
 			rv := NewObject()
 			if affetcted, err := res.RowsAffected(); err != nil {
-				c.OnRuntimeError("Database.execute get affected fail %s", err)
+				c.RaiseRuntimeError("Database.execute get affected fail %s", err)
 				return nil
 			} else {
 				rv.SetMember("affected", NewInt(affetcted), c)
 			}
 			if lastInsertID, err := res.LastInsertId(); err != nil {
-				c.OnRuntimeError("Database.execute get lastInsertID fail %s", err)
+				c.RaiseRuntimeError("Database.execute get lastInsertID fail %s", err)
 				return nil
 			} else {
 				rv.SetMember("lastInsertID", NewInt(lastInsertID), c)
@@ -555,7 +555,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
 			db := this.GetMember("_db", c).ToGoValue().(*sql.DB)
 			if err := db.Close(); err != nil {
-				c.OnRuntimeError("Database.close error %s", err)
+				c.RaiseRuntimeError("Database.close error %s", err)
 				return nil
 			}
 			return Undefined()
@@ -596,7 +596,7 @@ func initDatabaseSessionClass() ValueType {
 				{
 					tx, err = session.Begin()
 					if err != nil {
-						c.OnRuntimeError("Session.__init__: begin transaction error %s", err)
+						c.RaiseRuntimeError("Session.__init__: begin transaction error %s", err)
 					}
 				}
 			case *sql.Tx:
@@ -605,12 +605,12 @@ func initDatabaseSessionClass() ValueType {
 					spId := fmt.Sprintf("_zggdb_sp_%d", atomic.AddInt64(&globalSpId, 1))
 					_, err = tx.Exec(fmt.Sprintf("SAVEPOINT %s", spId))
 					if err != nil {
-						c.OnRuntimeError("Session.__init__: begin transaction error %s", err)
+						c.RaiseRuntimeError("Session.__init__: begin transaction error %s", err)
 					}
 					this.SetMember("__spId", NewStr(spId), c)
 				}
 			default:
-				c.OnRuntimeError("unexpected session parent type")
+				c.RaiseRuntimeError("unexpected session parent type")
 			}
 			this.SetMember("_tx", NewGoValue(tx), c)
 			this.SetMember("_dialect", args[1], c)
@@ -644,7 +644,7 @@ func initDatabaseSessionClass() ValueType {
 			}
 			rows, err := tx.Query(querySql.Value(), queryArgs...)
 			if err != nil {
-				c.OnRuntimeError("Database.query query fail %s", err)
+				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
 			}
 			return NewObjectAndInit(dbQueryResultClass, c, NewGoValue(rows))
@@ -663,18 +663,18 @@ func initDatabaseSessionClass() ValueType {
 			}
 			res, err := tx.Exec(execSql.Value(), execArgs...)
 			if err != nil {
-				c.OnRuntimeError("Session.execute execute fail %s", err)
+				c.RaiseRuntimeError("Session.execute execute fail %s", err)
 				return nil
 			}
 			rv := NewObject()
 			if affetcted, err := res.RowsAffected(); err != nil {
-				c.OnRuntimeError("Session.execute get affected fail %s", err)
+				c.RaiseRuntimeError("Session.execute get affected fail %s", err)
 				return nil
 			} else {
 				rv.SetMember("affected", NewInt(affetcted), c)
 			}
 			if lastInsertID, err := res.LastInsertId(); err != nil {
-				c.OnRuntimeError("Session.execute get lastInsertID fail %s", err)
+				c.RaiseRuntimeError("Session.execute get lastInsertID fail %s", err)
 				return nil
 			} else {
 				rv.SetMember("lastInsertID", NewInt(lastInsertID), c)
@@ -685,12 +685,12 @@ func initDatabaseSessionClass() ValueType {
 			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
 			if spId, ok := this.GetMember("__spId", c).(ValueStr); ok {
 				if _, err := tx.Exec(fmt.Sprintf("RELEASE SAVEPOINT %s", spId.Value())); err != nil {
-					c.OnRuntimeError("Session.commit: %s", err)
+					c.RaiseRuntimeError("Session.commit: %s", err)
 					return nil
 				}
 			} else {
 				if err := tx.Commit(); err != nil {
-					c.OnRuntimeError("Session.commit: %s", err)
+					c.RaiseRuntimeError("Session.commit: %s", err)
 					return nil
 				}
 			}
@@ -700,12 +700,12 @@ func initDatabaseSessionClass() ValueType {
 			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
 			if spId, ok := this.GetMember("__spId", c).(ValueStr); ok {
 				if _, err := tx.Exec(fmt.Sprintf("ROLLBACK TO %s", spId.Value())); err != nil {
-					c.OnRuntimeError("Session.rollback: %s", err)
+					c.RaiseRuntimeError("Session.rollback: %s", err)
 					return nil
 				}
 			} else {
 				if err := tx.Rollback(); err != nil {
-					c.OnRuntimeError("Session.rollback: %s", err)
+					c.RaiseRuntimeError("Session.rollback: %s", err)
 					return nil
 				}
 			}
@@ -764,7 +764,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		if paramNum := strings.Count(key, "?"); paramNum > 0 {
 			if varr, isArr := val.(ValueArray); isArr {
 				if varr.Len() != paramNum {
-					c.OnRuntimeError("db filter %s has %d placeholder(s), but get %d parameter(s)", key, paramNum, varr.Len())
+					c.RaiseRuntimeError("db filter %s has %d placeholder(s), but get %d parameter(s)", key, paramNum, varr.Len())
 				}
 				filters.PushBack(NewStr(key))
 				for i := 0; i < paramNum; i++ {
@@ -772,7 +772,7 @@ func initDatabaseActiveRecordClass() ValueType {
 				}
 			} else {
 				if paramNum != 1 {
-					c.OnRuntimeError("db filter %s has %d placeholder(s), but get %d parameter(s)", key, paramNum, 1)
+					c.RaiseRuntimeError("db filter %s has %d placeholder(s), but get %d parameter(s)", key, paramNum, 1)
 				}
 				filters.PushBack(NewStr(key))
 				sqlArgs.PushBack(val)
@@ -1017,7 +1017,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		}).
 		Method("add", func(c *Context, this ValueObject, args []Value) Value {
 			if len(args) < 1 {
-				c.OnRuntimeError("requires at least 1 argument(s)")
+				c.RaiseRuntimeError("requires at least 1 argument(s)")
 			}
 			table := c.MustStr(this.GetMember("table", c))
 			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)

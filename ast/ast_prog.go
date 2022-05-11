@@ -117,7 +117,7 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 		c.Invoke(getIter.(runtime.ValueCallable), nil, runtime.NoArgs)
 		iter := c.RetVal
 		if !c.IsCallable(iter) {
-			c.OnRuntimeError("__iter__ should return a callable value")
+			c.RaiseRuntimeError("__iter__ should return a callable value")
 		}
 		iterFn := iter.(runtime.ValueCallable)
 		for i := 0; ; i++ {
@@ -177,7 +177,7 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 			}
 		}
 	default:
-		c.OnRuntimeError("value is not iterable")
+		c.RaiseRuntimeError("value is not iterable")
 	}
 }
 
@@ -191,13 +191,13 @@ func (s *StmtForEach) Eval(c *runtime.Context) {
 		curVal := c.RetVal
 		curInt, ok := curVal.(runtime.ValueInt)
 		if !ok {
-			c.OnRuntimeError("for in range must begin with an integer")
+			c.RaiseRuntimeError("for in range must begin with an integer")
 		}
 		s.RangeEnd.Eval(c)
 		endVal := c.RetVal
 		endInt, ok := endVal.(runtime.ValueInt)
 		if !ok {
-			c.OnRuntimeError("for in range must end with an integer")
+			c.RaiseRuntimeError("for in range must end with an integer")
 		}
 		cur := curInt.AsInt()
 		end := endInt.AsInt()
@@ -363,7 +363,7 @@ type StmtExport struct {
 
 func (s *StmtExport) Eval(c *runtime.Context) {
 	if !c.IsModuleTop() {
-		c.OnRuntimeError("export must be in module top block")
+		c.RaiseRuntimeError("export must be in module top block")
 		return
 	}
 	s.Expr.Eval(c)
@@ -381,7 +381,7 @@ type StmtClassDefine struct {
 
 func (s *StmtClassDefine) Eval(c *runtime.Context) {
 	if s.Exported && !c.IsModuleTop() {
-		c.OnRuntimeError("export must be in module top block")
+		c.RaiseRuntimeError("export must be in module top block")
 		return
 	}
 	newClass := runtime.NewType(runtime.NextTypeId(), s.Name)
@@ -394,7 +394,7 @@ func (s *StmtClassDefine) Eval(c *runtime.Context) {
 				baseVal = b.Value
 			}
 			if baseCls, isType := baseVal.(runtime.ValueType); !isType {
-				c.OnRuntimeError("base class %s is not a type", c.RetVal.ToString(c))
+				c.RaiseRuntimeError("base class %s is not a type", c.RetVal.ToString(c))
 				return
 			} else {
 				newClass.Bases[i] = baseCls
@@ -406,7 +406,7 @@ func (s *StmtClassDefine) Eval(c *runtime.Context) {
 	for _, item := range s.Body.Items {
 		it, ok := item.(ExprObjectItemKV)
 		if !ok {
-			c.OnRuntimeError("expand object is not acceptable in class defination")
+			c.RaiseRuntimeError("expand object is not acceptable in class defination")
 		}
 		it.Key.Eval(c)
 		key := c.RetVal.ToString(c)
@@ -420,7 +420,7 @@ func (s *StmtClassDefine) Eval(c *runtime.Context) {
 	for _, item := range s.Static.Items {
 		it, ok := item.(ExprObjectItemKV)
 		if !ok {
-			c.OnRuntimeError("expand object is not acceptable in class defination")
+			c.RaiseRuntimeError("expand object is not acceptable in class defination")
 		}
 		it.Key.Eval(c)
 		key := c.RetVal.ToString(c)
@@ -536,7 +536,7 @@ func (s *StmtAssert) Eval(c *runtime.Context) {
 	s.Expr.Eval(c)
 	if !c.RetVal.IsTrue() {
 		s.Message.Eval(c)
-		c.OnRuntimeError("Assertion fail! " + c.RetVal.ToString(c))
+		c.RaiseRuntimeError("Assertion fail! " + c.RetVal.ToString(c))
 	}
 }
 
@@ -550,16 +550,16 @@ type StmtExtend struct {
 
 func (s *StmtExtend) Eval(c *runtime.Context) {
 	if s.Exported && !c.IsModuleTop() {
-		c.OnRuntimeError("export must be in module top block")
+		c.RaiseRuntimeError("export must be in module top block")
 		return
 	}
 	s.Type.Eval(c)
 	t, ok := c.RetVal.(runtime.ValueType)
 	if !ok {
-		c.OnRuntimeError("extending a non-type value")
+		c.RaiseRuntimeError("extending a non-type value")
 	}
 	if len(s.Name) != len(s.Func) {
-		c.OnRuntimeError("bug! extend len(name) %d != len(func) %d", len(s.Name), len(s.Func))
+		c.RaiseRuntimeError("bug! extend len(name) %d != len(func) %d", len(s.Name), len(s.Func))
 	}
 	for i, name := range s.Name {
 		name.Eval(c)

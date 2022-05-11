@@ -211,7 +211,7 @@ func (ValueObject) GetRefs() []string {
 func (v ValueObject) Invoke(c *Context, this Value, args []Value) {
 	callMethod, ok := v.GetMember("__call__", c).(ValueCallable)
 	if !ok {
-		c.OnRuntimeError("invoked object is not callable")
+		c.RaiseRuntimeError("invoked object is not callable")
 		return
 	}
 	c.Invoke(callMethod, v, Args(args...))
@@ -251,7 +251,7 @@ var builtinObjMethods = map[string]*ValueBuiltinFunction{
 	"each": NewNativeFunction("object.each", func(c *Context, this Value, args []Value) Value {
 		o := c.MustObject(this)
 		if len(args) != 1 {
-			c.OnRuntimeError("object.each requires 1 argument")
+			c.RaiseRuntimeError("object.each requires 1 argument")
 		}
 		handleFunc := c.MustCallable(args[0], "object.each handleFunc")
 		o.Each(func(key string, value Value) bool {
