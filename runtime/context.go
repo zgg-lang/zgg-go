@@ -386,8 +386,8 @@ const (
 	ImportTypeJson   = "json"
 )
 
-func (c *Context) ImportModule(modPath string, forceReload bool, importType string) Value {
-	modVal, thisTime, success := c.ImportFunc(c, modPath, "", importType, forceReload)
+func (c *Context) ImportModule(modPath string, reloadIfNewer bool, importType string) Value {
+	modVal, thisTime, success := c.ImportFunc(c, modPath, "", importType, reloadIfNewer)
 	if !success {
 		c.RaiseRuntimeError("ImportError: module %s not exists", modPath)
 		return constUndefined

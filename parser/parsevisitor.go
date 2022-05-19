@@ -329,7 +329,7 @@ func debugTrace(beginTime time.Time) {
 	debugLogger.Output(2, "TRACE"+gap.String())
 }
 
-func SimpleImport(c *runtime.Context, name string, code string, importType string, force bool) (modVal runtime.Value, thisTime int64, success bool) {
+func SimpleImport(c *runtime.Context, name string, code string, importType string, reloadIfNewer bool) (modVal runtime.Value, thisTime int64, success bool) {
 	if name == "" {
 		node, errs := ParseReplFromString(code, true)
 		if len(errs) > 0 || node == nil {
@@ -362,7 +362,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 	}
 	var lastTime int64
 	modVal, lastTime = c.GetModule(filename)
-	if thisTime = fi.ModTime().UnixNano(); thisTime == lastTime && !force {
+	if thisTime = fi.ModTime().UnixNano(); thisTime == lastTime || !reloadIfNewer {
 		success = true
 		return
 	}
