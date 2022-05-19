@@ -362,7 +362,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 	}
 	var lastTime int64
 	modVal, lastTime = c.GetModule(filename)
-	if thisTime = fi.ModTime().UnixNano(); thisTime == lastTime || !reloadIfNewer {
+	if thisTime = fi.ModTime().UnixNano(); thisTime == lastTime || (lastTime != 0 && !reloadIfNewer) {
 		success = true
 		return
 	}
