@@ -73,10 +73,7 @@ func (v ValueInt) CompareTo(other Value, c *Context) CompareResult {
 }
 
 func (v ValueInt) GetMember(name string, c *Context) Value {
-	if member, found := builtinIntMethods[name]; found {
-		return makeMember(v, member)
-	}
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (ValueInt) GetIndex(int, *Context) Value {
@@ -101,6 +98,7 @@ func initIntPool() {
 
 func init() {
 	intPoolInitOnce.Do(initIntPool)
+	addMembersAndStatics(TypeInt, builtinIntMethods)
 }
 
 var builtinIntMethods = map[string]ValueCallable{

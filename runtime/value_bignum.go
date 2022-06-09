@@ -52,10 +52,7 @@ func (v ValueBigNum) CompareTo(other Value, c *Context) CompareResult {
 }
 
 func (v ValueBigNum) GetMember(name string, c *Context) Value {
-	if member, found := builtinBigNumMethods[name]; found {
-		return makeMember(v, member)
-	}
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (ValueBigNum) GetIndex(int, *Context) Value {

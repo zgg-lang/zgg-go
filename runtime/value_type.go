@@ -200,6 +200,27 @@ func (h *ClassBuilder) Method(name string, f func(*Context, ValueObject, []Value
 	return h
 }
 
+func (h *ClassBuilder) StaticMethod(name string, f func(*Context, ValueObject, []Value) Value, args ...string) *ClassBuilder {
+	h.t.Statics.Store(name, NewNativeFunction(h.t.Name+"."+name, func(c *Context, this Value, args []Value) Value {
+		return f(c, c.MustObject(this), args)
+	}, args...))
+	return h
+}
+
 func (h *ClassBuilder) Build() ValueType {
 	return h.t
+}
+
+func addMembersAndStatics(vt ValueType, m map[string]ValueCallable) {
+	for name, memberFunc := range m {
+		vt.Members.Store(name, memberFunc)
+		nativeFunc := memberFunc.Invoke
+		staticFunc := NewNativeFunction(memberFunc.GetName(), func(c *Context, this Value, args []Value) Value {
+			target := args[0]
+			args = args[1:]
+			nativeFunc(c, target, args)
+			return c.RetVal
+		})
+		vt.Statics.Store(name, staticFunc)
+	}
 }

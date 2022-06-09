@@ -112,16 +112,7 @@ func (v ValueObject) GetMember(name string, c *Context) Value {
 	if val, found := v.m.Load(name); found {
 		return makeMember(v, val.(Value))
 	}
-	if member := v.t.findMember(name); member != nil {
-		return makeMember(v, member)
-	}
-	if getAttr, ok := v.t.findMember("__getAttr__").(ValueCallable); ok {
-		c.Invoke(getAttr, v, func() []Value { return []Value{NewStr(name)} })
-		if _, isUndefiend := c.RetVal.(ValueUndefined); !isUndefiend {
-			return makeMember(v, c.RetVal)
-		}
-	}
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (v ValueObject) Len() int {
@@ -217,7 +208,7 @@ func (v ValueObject) Invoke(c *Context, this Value, args []Value) {
 	c.Invoke(callMethod, v, Args(args...))
 }
 
-var builtinObjMethods = map[string]*ValueBuiltinFunction{
+var builtinObjMethods = map[string]ValueCallable{
 	"keys": NewNativeFunction("object.keys", func(c *Context, thisArg Value, args []Value) Value {
 		thisObj := thisArg.(ValueObject)
 		rv := NewArray()
@@ -226,7 +217,7 @@ var builtinObjMethods = map[string]*ValueBuiltinFunction{
 		})
 		return rv
 	}),
-	"values": {
+	"values": &ValueBuiltinFunction{
 		name: "object.values",
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			thisObj := thisArg.(ValueObject)
@@ -265,7 +256,5 @@ var builtinObjMethods = map[string]*ValueBuiltinFunction{
 }
 
 func init() {
-	for name, val := range builtinObjMethods {
-		TypeObject.Members.Store(name, val)
-	}
+	addMembersAndStatics(TypeObject, builtinObjMethods)
 }

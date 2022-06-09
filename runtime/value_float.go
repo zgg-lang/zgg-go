@@ -54,7 +54,7 @@ func (v ValueFloat) CompareTo(other Value, c *Context) CompareResult {
 }
 
 func (v ValueFloat) GetMember(name string, c *Context) Value {
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (ValueFloat) GetIndex(int, *Context) Value {

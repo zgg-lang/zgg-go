@@ -15,7 +15,7 @@ func (ValueNil) GetIndex(int, *Context) Value {
 }
 
 func (v ValueNil) GetMember(name string, c *Context) Value {
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (ValueNil) IsTrue() bool {

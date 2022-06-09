@@ -44,10 +44,7 @@ func (v ValueStr) GetIndex(index int, c *Context) Value {
 }
 
 func (v ValueStr) GetMember(name string, c *Context) Value {
-	if member, found := builtinStrMethods[name]; found {
-		return makeMember(v, member)
-	}
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (ValueStr) Type() ValueType {
@@ -332,7 +329,7 @@ var builtinStrMethods = map[string]ValueCallable{
 		}
 		return NewBytes(bs)
 	}),
-	"fillParams": func() ValueCallable {
+	"fillParams": func() *ValueBuiltinFunction {
 		re := regexp.MustCompile(`\{\w+\}`)
 		return NewNativeFunction("str.fillParams", func(c *Context, thisArg Value, args []Value) Value {
 			str := c.MustStr(thisArg)
@@ -343,4 +340,8 @@ var builtinStrMethods = map[string]ValueCallable{
 			}))
 		})
 	}(),
+}
+
+func init() {
+	addMembersAndStatics(TypeStr, builtinStrMethods)
 }

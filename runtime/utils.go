@@ -267,3 +267,17 @@ func GetValueByPath(c *Context, v Value, path string) Value {
 	}
 	return v
 }
+
+func getMemberByType(c *Context, v Value, name string) Value {
+	t := v.Type()
+	if member := t.findMember(name); member != nil {
+		return makeMember(v, member)
+	}
+	if getAttr, ok := t.findMember("__getAttr__").(ValueCallable); ok {
+		c.Invoke(getAttr, v, func() []Value { return []Value{NewStr(name)} })
+		if _, isUndefiend := c.RetVal.(ValueUndefined); !isUndefiend {
+			return makeMember(v, c.RetVal)
+		}
+	}
+	return getExtMember(v, name, c)
+}

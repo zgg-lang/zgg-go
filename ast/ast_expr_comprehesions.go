@@ -142,6 +142,7 @@ func (e *ArrayComprehension) Eval(c *runtime.Context) {
 		e.ItemExpr.Eval(c)
 		rv.PushBack(c.RetVal)
 	})
+	c.RetVal = rv
 }
 
 type ObjectComprehension struct {

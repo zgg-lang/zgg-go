@@ -43,7 +43,7 @@ func (v ValueBool) CompareTo(other Value, c *Context) CompareResult {
 }
 
 func (v ValueBool) GetMember(name string, c *Context) Value {
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (ValueBool) GetIndex(int, *Context) Value {

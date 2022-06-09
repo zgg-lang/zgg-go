@@ -176,3 +176,7 @@ var builtinBytesMethods = map[string]ValueCallable{
 		return NewStr(base64.StdEncoding.EncodeToString(thisBytes.v))
 	}),
 }
+
+func init() {
+	addMembersAndStatics(TypeBytes, builtinBytesMethods)
+}

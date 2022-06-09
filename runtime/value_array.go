@@ -51,10 +51,7 @@ func (v ValueArray) SetIndex(index int, value Value, c *Context) {
 }
 
 func (v ValueArray) GetMember(name string, c *Context) Value {
-	if member, found := builtinArrayMethods[name]; found {
-		return makeMember(v, member)
-	}
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (v ValueArray) Type() ValueType {
@@ -161,180 +158,168 @@ func arrayFind(c *Context, arr ValueArray, predict Value, start int) (int, Value
 }
 
 var builtinArrayMethods = map[string]ValueCallable{
-	"map": &ValueBuiltinFunction{
-		body: func(c *Context, thisArg Value, args []Value) Value {
-			var (
-				mapFunc    ValueCallable
-				fieldPath  ValueStr
-				fieldIndex ValueInt
-				mapType    int
-			)
-			EnsureFuncParams(c, "array.map", args,
-				ArgRuleOneOf{"mapper",
-					[]ValueType{TypeCallable, TypeStr, TypeInt},
-					[]interface{}{&mapFunc, &fieldPath, &fieldIndex},
-					&mapType, nil, nil,
-				},
-			)
-			thisArr := thisArg.(ValueArray)
-			l := thisArr.Len()
-			rv := NewArray(l)
-			switch mapType {
-			case 0:
-				for i := 0; i < l; i++ {
-					v := thisArr.GetIndex(i, c)
-					mapFunc.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
-					rv.PushBack(c.RetVal)
-				}
-			case 1:
-				fp := fieldPath.Value()
-				for i := 0; i < l; i++ {
-					v := thisArr.GetIndex(i, c)
-					rv.PushBack(GetValueByPath(c, v, fp))
-				}
-			case 2:
-				index := fieldIndex.AsInt()
-				for i := 0; i < l; i++ {
-					v := thisArr.GetIndex(i, c)
-					rv.PushBack(v.GetIndex(index, c))
-				}
-			}
-			return rv
-		},
-	},
-	"filter": &ValueBuiltinFunction{
-		body: func(c *Context, thisArg Value, args []Value) Value {
-			if len(args) != 1 {
-				c.RaiseRuntimeError("array.filter: arguments length must be 1")
-				return nil
-			}
-			f, isCallable := args[0].(ValueCallable)
-			if !isCallable {
-				c.RaiseRuntimeError("array.filter: argument 0 must be callable")
-				return nil
-			}
-			thisArr := thisArg.(ValueArray)
-			l := thisArr.Len()
-			rv := NewArray(l)
+	"map": NewNativeFunction("map", func(c *Context, thisArg Value, args []Value) Value {
+		var (
+			mapFunc    ValueCallable
+			fieldPath  ValueStr
+			fieldIndex ValueInt
+			mapType    int
+		)
+		EnsureFuncParams(c, "array.map", args,
+			ArgRuleOneOf{"mapper",
+				[]ValueType{TypeCallable, TypeStr, TypeInt},
+				[]interface{}{&mapFunc, &fieldPath, &fieldIndex},
+				&mapType, nil, nil,
+			},
+		)
+		thisArr := thisArg.(ValueArray)
+		l := thisArr.Len()
+		rv := NewArray(l)
+		switch mapType {
+		case 0:
 			for i := 0; i < l; i++ {
 				v := thisArr.GetIndex(i, c)
-				f.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
-				if c.ReturnTrue() {
-					rv.PushBack(v)
-				}
+				mapFunc.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
+				rv.PushBack(c.RetVal)
 			}
-			return rv
-		},
-	},
-	"reduce": &ValueBuiltinFunction{
-		body: func(c *Context, thisArg Value, args []Value) Value {
-			thisArr := thisArg.(ValueArray)
-			l := thisArr.Len()
-			if len(args) < 1 {
-				args = []Value{c.Eval("(prev, cur) => prev + cur", true)}
-			}
-			f, isCallable := args[0].(ValueCallable)
-			if !isCallable {
-				c.RaiseRuntimeError("array.reduce: argument 0 must be callable")
-				return nil
-			}
-			var initVal Value
-			start := 0
-			if len(args) > 1 {
-				initVal = args[1]
-			} else {
-				if thisArr.Len() < 1 {
-					return constUndefined
-				}
-				initVal = thisArr.GetIndex(start, c)
-				start++
-			}
-			for i := start; i < l; i++ {
-				v := thisArr.GetIndex(i, c)
-				f.Invoke(c, constUndefined, []Value{initVal, v, NewInt(int64(i)), thisArr})
-				initVal = c.RetVal
-			}
-			return initVal
-		},
-	},
-	"each": &ValueBuiltinFunction{
-		body: func(c *Context, thisArg Value, args []Value) Value {
-			if len(args) != 1 {
-				c.RaiseRuntimeError("array.each: arguments length must be 1")
-				return nil
-			}
-			f, isCallable := args[0].(ValueCallable)
-			if !isCallable {
-				c.RaiseRuntimeError("array.each: argument 0 must be callable")
-				return nil
-			}
-			rv := NewArray()
-			thisArr := thisArg.(ValueArray)
-			l := thisArr.Len()
+		case 1:
+			fp := fieldPath.Value()
 			for i := 0; i < l; i++ {
 				v := thisArr.GetIndex(i, c)
-				f.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
+				rv.PushBack(GetValueByPath(c, v, fp))
 			}
-			return rv
-		},
-	},
-	"push": &ValueBuiltinFunction{
-		body: func(c *Context, thisArg Value, args []Value) Value {
-			thisArr := thisArg.(ValueArray)
-			for _, arg := range args {
-				thisArr.PushBack(arg)
+		case 2:
+			index := fieldIndex.AsInt()
+			for i := 0; i < l; i++ {
+				v := thisArr.GetIndex(i, c)
+				rv.PushBack(v.GetIndex(index, c))
 			}
-			return NewInt(int64(len(args)))
-		},
-	},
-	"slice": &ValueBuiltinFunction{
-		body: func(c *Context, thisArg Value, args []Value) Value {
-			thisArr := thisArg.(ValueArray)
-			arrLen := thisArr.Len()
-			begin, end := 0, arrLen
-			switch len(args) {
-			case 2:
-				{
-					endArg, isInt := args[1].(ValueInt)
-					if !isInt {
-						c.RaiseRuntimeError("array.slice arg 1 must be int")
-						return nil
-					}
-					end = int(endArg.Value())
-					if end < 0 {
-						end += arrLen
-					}
+		}
+		return rv
+	}),
+	"filter": NewNativeFunction("filter", func(c *Context, thisArg Value, args []Value) Value {
+		if len(args) != 1 {
+			c.RaiseRuntimeError("array.filter: arguments length must be 1")
+			return nil
+		}
+		f, isCallable := args[0].(ValueCallable)
+		if !isCallable {
+			c.RaiseRuntimeError("array.filter: argument 0 must be callable")
+			return nil
+		}
+		thisArr := thisArg.(ValueArray)
+		l := thisArr.Len()
+		rv := NewArray(l)
+		for i := 0; i < l; i++ {
+			v := thisArr.GetIndex(i, c)
+			f.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
+			if c.ReturnTrue() {
+				rv.PushBack(v)
+			}
+		}
+		return rv
+	}),
+	"reduce": NewNativeFunction("reduce", func(c *Context, thisArg Value, args []Value) Value {
+		thisArr := thisArg.(ValueArray)
+		l := thisArr.Len()
+		if len(args) < 1 {
+			args = []Value{c.Eval("(prev, cur) => prev + cur", true)}
+		}
+		f, isCallable := args[0].(ValueCallable)
+		if !isCallable {
+			c.RaiseRuntimeError("array.reduce: argument 0 must be callable")
+			return nil
+		}
+		var initVal Value
+		start := 0
+		if len(args) > 1 {
+			initVal = args[1]
+		} else {
+			if thisArr.Len() < 1 {
+				return constUndefined
+			}
+			initVal = thisArr.GetIndex(start, c)
+			start++
+		}
+		for i := start; i < l; i++ {
+			v := thisArr.GetIndex(i, c)
+			f.Invoke(c, constUndefined, []Value{initVal, v, NewInt(int64(i)), thisArr})
+			initVal = c.RetVal
+		}
+		return initVal
+	}),
+	"each": NewNativeFunction("each", func(c *Context, thisArg Value, args []Value) Value {
+		if len(args) != 1 {
+			c.RaiseRuntimeError("array.each: arguments length must be 1")
+			return nil
+		}
+		f, isCallable := args[0].(ValueCallable)
+		if !isCallable {
+			c.RaiseRuntimeError("array.each: argument 0 must be callable")
+			return nil
+		}
+		rv := NewArray()
+		thisArr := thisArg.(ValueArray)
+		l := thisArr.Len()
+		for i := 0; i < l; i++ {
+			v := thisArr.GetIndex(i, c)
+			f.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
+		}
+		return rv
+	}),
+	"push": NewNativeFunction("push", func(c *Context, thisArg Value, args []Value) Value {
+		thisArr := thisArg.(ValueArray)
+		for _, arg := range args {
+			thisArr.PushBack(arg)
+		}
+		return NewInt(int64(len(args)))
+	}),
+	"slice": NewNativeFunction("slice", func(c *Context, thisArg Value, args []Value) Value {
+		thisArr := thisArg.(ValueArray)
+		arrLen := thisArr.Len()
+		begin, end := 0, arrLen
+		switch len(args) {
+		case 2:
+			{
+				endArg, isInt := args[1].(ValueInt)
+				if !isInt {
+					c.RaiseRuntimeError("array.slice arg 1 must be int")
+					return nil
 				}
-				fallthrough
-			case 1:
-				{
-					beginArg, isInt := args[0].(ValueInt)
-					if !isInt {
-						c.RaiseRuntimeError("array.slice arg 0 must be int")
-						return nil
-					}
-					begin = int(beginArg.Value())
-					if begin < 0 {
-						begin += arrLen
-					}
+				end = int(endArg.Value())
+				if end < 0 {
+					end += arrLen
 				}
-			case 0:
-			default:
-				c.RaiseRuntimeError("array.slice arguments num error")
-				return nil
 			}
-			if end > arrLen {
-				end = arrLen
+			fallthrough
+		case 1:
+			{
+				beginArg, isInt := args[0].(ValueInt)
+				if !isInt {
+					c.RaiseRuntimeError("array.slice arg 0 must be int")
+					return nil
+				}
+				begin = int(beginArg.Value())
+				if begin < 0 {
+					begin += arrLen
+				}
 			}
-			if begin < 0 {
-				begin = 0
-			}
-			if begin <= end && begin < arrLen {
-				return thisArr.slice(begin, end)
-			}
-			return NewArray()
-		},
-	},
+		case 0:
+		default:
+			c.RaiseRuntimeError("array.slice arguments num error")
+			return nil
+		}
+		if end > arrLen {
+			end = arrLen
+		}
+		if begin < 0 {
+			begin = 0
+		}
+		if begin <= end && begin < arrLen {
+			return thisArr.slice(begin, end)
+		}
+		return NewArray()
+	}),
 	"sort": NewNativeFunction("array.sort", func(c *Context, thisArg Value, args []Value) Value {
 		thisArr, isArr := thisArg.(ValueArray)
 		if !isArr {
@@ -533,4 +518,8 @@ func (s *ArraySort) Swap(i, j int) {
 	vj := s.Array.GetIndex(j, s.Context)
 	s.Array.SetIndex(i, vj, s.Context)
 	s.Array.SetIndex(j, vi, s.Context)
+}
+
+func init() {
+	addMembersAndStatics(TypeArray, builtinArrayMethods)
 }

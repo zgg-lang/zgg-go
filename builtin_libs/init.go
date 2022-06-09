@@ -25,6 +25,8 @@ func FindLib(c *Context, name string) (ValueObject, bool) {
 	switch name {
 	case "base64":
 		return getLib(c, "base64", libBase64), true
+	case "chart":
+		return getLib(c, "chart", libChart), true
 	case "concurrent":
 		return getLib(c, "concurrent", libConcurrent), true
 	case "cron":
@@ -41,6 +43,8 @@ func FindLib(c *Context, name string) (ValueObject, bool) {
 		return getLib(c, "file", libFile), true
 	case "go":
 		return getLib(c, "go", libGo), true
+	case "graph":
+		return getLib(c, "graph", libGraph), true
 	case "http":
 		return getLib(c, "http", libHttp), true
 	case "json":
