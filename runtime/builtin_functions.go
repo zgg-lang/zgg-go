@@ -229,14 +229,26 @@ var builtinFunctions = map[string]ValueCallable{
 					vs := v.Value()
 					var vi int64
 					var err error
-					if strings.HasPrefix(vs, "0x") || strings.HasPrefix(vs, "0X") {
-						vi, err = strconv.ParseInt(vs[2:], 16, 64)
-					} else if strings.HasPrefix(vs, "0b") || strings.HasPrefix(vs, "0b") {
-						vi, err = strconv.ParseInt(vs[2:], 2, 64)
-					} else if len(vs) > 1 && strings.HasPrefix(vs, "0") || strings.HasPrefix(vs, "0") {
-						vi, err = strconv.ParseInt(vs[1:], 8, 64)
+					if len(args) >= 2 {
+						baseVal, isInt := args[1].(ValueInt)
+						if !isInt {
+							c.RaiseRuntimeError("int: base must be an integer")
+						}
+						base := baseVal.AsInt()
+						if base < 2 || base > 36 {
+							c.RaiseRuntimeError("int: base must between 2 and 36")
+						}
+						vi, err = strconv.ParseInt(vs, base, 64)
 					} else {
-						vi, err = strconv.ParseInt(vs, 10, 64)
+						if strings.HasPrefix(vs, "0x") || strings.HasPrefix(vs, "0X") {
+							vi, err = strconv.ParseInt(vs[2:], 16, 64)
+						} else if strings.HasPrefix(vs, "0b") || strings.HasPrefix(vs, "0b") {
+							vi, err = strconv.ParseInt(vs[2:], 2, 64)
+						} else if len(vs) > 1 && strings.HasPrefix(vs, "0") || strings.HasPrefix(vs, "0") {
+							vi, err = strconv.ParseInt(vs[1:], 8, 64)
+						} else {
+							vi, err = strconv.ParseInt(vs, 10, 64)
+						}
 					}
 					if err == nil {
 						return NewInt(vi)
@@ -282,6 +294,19 @@ var builtinFunctions = map[string]ValueCallable{
 		body: func(c *Context, thisArg Value, args []Value) Value {
 			if len(args) < 1 {
 				return NewStr("")
+			}
+			if len(args) == 2 {
+				if vi, valueIsInt := args[0].(ValueInt); valueIsInt {
+					if base, baseIsInt := args[1].(ValueInt); baseIsInt {
+						b := base.AsInt()
+						if b < 2 || b > 36 {
+							c.RaiseRuntimeError("str: base must between 2 and 36")
+						}
+						return NewStr(strconv.FormatInt(vi.Value(), b))
+					} else {
+						c.RaiseRuntimeError("str: base must an integer")
+					}
+				}
 			}
 			return NewStr(args[0].ToString(c))
 		},

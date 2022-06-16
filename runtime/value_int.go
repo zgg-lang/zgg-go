@@ -116,6 +116,35 @@ var builtinIntMethods = map[string]ValueCallable{
 		}
 		return constUndefined
 	}),
+	"str": NewNativeFunction("str", func(c *Context, this Value, args []Value) Value {
+		var base ValueInt
+		EnsureFuncParams(c, "str", args, ArgRuleOptional{"base", TypeInt, &base, NewInt(10)})
+		b := base.AsInt()
+		if b < 2 || b > 36 {
+			c.RaiseRuntimeError("str: 2 <= base <= 36")
+		}
+		val := c.MustInt(this)
+		return NewStr(strconv.FormatInt(val, b))
+	}, "base"),
+	"parse": NewNativeFunction("parse", func(c *Context, this Value, args []Value) Value {
+		var (
+			value ValueStr
+			base  ValueInt
+		)
+		EnsureFuncParams(c, "parse", args,
+			ArgRuleRequired{"value", TypeStr, &value},
+			ArgRuleOptional{"base", TypeInt, &base, NewInt(10)},
+		)
+		b := base.AsInt()
+		if b < 2 || b > 36 {
+			c.RaiseRuntimeError("parse: 2 <= base <= 36")
+		}
+		v, err := strconv.ParseInt(value.Value(), b, 64)
+		if err != nil {
+			c.RaiseRuntimeError("parse: %s", err)
+		}
+		return NewInt(v)
+	}, "value", "base"),
 	"__next__": NewNativeFunction("__next__", func(c *Context, this Value, args []Value) Value {
 		return NewInt(c.MustInt(this) + 1)
 	}),

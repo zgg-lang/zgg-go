@@ -212,6 +212,31 @@ var builtinStrMethods = map[string]ValueCallable{
 		}
 		return rv
 	}),
+	"splitr": NewNativeFunction("str.splitr", func(c *Context, thisArg Value, args []Value) Value {
+		str := c.MustStr(thisArg)
+		sp := "\\s+"
+		limit := -1
+		switch len(args) {
+		case 2:
+			limit = int(c.MustInt(args[1], "str.split argument limit"))
+			fallthrough
+		case 1:
+			sp = c.MustStr(args[0], "str.splitr argument sp")
+		default:
+			c.RaiseRuntimeError("str.splitr usage: splitr(sp[, limit=-1])")
+		}
+		if re, err := regexp.Compile(sp); err != nil {
+			c.RaiseRuntimeError("str.splitr: parse regexp %s error %s", sp, err)
+			return nil
+		} else {
+			items := re.Split(str, limit)
+			rv := NewArray(len(items))
+			for _, item := range items {
+				rv.PushBack(NewStr(item))
+			}
+			return rv
+		}
+	}),
 	"lines": NewNativeFunction("str.lines", func(c *Context, thisArg Value, args []Value) Value {
 		str := c.MustStr(thisArg)
 		lines := strings.Split(str, "\n")
