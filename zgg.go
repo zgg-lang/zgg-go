@@ -25,7 +25,9 @@ type (
 		Name  string
 		Value interface{}
 	}
-	Val interface{}
+	Val struct {
+		Value interface{}
+	}
 )
 
 func NewRunner() *Runner {

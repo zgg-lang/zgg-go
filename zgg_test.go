@@ -22,7 +22,7 @@ func TestRunEval(t *testing.T) {
 				else -> fib(n-1) + fib(n-2)
 			}
 			fib(v)
-		`, Var{"v", Val(i)})
+		`, Var{"v", Val{i}})
 		if err != nil {
 			t.Fatalf("eval error %s", err)
 		}
@@ -80,6 +80,6 @@ func BenchmarkRunWithPool(b *testing.B) {
 	prog, _ := CompileCode("1+2+3+a")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		RunCode(prog, Var{"a", Val(i)})
+		RunCode(prog, Var{"a", Val{i}})
 	}
 }
