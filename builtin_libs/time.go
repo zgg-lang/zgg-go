@@ -126,6 +126,19 @@ func initTimeClass() {
 						_t = t
 					}
 				}
+			case 2:
+				{
+					var timeStr, layout ValueStr
+					EnsureFuncParams(c, "Time.__init__", args,
+						ArgRuleRequired{"timeStr", TypeStr, &timeStr},
+						ArgRuleRequired{"layout", TypeStr, &layout},
+					)
+					t, err := time.Parse(layout.Value(), timeStr.Value())
+					if err != nil {
+						c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
+					}
+					_t = t
+				}
 			case 3:
 				{
 					var year, month, day ValueInt

@@ -6,9 +6,12 @@ import (
 )
 
 func TestRunCode(t *testing.T) {
-	RunCode(`
+	r, e := RunCode(`
 		println(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9)
+		export result := 123321
 	`)
+	t.Log("err:", e)
+	t.Log("result:", r.(map[string]interface{})["result"].(int64))
 }
 
 func TestRunEval(t *testing.T) {
