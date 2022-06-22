@@ -70,7 +70,7 @@ func (r *Runner) Args(args ...string) *Runner {
 
 func (r *Runner) Var(name string, value interface{}) *Runner {
 	if zggval, ok := value.(Val); ok {
-		r.context.ForceSetLocalValue(name, runtime.FromGoValue(reflect.ValueOf(zggval), r.context))
+		r.context.ForceSetLocalValue(name, runtime.FromGoValue(reflect.ValueOf(zggval.Value), r.context))
 	} else {
 		r.context.ForceSetLocalValue(name, runtime.NewGoValue(value))
 	}
