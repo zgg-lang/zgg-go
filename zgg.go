@@ -171,14 +171,22 @@ func CompileExpr(code interface{}) (ast.Node, error) {
 	return runner.CompileExpr(code)
 }
 
-func RunCode(code interface{}, opts ...ExecOption) (interface{}, error) {
+func RunCode(code interface{}, opts ...ExecOption) (map[string]interface{}, error) {
 	runner := runnerPool.Get().(*Runner)
 	defer runnerPool.Put(runner)
 	runner.Reset()
 	for _, opt := range opts {
 		opt.Apply(runner)
 	}
-	return runner.Run(code)
+	r, err := runner.Run(code)
+	if err != nil {
+		return nil, err
+	}
+	if exported, ok := r.(map[string]interface{}); !ok {
+		return map[string]interface{}{}, nil
+	} else {
+		return exported, nil
+	}
 }
 
 func Eval(expr interface{}, opts ...ExecOption) (interface{}, error) {
