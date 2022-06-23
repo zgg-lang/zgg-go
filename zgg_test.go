@@ -11,7 +11,7 @@ func TestRunCode(t *testing.T) {
 		export result := 123321
 	`)
 	t.Log("err:", e)
-	t.Log("result:", r.(map[string]interface{})["result"].(int64))
+	t.Log("result:", r["result"].(int64))
 }
 
 func TestRunEval(t *testing.T) {
