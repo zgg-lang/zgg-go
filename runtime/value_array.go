@@ -157,43 +157,72 @@ func arrayFind(c *Context, arr ValueArray, predict Value, start int) (int, Value
 	return arrayFindByValue(c, arr, predict, start)
 }
 
+type arrayMapper struct {
+	f      ValueCallable
+	k      ValueStr
+	i      ValueInt
+	d      ValueInt
+	which  int
+	mapper func(Value, int, *Context) Value
+}
+
+func (m *arrayMapper) ArgRule(argName string, required bool) ArgRuleOneOf {
+	rv := ArgRuleOneOf{
+		ArgName:       argName,
+		ExpectedTypes: []ValueType{TypeCallable, TypeStr, TypeInt},
+		StoreTos:      []interface{}{&(m.f), &(m.k), &(m.i)},
+		Selected:      &(m.which),
+	}
+	if !required {
+		rv.DefaultStore = &(m.d)
+		rv.DefaultValue = NewInt(0)
+	}
+	return rv
+}
+
+func (m *arrayMapper) Build() {
+	switch m.which {
+	case 0:
+		m.mapper = func(item Value, index int, c *Context) Value {
+			c.Invoke(m.f, nil, Args(item, NewInt(int64(index))))
+			return c.RetVal
+		}
+	case 1:
+		key := m.k.Value()
+		m.mapper = func(item Value, index int, c *Context) Value {
+			return item.GetMember(key, c)
+		}
+	case 2:
+		i := m.i.AsInt()
+		m.mapper = func(item Value, index int, c *Context) Value {
+			return item.GetIndex(i, c)
+		}
+	default:
+		m.mapper = func(item Value, index int, c *Context) Value {
+			return item
+		}
+	}
+}
+
+func (m *arrayMapper) Map(item Value, index int, c *Context) Value {
+	return m.mapper(item, index, c)
+}
+
 var builtinArrayMethods = map[string]ValueCallable{
 	"map": NewNativeFunction("map", func(c *Context, thisArg Value, args []Value) Value {
 		var (
-			mapFunc    ValueCallable
-			fieldPath  ValueStr
-			fieldIndex ValueInt
-			mapType    int
+			mapper arrayMapper
 		)
 		EnsureFuncParams(c, "array.map", args,
-			ArgRuleOneOf{"mapper",
-				[]ValueType{TypeCallable, TypeStr, TypeInt},
-				[]interface{}{&mapFunc, &fieldPath, &fieldIndex},
-				&mapType, nil, nil,
-			},
+			mapper.ArgRule("mapper", true),
 		)
+		mapper.Build()
 		thisArr := thisArg.(ValueArray)
 		l := thisArr.Len()
 		rv := NewArray(l)
-		switch mapType {
-		case 0:
-			for i := 0; i < l; i++ {
-				v := thisArr.GetIndex(i, c)
-				mapFunc.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
-				rv.PushBack(c.RetVal)
-			}
-		case 1:
-			fp := fieldPath.Value()
-			for i := 0; i < l; i++ {
-				v := thisArr.GetIndex(i, c)
-				rv.PushBack(GetValueByPath(c, v, fp))
-			}
-		case 2:
-			index := fieldIndex.AsInt()
-			for i := 0; i < l; i++ {
-				v := thisArr.GetIndex(i, c)
-				rv.PushBack(v.GetIndex(index, c))
-			}
+		for i := 0; i < l; i++ {
+			v := thisArr.GetIndex(i, c)
+			rv.PushBack(mapper.Map(v, i, c))
 		}
 		return rv
 	}),
@@ -360,31 +389,19 @@ var builtinArrayMethods = map[string]ValueCallable{
 	"toMap": NewNativeFunction("array.toMap", func(c *Context, this Value, args []Value) Value {
 		thisArr := c.MustArray(this)
 		var (
-			getKey ValueCallable
-			getVal ValueCallable
+			keyMapper arrayMapper
+			valMapper arrayMapper
 		)
 		EnsureFuncParams(c, "array.toMap", args,
-			ArgRuleOptional{"getKey", TypeCallable, &getKey, nil},
-			ArgRuleOptional{"getVal", TypeCallable, &getVal, nil},
+			keyMapper.ArgRule("keyMapper", false),
+			valMapper.ArgRule("valMapper", false),
 		)
+		keyMapper.Build()
+		valMapper.Build()
 		rv := NewObject()
-		for _, item := range *(thisArr.Values) {
-			var (
-				k string
-				v Value
-			)
-			if getKey != nil {
-				c.Invoke(getKey, nil, func() []Value { return []Value{item} })
-				k = c.RetVal.ToString(c)
-			} else {
-				k = item.ToString(c)
-			}
-			if getVal != nil {
-				c.Invoke(getVal, nil, func() []Value { return []Value{item} })
-				v = c.RetVal
-			} else {
-				v = item
-			}
+		for i, item := range *(thisArr.Values) {
+			k := keyMapper.Map(item, i, c).ToString(c)
+			v := valMapper.Map(item, i, c)
 			rv.SetMember(k, v, c)
 		}
 		return rv
@@ -392,26 +409,24 @@ var builtinArrayMethods = map[string]ValueCallable{
 	"toGroup": NewNativeFunction("array.toGroup", func(c *Context, this Value, args []Value) Value {
 		thisArr := c.MustArray(this)
 		var (
-			getKey ValueCallable
-			getVal ValueCallable
+			keyMapper arrayMapper
+			valMapper arrayMapper
 		)
-		EnsureFuncParams(c, "array.toGroup", args,
-			ArgRuleRequired{"getKey", TypeCallable, &getKey},
-			ArgRuleOptional{"getKey", TypeCallable, &getVal, nil},
+		EnsureFuncParams(c, "array.toMap", args,
+			keyMapper.ArgRule("keyMapper", false),
+			valMapper.ArgRule("valMapper", false),
 		)
+		keyMapper.Build()
+		valMapper.Build()
 		rv := NewObject()
-		for _, item := range *(thisArr.Values) {
-			c.Invoke(getKey, nil, func() []Value { return []Value{item} })
-			key := c.RetVal.ToString(c)
-			group := rv.GetMember(key, c)
-			if getVal != nil {
-				c.Invoke(getVal, nil, Args(item))
-				item = c.RetVal
-			}
+		for i, item := range *(thisArr.Values) {
+			k := keyMapper.Map(item, i, c).ToString(c)
+			group := rv.GetMember(k, c)
+			v := valMapper.Map(item, i, c)
 			if groupArr, ok := group.(ValueArray); ok {
-				groupArr.PushBack(item)
+				groupArr.PushBack(v)
 			} else {
-				rv.SetMember(key, NewArrayByValues(item), c)
+				rv.SetMember(k, NewArrayByValues(v), c)
 			}
 		}
 		return rv
