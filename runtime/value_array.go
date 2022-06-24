@@ -431,6 +431,29 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return rv
 	}),
+	"chunk": NewNativeFunction("chunk", func(c *Context, this Value, args []Value) Value {
+		var (
+			chunkSize ValueInt
+		)
+		thisArr := c.MustArray(this)
+		EnsureFuncParams(c, "array.chunk", args,
+			ArgRuleRequired{"chunkSize", TypeInt, &chunkSize},
+		)
+		items := *(thisArr.Values)
+		n := len(items)
+		cs := chunkSize.AsInt()
+		rv := NewArray(n/cs + 1)
+		for i := 0; i < n; i += cs {
+			begin := i
+			end := i + cs
+			if end > n {
+				end = n
+			}
+			chunk := NewArrayByValues(items[begin:end]...)
+			rv.PushBack(chunk)
+		}
+		return rv
+	}),
 	"find": NewNativeFunction("array.find", func(c *Context, this Value, args []Value) Value {
 		var (
 			predict Value
