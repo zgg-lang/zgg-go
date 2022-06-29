@@ -246,11 +246,6 @@ func initPTableClass() {
 				b.WriteString("|")
 			}
 		}
-		// data rows
-		defaultAlign := "r"
-		if isMarkdown {
-			defaultAlign = "l"
-		}
 		for i, row := range rowsText {
 			for k := 0; k < rowLines[i]; k++ {
 				b.WriteString("\n")
@@ -263,6 +258,14 @@ func initPTableClass() {
 					if k >= len(item.lines) {
 						b.WriteString(strings.Repeat(" ", w))
 					} else {
+						// data rows
+						defaultAlign := "l"
+						if !isMarkdown {
+							switch _rows[i][j].(type) {
+							case ValueInt, ValueFloat:
+								defaultAlign = "r"
+							}
+						}
 						align := getAlign(c, alignConf, _rows[i][j], i, j, defaultAlign)
 						line := item.lines[k]
 						lw := item.widths[k]
