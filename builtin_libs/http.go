@@ -2,6 +2,8 @@ package builtin_libs
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -718,6 +720,20 @@ func initHttpRequestClass() ValueType {
 			this.SetMember("__headers", NewArray(), c)
 			this.SetMember("__body", NewArray(), c)
 		}).
+		Method("certFile", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				certFile ValueStr
+				keyFile  ValueStr
+				caFile   ValueStr
+			)
+			EnsureFuncParams(c, "http.Request.certFile", args,
+				ArgRuleRequired{"certFile", TypeStr, &certFile},
+				ArgRuleRequired{"keyFile", TypeStr, &keyFile},
+				ArgRuleOptional{"caFile", TypeStr, &caFile, NewStr("")},
+			)
+			this.SetMember("__certs", NewArrayByValues(certFile, keyFile, caFile), c)
+			return this
+		}).
 		Method("data", func(c *Context, this ValueObject, args []Value) Value {
 			body := this.GetMember("__body", c).(ValueArray)
 			for _, arg := range args {
@@ -786,7 +802,32 @@ func initHttpRequestClass() ValueType {
 				val := item.GetIndex(1, c)
 				req.Header.Add(key.ToString(c), val.ToString(c))
 			}
-			resp, err := http.DefaultClient.Do(req)
+			httpClient := http.DefaultClient
+			if certs, ok := this.GetMember("__certs", c).(ValueArray); ok && certs.Len() == 3 {
+				certFile := certs.GetIndex(0, c).ToString(c)
+				keyFile := certs.GetIndex(1, c).ToString(c)
+				caFile := certs.GetIndex(2, c).ToString(c)
+				cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+				if err != nil {
+					c.RaiseRuntimeError("http.Request.call: load key pair error: %s", err)
+				}
+				tlsConfig := &tls.Config{
+					Certificates: []tls.Certificate{cert},
+				}
+				if caFile != "" {
+					caCertPool := x509.NewCertPool()
+					if caCert, err := ioutil.ReadFile(caFile); err != nil {
+						c.RaiseRuntimeError("http.Request.call: load ca cert error: %s", err)
+					} else {
+						caCertPool.AppendCertsFromPEM(caCert)
+						tlsConfig.RootCAs = caCertPool
+					}
+				}
+				tlsConfig.BuildNameToCertificate()
+				transport := &http.Transport{TLSClientConfig: tlsConfig}
+				httpClient = &http.Client{Transport: transport}
+			}
+			resp, err := httpClient.Do(req)
 			if err != nil {
 				c.RaiseRuntimeError("http.Request.call: do request error %s", err)
 			}
