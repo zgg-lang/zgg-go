@@ -14,7 +14,7 @@ func libConcurrent(*Context) ValueObject {
 			c.RaiseRuntimeError("concurrent.start: requires at least 1 argument")
 			return nil
 		}
-		callee, isCallable := args[0].(ValueCallable)
+		callee, isCallable := c.GetCallable(args[0])
 		if !isCallable {
 			c.RaiseRuntimeError("concurrent.start: argument 0 must callable")
 			return nil
@@ -25,7 +25,7 @@ func libConcurrent(*Context) ValueObject {
 	lib.SetMember("all", NewNativeFunction("all", func(c *Context, this Value, args []Value) Value {
 		rv := make([]Value, len(args))
 		for i, arg := range args {
-			callee, isCallable := arg.(ValueCallable)
+			callee, isCallable := c.GetCallable(arg)
 			if !isCallable {
 				c.RaiseRuntimeError("concurrent.all: argument %d must callable", i)
 				return nil
@@ -34,7 +34,7 @@ func libConcurrent(*Context) ValueObject {
 			rv[i] = c.RetVal
 		}
 		for i, t := range rv {
-			await, ok := t.GetMember("await", c).(ValueCallable)
+			await, ok := c.GetCallable(t.GetMember("await", c))
 			if ok {
 				c.Invoke(await, nil, NoArgs)
 				rv[i] = c.RetVal

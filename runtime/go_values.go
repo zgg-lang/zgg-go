@@ -439,28 +439,28 @@ func (v GoValue) GetMember(key string, c *Context) Value {
 		return NewStr(v.v.Kind().String())
 	// for map
 	case "each":
-		return makeMember(v, gomapEach)
+		return makeMember(v, gomapEach, c)
 	case "get":
-		return makeMember(v, gomapGet)
+		return makeMember(v, gomapGet, c)
 	case "set":
-		return makeMember(v, gomapSet)
+		return makeMember(v, gomapSet, c)
 	case "delete":
-		return makeMember(v, gomapDelete)
+		return makeMember(v, gomapDelete, c)
 	// for chan
 	case "send":
-		return makeMember(v, gochanSend)
+		return makeMember(v, gochanSend, c)
 	case "recv":
-		return makeMember(v, gochanRecv)
+		return makeMember(v, gochanRecv, c)
 	case "methods":
-		return makeMember(v, goMethods)
+		return makeMember(v, goMethods, c)
 	case "fields":
-		return makeMember(v, goFields)
+		return makeMember(v, goFields, c)
 	case "sign":
-		return makeMember(v, goSign)
+		return makeMember(v, goSign, c)
 	case "as":
-		return makeMember(v, goAs)
+		return makeMember(v, goAs, c)
 	case "is":
-		return makeMember(v, goIs)
+		return makeMember(v, goIs, c)
 	}
 	// isPtr := false
 	goval := v.v
@@ -475,34 +475,34 @@ func (v GoValue) GetMember(key string, c *Context) Value {
 		if gotype.Key().Kind() == reflect.String {
 			rv := goval.MapIndex(reflect.ValueOf(key))
 			if rv.IsValid() {
-				return makeMember(v, NewReflectedGoValue(rv))
+				return makeMember(v, NewReflectedGoValue(rv), c)
 			}
 		}
 	case reflect.Struct:
 		if _, found := gotype.FieldByName(key); found {
-			return makeMember(v, NewReflectedGoValue(goval.FieldByName(key)))
+			return makeMember(v, NewReflectedGoValue(goval.FieldByName(key)), c)
 		}
 	case reflect.Ptr:
 		elType := gotype.Elem()
 		switch elType.Kind() {
 		case reflect.Struct:
 			if _, found := elType.FieldByName(key); found {
-				return makeMember(v, NewReflectedGoValue(goval.Elem().FieldByName(key)))
+				return makeMember(v, NewReflectedGoValue(goval.Elem().FieldByName(key)), c)
 			}
 		}
 	}
 	if _, found := gotype.MethodByName(key); found {
-		return makeMember(v, NewReflectedGoValue(goval.MethodByName(key)))
+		return makeMember(v, NewReflectedGoValue(goval.MethodByName(key)), c)
 	}
 	if goval.CanAddr() {
 		pv := goval.Addr()
 		if method := pv.MethodByName(key); method.IsValid() {
-			return makeMember(v, NewReflectedGoValue(method))
+			return makeMember(v, NewReflectedGoValue(method), c)
 		}
 	} else if goval.Kind() == reflect.Ptr {
 		ev := goval.Elem()
 		if method := ev.MethodByName(key); method.IsValid() {
-			return makeMember(v, NewReflectedGoValue(method))
+			return makeMember(v, NewReflectedGoValue(method), c)
 		}
 	}
 	return getExtMember(v, key, c)
@@ -512,7 +512,7 @@ func (v GoFunc) GetName() string {
 	return v.v.Type().Name()
 }
 
-func (v GoFunc) GetArgNames() []string {
+func (v GoFunc) GetArgNames(*Context) []string {
 	return []string{}
 }
 
@@ -632,7 +632,7 @@ func (t GoType) GetName() string {
 	return t.typ.Name()
 }
 
-func (t GoType) GetArgNames() []string {
+func (t GoType) GetArgNames(*Context) []string {
 	return []string{}
 }
 

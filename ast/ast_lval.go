@@ -77,11 +77,11 @@ func (v *LvalByField) SetValue(c *runtime.Context, val runtime.Value) {
 	switch field := fieldVal.(type) {
 	case runtime.ValueStr:
 		if owner, ok := ownerVal.(runtime.CanSetMember); ok {
-			owner.SetMember(field.Value(), runtime.MakeMember(ownerVal, val), c)
+			owner.SetMember(field.Value(), runtime.MakeMember(ownerVal, val, c), c)
 		}
 	case runtime.ValueInt:
 		if owner, ok := ownerVal.(runtime.CanSetIndex); ok {
-			owner.SetIndex(int(field.Value()), runtime.MakeMember(ownerVal, val), c)
+			owner.SetIndex(int(field.Value()), runtime.MakeMember(ownerVal, val, c), c)
 		}
 	}
 }

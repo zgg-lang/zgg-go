@@ -151,8 +151,8 @@ func arrayFindByValue(c *Context, arr ValueArray, expected Value, start int) (in
 }
 
 func arrayFind(c *Context, arr ValueArray, predict Value, start int) (int, Value) {
-	if c.IsCallable(predict) {
-		return arrayFindByPredictFunc(c, arr, predict.(ValueCallable), start)
+	if pd, ok := c.GetCallable(predict); ok {
+		return arrayFindByPredictFunc(c, arr, pd, start)
 	}
 	return arrayFindByValue(c, arr, predict, start)
 }
@@ -231,7 +231,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 			c.RaiseRuntimeError("array.filter: arguments length must be 1")
 			return nil
 		}
-		f, isCallable := args[0].(ValueCallable)
+		f, isCallable := c.GetCallable(args[0])
 		if !isCallable {
 			c.RaiseRuntimeError("array.filter: argument 0 must be callable")
 			return nil
@@ -254,7 +254,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 		if len(args) < 1 {
 			args = []Value{c.Eval("(prev, cur) => prev + cur", true)}
 		}
-		f, isCallable := args[0].(ValueCallable)
+		f, isCallable := c.GetCallable(args[0])
 		if !isCallable {
 			c.RaiseRuntimeError("array.reduce: argument 0 must be callable")
 			return nil
@@ -282,7 +282,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 			c.RaiseRuntimeError("array.each: arguments length must be 1")
 			return nil
 		}
-		f, isCallable := args[0].(ValueCallable)
+		f, isCallable := c.GetCallable(args[0])
 		if !isCallable {
 			c.RaiseRuntimeError("array.each: argument 0 must be callable")
 			return nil

@@ -21,7 +21,7 @@ type ExprCall struct {
 
 func (expr *ExprCall) GetArgs(c *runtime.Context, callable runtime.ValueCallable) []runtime.Value {
 	args := make([]runtime.Value, 0, len(expr.Arguments))
-	argNames := callable.GetArgNames()
+	argNames := callable.GetArgNames(c)
 	argPos := make(map[string]int, len(argNames))
 	for i, n := range argNames {
 		argPos[n] = i

@@ -42,7 +42,7 @@ func (v *ValueBase) SetOwner(owner Value) {
 	v.Owner = owner
 }
 
-func makeMember(owner, member Value) Value {
+func makeMember(owner, member Value, c *Context) Value {
 	if callable, ok := member.(ValueCallable); ok {
 		if _, isObj := member.(ValueObject); !isObj {
 			return NewBoundMethod(owner, callable)
@@ -57,11 +57,11 @@ func getExtMember(owner Value, name string, c *Context) Value {
 	tid := owner.Type().TypeId
 	extName := fmt.Sprintf("%d#%s", tid, name)
 	if ext, found := c.FindValue(extName); found {
-		return makeMember(owner, ext)
+		return makeMember(owner, ext, c)
 	}
 	switch name {
 	case "$get":
-		return makeMember(owner, commonValueGet)
+		return makeMember(owner, commonValueGet, c)
 	}
 	return constUndefined
 }

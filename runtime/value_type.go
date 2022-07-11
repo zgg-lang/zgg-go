@@ -42,7 +42,7 @@ func (t *valueType) Super() ValueType {
 			thisObj, ok := this.(ValueObject)
 			if ok {
 				for _, base := range t.Bases {
-					if initFn := base.getInitFunc(); initFn != nil {
+					if initFn := base.getInitFunc(c); initFn != nil {
 						thisObj.t = base
 						c.Invoke(initFn, thisObj, getArgs)
 					}
@@ -110,7 +110,7 @@ func (t *valueType) findStatic(vt *valueType, name string, c *Context) (Value, b
 		return m.(Value), true
 	}
 	if m, ok := t.Statics.Load("__getAttr__"); ok {
-		if getattr, ok := m.(ValueCallable); ok {
+		if getattr, ok := c.GetCallable(m); ok {
 			c.Invoke(getattr, vt, Args(NewStr(name)))
 			return c.RetVal, true
 		}
@@ -128,25 +128,25 @@ func (t *valueType) GetName() string {
 	return t.Name
 }
 
-func (t *valueType) getInitFunc() ValueCallable {
+func (t *valueType) getInitFunc(c *Context) ValueCallable {
 	if initer, found := t.Members.Load("__init__"); found {
-		if initFn, callable := initer.(ValueCallable); callable {
+		if initFn, callable := c.GetCallable(initer); callable {
 			return initFn
 		}
 	}
 	return nil
 }
 
-func (t *valueType) GetArgNames() []string {
-	if initFn := t.getInitFunc(); initFn != nil {
-		return initFn.GetArgNames()
+func (t *valueType) GetArgNames(c *Context) []string {
+	if initFn := t.getInitFunc(c); initFn != nil {
+		return initFn.GetArgNames(c)
 	}
 	return []string{}
 }
 
 func (t *valueType) Invoke(c *Context, this Value, args []Value) {
 	rv := NewObject(t)
-	if initFn := t.getInitFunc(); initFn != nil {
+	if initFn := t.getInitFunc(c); initFn != nil {
 		c.Invoke(initFn, rv, func() []Value { return args })
 	}
 	c.RetVal = rv

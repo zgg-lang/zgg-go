@@ -49,8 +49,8 @@ func (v ValueBoundMethod) GetName() string {
 	return v.Value.GetName()
 }
 
-func (v ValueBoundMethod) GetArgNames() []string {
-	return v.Value.GetArgNames()
+func (v ValueBoundMethod) GetArgNames(c *Context) []string {
+	return v.Value.GetArgNames(c)
 }
 
 func (v ValueBoundMethod) Invoke(c *Context, thisVal Value, args []Value) {

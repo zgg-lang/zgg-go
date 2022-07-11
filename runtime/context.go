@@ -473,8 +473,8 @@ func (c *Context) MustObject(v Value, name ...string) ValueObject {
 }
 
 func (c *Context) MustCallable(v Value, name ...string) ValueCallable {
-	if ov, ok := v.(ValueCallable); ok {
-		return ov
+	if f, ok := c.GetCallable(v); ok {
+		return f
 	}
 	c.throwValueTypeError(v, "callable", name)
 	return nil
@@ -490,6 +490,18 @@ func (c *Context) IsCallable(value Value) bool {
 	return false
 }
 
+func (c *Context) GetCallable(value interface{}) (ValueCallable, bool) {
+	switch vv := value.(type) {
+	case ValueObject:
+		if c.IsCallable(vv.GetMember("__call__", c)) {
+			return vv, true
+		}
+	case ValueCallable:
+		return vv, true
+	}
+	return nil, false
+}
+
 func (c *Context) Invoke(calleeVal Value, this Value, getArgs func() []Value) bool {
 	switch callee := calleeVal.(type) {
 	case ValueCallable:
@@ -499,7 +511,7 @@ func (c *Context) Invoke(calleeVal Value, this Value, getArgs func() []Value) bo
 		{
 			newObj := NewObject(callee)
 			initMember := newObj.GetMember("__init__", c)
-			if initFunc, isCallable := initMember.(ValueCallable); isCallable {
+			if initFunc, isCallable := c.GetCallable(initMember); isCallable {
 				c.Invoke(initFunc, newObj, getArgs)
 			}
 			c.RetVal = newObj
@@ -634,7 +646,7 @@ func (c *Context) AutoImport() {
 }
 
 func (c *Context) valuesCompare(v1, v2 Value, fn string, expectedResults ...CompareResult) bool {
-	if compFn, ok := v1.GetMember(fn, c).(ValueCallable); ok && c.IsCallable(compFn) {
+	if compFn, ok := c.GetCallable(v1.GetMember(fn, c)); ok && c.IsCallable(compFn) {
 		c.Invoke(compFn, v1, Args(v2))
 		return c.RetVal.IsTrue()
 	}

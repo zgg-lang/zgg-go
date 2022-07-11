@@ -42,7 +42,7 @@ func NewObjectAndInit(objType ValueType, c *Context, initArgs ...Value) ValueObj
 }
 
 func (v *ValueObject) Init(c *Context, args []Value) {
-	if initFn := v.t.getInitFunc(); initFn != nil {
+	if initFn := v.t.getInitFunc(c); initFn != nil {
 		c.Invoke(initFn, *v, func() []Value { return args })
 	}
 }
@@ -81,7 +81,7 @@ func (v ValueObject) ToGoValue() interface{} {
 
 func (v ValueObject) GetIndex(index int, c *Context) Value {
 	getItem := v.GetMember("__getItem__", c)
-	if getItemFunc, callable := getItem.(ValueCallable); callable {
+	if getItemFunc, callable := c.GetCallable(getItem); callable {
 		getItemFunc.Invoke(c, v, []Value{NewInt(int64(index))})
 		return c.RetVal
 	}
@@ -110,7 +110,7 @@ func (v ValueObject) SetMember(name string, value Value, c *Context) {
 
 func (v ValueObject) GetMember(name string, c *Context) Value {
 	if val, found := v.m.Load(name); found {
-		return makeMember(v, val.(Value))
+		return makeMember(v, val.(Value), c)
 	}
 	return getMemberByType(c, v, name)
 }
@@ -160,7 +160,7 @@ func (v ValueObject) CompareTo(other Value, c *Context) CompareResult {
 }
 
 func (v ValueObject) ToString(c *Context) string {
-	if strFn, ok := v.t.findMember("__str__").(ValueCallable); ok {
+	if strFn, ok := c.GetCallable(v.t.findMember("__str__")); ok {
 		c.Invoke(strFn, v, func() []Value { return []Value{} })
 		return c.RetVal.ToString(c)
 	}
@@ -191,7 +191,7 @@ func (v ValueObject) GetName() string {
 	return ""
 }
 
-func (ValueObject) GetArgNames() []string {
+func (ValueObject) GetArgNames(*Context) []string {
 	return []string{}
 }
 
@@ -200,7 +200,7 @@ func (ValueObject) GetRefs() []string {
 }
 
 func (v ValueObject) Invoke(c *Context, this Value, args []Value) {
-	callMethod, ok := v.GetMember("__call__", c).(ValueCallable)
+	callMethod, ok := c.GetCallable(v.GetMember("__call__", c))
 	if !ok {
 		c.RaiseRuntimeError("invoked object is not callable")
 		return

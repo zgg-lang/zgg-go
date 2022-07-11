@@ -383,10 +383,10 @@ func initPTableClass() {
 			)
 			if len(args) > 0 {
 				opt := args[0]
-				if f, ok := opt.GetMember("formatter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(opt.GetMember("formatter", c)); ok {
 					formatFn = f
 				}
-				if f, ok := opt.GetMember("filter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(opt.GetMember("filter", c)); ok {
 					filterFn = f
 				}
 				alignConf = opt.GetMember("align", c)
@@ -404,10 +404,10 @@ func initPTableClass() {
 			)
 			if len(args) > 0 {
 				opt := args[0]
-				if f, ok := opt.GetMember("formatter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(opt.GetMember("formatter", c)); ok {
 					formatFn = f
 				}
-				if f, ok := opt.GetMember("filter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(opt.GetMember("filter", c)); ok {
 					filterFn = f
 				}
 				alignConf = opt.GetMember("align", c)
@@ -422,10 +422,10 @@ func initPTableClass() {
 			)
 			if len(args) > 0 {
 				opt := args[0]
-				if f, ok := opt.GetMember("formatter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(opt.GetMember("formatter", c)); ok {
 					formatFn = f
 				}
-				if f, ok := opt.GetMember("filter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(opt.GetMember("filter", c)); ok {
 					filterFn = f
 				}
 				alignConf = opt.GetMember("align", c)
@@ -445,10 +445,10 @@ func initPTableClass() {
 			)
 			// var alignConf Value
 			if len(args) > 0 {
-				if f, ok := args[0].GetMember("formatter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(args[0].GetMember("formatter", c)); ok {
 					formatFn = f
 				}
-				if f, ok := args[0].GetMember("filter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(args[0].GetMember("filter", c)); ok {
 					filterFn = f
 				}
 				// alignConf = args[0].GetMember("align", c)
@@ -506,10 +506,10 @@ func initPTableClass() {
 			)
 			// var alignConf Value
 			if len(args) > 0 {
-				if f, ok := args[0].GetMember("formatter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(args[0].GetMember("formatter", c)); ok {
 					formatFn = f
 				}
-				if f, ok := args[0].GetMember("filter", c).(ValueCallable); ok {
+				if f, ok := c.GetCallable(args[0].GetMember("filter", c)); ok {
 					filterFn = f
 				}
 			}

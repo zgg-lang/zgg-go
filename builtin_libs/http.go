@@ -269,7 +269,7 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 			wv := NewGoValue(w)
 			ctx := NewObjectAndInit(httpRequestContextClass, newC, wv, rv)
 			newC.Invoke(handleFunc, nil, Args(ctx))
-			if callable, ok := ctx.GetMember("close", c).(ValueCallable); ok {
+			if callable, ok := newC.GetCallable(ctx.GetMember("close", c)); ok {
 				c.Invoke(callable, ctx, NoArgs)
 			}
 		})

@@ -95,7 +95,7 @@ func (v *ValueFunc) GetName() string {
 	return v.Name
 }
 
-func (v *ValueFunc) GetArgNames() []string {
+func (v *ValueFunc) GetArgNames(*Context) []string {
 	return v.Args
 }
 

@@ -82,7 +82,7 @@ func (f *ValueBuiltinFunction) GetName() string {
 	return f.name
 }
 
-func (f *ValueBuiltinFunction) GetArgNames() []string {
+func (f *ValueBuiltinFunction) GetArgNames(*Context) []string {
 	return f.args
 }
 
@@ -728,7 +728,7 @@ var builtinFunctions = map[string]ValueCallable{
 				return
 			}
 			handler := rv.GetMember("handler", c)
-			if c.IsCallable(handler) {
+			if hfun, ok := c.GetCallable(handler); ok {
 				var stackArgs [10]Value
 				var a []Value
 				n := len(args)
@@ -741,7 +741,7 @@ var builtinFunctions = map[string]ValueCallable{
 				for i, arg := range args {
 					a[i+1] = arg
 				}
-				c.Invoke(handler.(ValueCallable), nil, Args(a...))
+				c.Invoke(hfun, nil, Args(a...))
 				if c.RetVal.IsTrue() {
 					return
 				}

@@ -49,7 +49,7 @@ func (v ValueBytes) SetIndex(index int, value Value, c *Context) {
 
 func (v ValueBytes) GetMember(name string, c *Context) Value {
 	if member, found := builtinBytesMethods[name]; found {
-		return makeMember(v, member)
+		return makeMember(v, member, c)
 	}
 	return getExtMember(v, name, c)
 }
