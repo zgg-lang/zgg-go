@@ -284,6 +284,10 @@ func (v *BaseZggParserVisitor) VisitWhenConditionInRange(ctx *WhenConditionInRan
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitWhenConditionIsType(ctx *WhenConditionIsTypeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitArguments(ctx *ArgumentsContext) interface{} {
 	return v.VisitChildren(ctx)
 }

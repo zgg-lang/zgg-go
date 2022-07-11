@@ -228,6 +228,8 @@ func (v *ParseVisitor) VisitExprWhenValue(ctx *ExprWhenValueContext) interface{}
 			wcv.Ret = exprs[i+1].Accept(v).(ast.Expr)
 		case *ast.ValueConditionInRange:
 			wcv.Ret = exprs[i+1].Accept(v).(ast.Expr)
+		case *ast.ValueConditionIsType:
+			wcv.Ret = exprs[i+1].Accept(v).(ast.Expr)
 		}
 		rv.Cases = append(rv.Cases, wc)
 	}
@@ -260,6 +262,12 @@ func (v *ParseVisitor) VisitWhenConditionInRange(ctx *WhenConditionInRangeContex
 		rv.Max = ub.Accept(v).(ast.Expr)
 	}
 	return rv
+}
+
+func (v *ParseVisitor) VisitWhenConditionIsType(ctx *WhenConditionIsTypeContext) interface{} {
+	return &ast.ValueConditionIsType{
+		ExpectedType: ctx.Expr().Accept(v).(ast.Expr),
+	}
 }
 
 func (v *ParseVisitor) VisitExprAssertError(ctx *ExprAssertErrorContext) interface{} {

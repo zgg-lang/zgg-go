@@ -92,6 +92,24 @@ func (vc *ValueConditionInRange) Return(c *runtime.Context) {
 	vc.Ret.Eval(c)
 }
 
+type ValueConditionIsType struct {
+	ExpectedType Expr
+	Ret          Expr
+}
+
+func (vc *ValueConditionIsType) IsMatch(c *runtime.Context, v runtime.Value) bool {
+	vc.ExpectedType.Eval(c)
+	et, isType := c.RetVal.(runtime.ValueType)
+	if !isType {
+		c.RaiseRuntimeError("not a type")
+	}
+	return v.Type().IsSubOf(et)
+}
+
+func (vc *ValueConditionIsType) Return(c *runtime.Context) {
+	vc.Ret.Eval(c)
+}
+
 type ExprWhenValue struct {
 	Input Expr
 	Cases []ValueCondition

@@ -145,6 +145,7 @@ expr
 whenCondition
     : expr (',' expr)*          # whenConditionInList
     | lowerBound=expr? ('..'|'..<') upperBound=expr?    # whenConditionInRange
+    | 'is' expr                                         # whenConditionIsType
     ;
 arguments
     : '(' ( funcArgument ( ',' funcArgument )* ','? )? ')'

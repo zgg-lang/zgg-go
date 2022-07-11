@@ -215,6 +215,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#whenConditionInRange.
 	VisitWhenConditionInRange(ctx *WhenConditionInRangeContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#whenConditionIsType.
+	VisitWhenConditionIsType(ctx *WhenConditionIsTypeContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#arguments.
 	VisitArguments(ctx *ArgumentsContext) interface{}
 
