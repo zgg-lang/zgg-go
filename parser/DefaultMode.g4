@@ -34,6 +34,7 @@ SWITCH      : 'switch';
 CASE        : 'case';
 FALLTHROUGH : 'fallthrough';
 DEFAULT     : 'default';
+IS          : 'is';
 
 // 数值
 

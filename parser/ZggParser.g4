@@ -117,10 +117,11 @@ expr
     | expr op=('*' | '/' | '%') expr                        	        # exprTimesDivMod
     | expr op=('+' | '-') expr                              	        # exprPlusMinus
     | expr op=('<<' | '>>') expr                            	        # exprBitShift
-    | expr comparator expr                                              # exprCompare
     | expr '&' expr                                         	        # exprBitAnd
     | expr '|' expr                                         	        # exprBitOr
     | expr '^' expr                                         	        # exprBitXor
+    | expr comparator expr                                              # exprCompare
+    | expr 'is' expr                                                    # exprIsType
     | expr '&&' expr                                        	        # exprLogicAnd
     | expr '||' expr                                        	        # exprLogicOr
     | 'when' L_CURLY

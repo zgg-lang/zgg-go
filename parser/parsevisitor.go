@@ -174,42 +174,6 @@ func (v *ParseVisitor) VisitExprLiteral(ctx *ExprLiteralContext) interface{} {
 	panic("should not reach this line")
 }
 
-func (v *ParseVisitor) VisitExprCompare(ctx *ExprCompareContext) interface{} {
-	rv := &ast.ExprCompare{
-		First: ctx.Expr(0).Accept(v).(ast.Expr),
-	}
-	// for i, opToken := range ctx.AllComparator() {
-	opToken := ctx.Comparator()
-	var op int
-	switch opToken.GetText() {
-	case "==":
-		op = ast.CompareOpEQ
-	case "!=":
-		op = ast.CompareOpNE
-	case ">":
-		op = ast.CompareOpGT
-	case "<":
-		op = ast.CompareOpLT
-	case ">=":
-		op = ast.CompareOpGE
-	case "<=":
-		op = ast.CompareOpLE
-	default:
-		panic("invalid op " + opToken.GetText())
-	}
-	rv.Ops = append(rv.Ops, op)
-	target := ctx.Expr(1).Accept(v).(ast.Expr)
-	if next, ok := target.(*ast.ExprCompare); ok {
-		rv.Ops = append(rv.Ops, next.Ops...)
-		rv.Targets = append(rv.Targets, next.First)
-		rv.Targets = append(rv.Targets, next.Targets...)
-	} else {
-		rv.Targets = append(rv.Targets, target)
-	}
-	// }
-	return rv
-}
-
 func (v *ParseVisitor) VisitExprQuestion(ctx *ExprQuestionContext) interface{} {
 	return &ast.ExprWhen{
 		Cases: []ast.Case{ast.Case{

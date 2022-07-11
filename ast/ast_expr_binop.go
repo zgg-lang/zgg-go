@@ -810,3 +810,20 @@ func (expr *ExprBitXor) Eval(c *runtime.Context) {
 		c.RetVal = runtime.NewInt(c.MustInt(left) ^ c.MustInt(right))
 	}
 }
+
+type ExprIsType struct {
+	BinOp
+}
+
+func (expr *ExprIsType) Eval(c *runtime.Context) {
+	left, right, overrideRet := expr.tryOverride(c, "__is__")
+	if overrideRet != nil {
+		c.RetVal = overrideRet
+	} else {
+		rightType, isType := right.(runtime.ValueType)
+		if !isType {
+			c.RaiseRuntimeError("is expression: right operand is not a Type")
+		}
+		c.RetVal = runtime.NewBool(left.Type().IsSubOf(rightType))
+	}
+}

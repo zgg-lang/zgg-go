@@ -33,6 +33,49 @@ func (v *ParseVisitor) VisitFuncArgument(ctx *FuncArgumentContext) interface{} {
 	return rv
 }
 
+func (v *ParseVisitor) VisitExprCompare(ctx *ExprCompareContext) interface{} {
+	rv := &ast.ExprCompare{
+		First: ctx.Expr(0).Accept(v).(ast.Expr),
+	}
+	// for i, opToken := range ctx.AllComparator() {
+	opToken := ctx.Comparator()
+	var op int
+	switch opToken.GetText() {
+	case "==":
+		op = ast.CompareOpEQ
+	case "!=":
+		op = ast.CompareOpNE
+	case ">":
+		op = ast.CompareOpGT
+	case "<":
+		op = ast.CompareOpLT
+	case ">=":
+		op = ast.CompareOpGE
+	case "<=":
+		op = ast.CompareOpLE
+	default:
+		panic("invalid op " + opToken.GetText())
+	}
+	rv.Ops = append(rv.Ops, op)
+	target := ctx.Expr(1).Accept(v).(ast.Expr)
+	if next, ok := target.(*ast.ExprCompare); ok {
+		rv.Ops = append(rv.Ops, next.Ops...)
+		rv.Targets = append(rv.Targets, next.First)
+		rv.Targets = append(rv.Targets, next.Targets...)
+	} else {
+		rv.Targets = append(rv.Targets, target)
+	}
+	// }
+	return rv
+}
+
+func (v *ParseVisitor) VisitExprIsType(ctx *ExprIsTypeContext) interface{} {
+	return &ast.ExprIsType{BinOp: ast.BinOp{
+		Left:  ctx.Expr(0).Accept(v).(ast.Expr),
+		Right: ctx.Expr(1).Accept(v).(ast.Expr),
+	}}
+}
+
 func (v *ParseVisitor) VisitExprAssign(ctx *ExprAssignContext) interface{} {
 	return ctx.AssignExpr().Accept(v)
 }
