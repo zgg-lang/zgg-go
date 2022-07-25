@@ -3,6 +3,7 @@ package builtin_libs
 import (
 	htpl "html/template"
 	"strings"
+	ttpl "text/template"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
@@ -23,6 +24,25 @@ func libTemplate(c *Context) ValueObject {
 			ArgRuleOptional{"params", TypeAny, &params, NewObject()},
 		)
 		t, err := htpl.New("tpl").Parse(templateSrc.Value())
+		if err != nil {
+			c.RaiseRuntimeError("renderThml: parse template error %s", err)
+		}
+		var b strings.Builder
+		if err := t.Execute(&b, params.ToGoValue()); err != nil {
+			c.RaiseRuntimeError("renderThml: execute template error %s", err)
+		}
+		return NewStr(b.String())
+	}), c)
+	rv.SetMember("renderText", NewNativeFunction("template.renderText", func(c *Context, this Value, args []Value) Value {
+		var (
+			templateSrc ValueStr
+			params      Value
+		)
+		EnsureFuncParams(c, "template.renderText", args,
+			ArgRuleRequired{"templateSrc", TypeStr, &templateSrc},
+			ArgRuleOptional{"params", TypeAny, &params, NewObject()},
+		)
+		t, err := ttpl.New("tpl").Parse(templateSrc.Value())
 		if err != nil {
 			c.RaiseRuntimeError("renderThml: parse template error %s", err)
 		}
