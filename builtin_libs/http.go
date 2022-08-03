@@ -98,18 +98,21 @@ var httpGet = NewNativeFunction("http.get", func(c *Context, thisArg Value, args
 		ArgRuleOptional{"headers", TypeObject, &headers, NewObject()},
 	)
 	request, err := http.NewRequest("GET", url.Value(), nil)
+	if err != nil {
+		c.RaiseRuntimeError("http.get: make reqeust failed %s", err)
+	}
 	headers.Each(func(key string, value Value) bool {
 		request.Header.Add(key, value.ToString(c))
 		return true
 	})
 	rsp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		panic("http.get: " + err.Error())
+		c.RaiseRuntimeError("http.get: request failed %s", err)
 	}
 	defer rsp.Body.Close()
 	bs, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
-		panic("http.get: " + err.Error())
+		c.RaiseRuntimeError("http.get: read response failed %s", err)
 	}
 	return NewBytes(bs)
 }, "url", "headers")
