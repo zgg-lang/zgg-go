@@ -778,6 +778,23 @@ func initHttpRequestClass() ValueType {
 			c.RaiseRuntimeError("Request.header: invalid argument(s)")
 			return nil
 		}).
+		Method("followRedirect", func(c *Context, this ValueObject, args []Value) Value {
+			var shouldFollow ValueBool
+			EnsureFuncParams(c, "Request.followRedirect", args,
+				ArgRuleRequired{"shouldFollow", TypeBool, &shouldFollow})
+			this.SetMember("__shouldFollowRedirect", shouldFollow, c)
+			return this
+		}).
+		Method("useClient", func(c *Context, this ValueObject, args []Value) Value {
+			var client GoValue
+			EnsureFuncParams(c, "Request.useClient", args,
+				ArgRuleRequired{"goHttpClient", TypeGoValue, &client})
+			if _, ok := client.ToGoValue().(*http.Client); !ok {
+				c.RaiseRuntimeError("Request.useClient: argument must be a *http.Client")
+			}
+			this.SetMember("__goHttpClient", client, c)
+			return this
+		}).
 		Method("call", func(c *Context, this ValueObject, args []Value) Value {
 			body := this.GetMember("__body", c).(ValueArray)
 			var reqBody io.Reader
@@ -809,30 +826,49 @@ func initHttpRequestClass() ValueType {
 				val := item.GetIndex(1, c)
 				req.Header.Add(key.ToString(c), val.ToString(c))
 			}
-			httpClient := http.DefaultClient
-			if certs, ok := this.GetMember("__certs", c).(ValueArray); ok && certs.Len() == 3 {
-				certFile := certs.GetIndex(0, c).ToString(c)
-				keyFile := certs.GetIndex(1, c).ToString(c)
-				caFile := certs.GetIndex(2, c).ToString(c)
-				cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-				if err != nil {
-					c.RaiseRuntimeError("http.Request.call: load key pair error: %s", err)
-				}
-				tlsConfig := &tls.Config{
-					Certificates: []tls.Certificate{cert},
-				}
-				if caFile != "" {
-					caCertPool := x509.NewCertPool()
-					if caCert, err := ioutil.ReadFile(caFile); err != nil {
-						c.RaiseRuntimeError("http.Request.call: load ca cert error: %s", err)
+			var httpClient *http.Client = nil
+			if hc, ok := this.GetMember("__goHttpClient", c).ToGoValue().(*http.Client); ok {
+				httpClient = hc
+			} else {
+				if certs, ok := this.GetMember("__certs", c).(ValueArray); ok && certs.Len() == 3 {
+					certFile := certs.GetIndex(0, c).ToString(c)
+					keyFile := certs.GetIndex(1, c).ToString(c)
+					caFile := certs.GetIndex(2, c).ToString(c)
+					cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+					if err != nil {
+						c.RaiseRuntimeError("http.Request.call: load key pair error: %s", err)
+					}
+					tlsConfig := &tls.Config{
+						Certificates: []tls.Certificate{cert},
+					}
+					if caFile != "" {
+						caCertPool := x509.NewCertPool()
+						if caCert, err := ioutil.ReadFile(caFile); err != nil {
+							c.RaiseRuntimeError("http.Request.call: load ca cert error: %s", err)
+						} else {
+							caCertPool.AppendCertsFromPEM(caCert)
+							tlsConfig.RootCAs = caCertPool
+						}
+					}
+					tlsConfig.BuildNameToCertificate()
+					transport := &http.Transport{TLSClientConfig: tlsConfig}
+					if httpClient == nil {
+						httpClient = &http.Client{Transport: transport}
 					} else {
-						caCertPool.AppendCertsFromPEM(caCert)
-						tlsConfig.RootCAs = caCertPool
+						httpClient.Transport = transport
 					}
 				}
-				tlsConfig.BuildNameToCertificate()
-				transport := &http.Transport{TLSClientConfig: tlsConfig}
-				httpClient = &http.Client{Transport: transport}
+				if s, ok := this.GetMember("__shouldFollowRedirect", c).(ValueBool); ok && !s.Value() {
+					if httpClient == nil {
+						httpClient = &http.Client{}
+					}
+					httpClient.CheckRedirect = func(*http.Request, []*http.Request) error {
+						return http.ErrUseLastResponse
+					}
+				}
+				if httpClient == nil {
+					httpClient = http.DefaultClient
+				}
 			}
 			resp, err := httpClient.Do(req)
 			if err != nil {
