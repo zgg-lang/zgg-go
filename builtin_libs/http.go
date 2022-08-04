@@ -629,7 +629,11 @@ func initHttpRequestContextClass() ValueType {
 					}
 				}
 			}
-			response, err := http.DefaultClient.Do(request)
+			var client http.Client
+			client.CheckRedirect = func(*http.Request, []*http.Request) error {
+				return http.ErrUseLastResponse
+			}
+			response, err := client.Do(request)
 			if err != nil {
 				c.RaiseRuntimeError("do forward request error: %s", err)
 			}
