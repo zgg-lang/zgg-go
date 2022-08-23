@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -24,6 +25,10 @@ var (
 	httpRequestClass        ValueType
 	httpResponseClass       ValueType
 	httpFormFileClass       ValueType
+)
+
+const (
+	httpUnixPrefix = "unix://"
 )
 
 func libHttp(*Context) ValueObject {
@@ -75,14 +80,33 @@ func libHttp(*Context) ValueObject {
 		}
 		addr := c.MustStr(args[0], "http.serve(addr, handleFunc): addr")
 		handleFunc := c.MustCallable(args[1], "http.serve(addr, handleFunc): function")
-		http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			newC := c.Clone()
 			w.Header().Set("server", "zgg simple server")
 			rv := NewGoValue(r)
 			wv := NewGoValue(w)
 			ctx := NewObjectAndInit(httpRequestContextClass, newC, wv, rv)
 			newC.Invoke(handleFunc, nil, Args(ctx))
-		}))
+		})
+		if strings.HasPrefix(addr, httpUnixPrefix) {
+			unixAddr, err := net.ResolveUnixAddr("unix", addr[len(httpUnixPrefix):])
+			if err != nil {
+				c.RaiseRuntimeError("resolve unix addr %s error %s", addr, err)
+			}
+			listener, err := net.ListenUnix("unix", unixAddr)
+			if err != nil {
+				c.RaiseRuntimeError("listen %s error %s", addr, err)
+			}
+			defer listener.Close()
+			listener.SetUnlinkOnClose(true)
+			if err := http.Serve(listener, handler); err != nil {
+				c.RaiseRuntimeError("http serve on %s error %s", addr, err)
+			}
+		} else {
+			if err := http.ListenAndServe(addr, handler); err != nil {
+				c.RaiseRuntimeError("http serve on %s error %s", addr, err)
+			}
+		}
 		return nil
 	}), nil)
 	return lib
@@ -307,9 +331,25 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 			return nil
 		}
 		addr := c.MustStr(args[0], "http.server.serve(listenAddr): listenAddr")
-		if err := http.ListenAndServe(addr, svr); err != nil {
-			c.RaiseRuntimeError("http.server.serve fail: " + err.Error())
-			return nil
+		if strings.HasPrefix(addr, httpUnixPrefix) {
+			unixAddr, err := net.ResolveUnixAddr("unix", addr[len(httpUnixPrefix):])
+			if err != nil {
+				c.RaiseRuntimeError("resolve unix addr %s error %s", addr, err)
+			}
+			listener, err := net.ListenUnix("unix", unixAddr)
+			if err != nil {
+				c.RaiseRuntimeError("listen %s error %s", addr, err)
+			}
+			defer listener.Close()
+			listener.SetUnlinkOnClose(true)
+			if err := http.Serve(listener, svr); err != nil {
+				c.RaiseRuntimeError("http serve on %s error %s", addr, err)
+			}
+		} else {
+			if err := http.ListenAndServe(addr, svr); err != nil {
+				c.RaiseRuntimeError("http.server.serve fail: %s", err)
+				return nil
+			}
 		}
 		return Undefined()
 	}), nil)
