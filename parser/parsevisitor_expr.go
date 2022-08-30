@@ -171,7 +171,7 @@ func (v *ParseVisitor) VisitExprUseBlock(ctx *ExprUseBlockContext) interface{} {
 	return &ast.ExprUse{
 		Expr: ctx.Expr().Accept(v).(ast.Expr),
 		DeferFunc: ast.ExprFunc{
-			Value: runtime.NewFunc("", []string{}, false,
+			Value: runtime.NewFunc("", []string{"it"}, false,
 				ctx.CodeBlock().Accept(v).(*ast.Block),
 			),
 		},

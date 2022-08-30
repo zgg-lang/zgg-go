@@ -39,6 +39,7 @@ func libHttp(*Context) ValueObject {
 	lib.SetMember("postForm", httpPostForm, nil)
 	lib.SetMember("postJson", httpPostJson, nil)
 	lib.SetMember("Request", httpRequestClass, nil)
+	lib.SetMember("WebsocketClient", websocketClientClass, nil)
 	lib.SetMember("escape", NewNativeFunction("escape", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 1 {
 			return NewStr("")
@@ -1049,20 +1050,97 @@ func initHttpFormFileClass() ValueType {
 		Build()
 }
 
-// func initHttpWebsocketClientClass() ValueType {
-// 	return NewClassBuilder("WebsocketClient").
-// 		Constructor(func(c *Context, this ValueObject, args []Value) {
-// 			var (
-// 				url ValueStr
-// 			)
-// 			EnsureFuncParams(c, "http.WebSocket")
-// 			websocket.Dial()
-// 		}).
-// 		Build()
-// }
+func initHttpWebsocketClientClass() ValueType {
+	return NewClassBuilder("WebsocketClient").
+		Constructor(func(c *Context, this ValueObject, args []Value) {
+			var (
+				url ValueStr
+			)
+			EnsureFuncParams(c, "http.WebSocket", args,
+				ArgRuleRequired{"url", TypeStr, &url},
+			)
+			this.SetMember("__url", url, c)
+		}).
+		Method("connect", func(c *Context, this ValueObject, args []Value) Value {
+			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			if ok && conn != nil {
+				conn.Close()
+			}
+			var err error
+			conn, _, err = websocket.DefaultDialer.Dial(this.GetMember("__url", c).ToString(c), nil)
+			this.SetMember("__conn", NewGoValue(conn), c)
+			if err != nil {
+				c.RaiseRuntimeError("websocket connect error: %s", err)
+			}
+			return Undefined()
+		}).
+		Method("close", func(c *Context, this ValueObject, args []Value) Value {
+			return this
+		}).
+		Method("read", func(c *Context, this ValueObject, args []Value) Value {
+			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			if !ok || conn == nil {
+				c.RaiseRuntimeError("websocket read error: no connection")
+			}
+			msgType, msg, err := conn.ReadMessage()
+			if err != nil {
+				c.RaiseRuntimeError("websocket read error: %s", err)
+			}
+			if msgType == websocket.TextMessage {
+				return NewStr(string(msg))
+			} else {
+				return NewBytes(msg)
+			}
+		}).
+		Method("readJson", func(c *Context, this ValueObject, args []Value) Value {
+			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			if !ok || conn == nil {
+				c.RaiseRuntimeError("websocket readJson error: no connection")
+			}
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				c.RaiseRuntimeError("websocket readJson error: %s", err)
+			}
+			var j interface{}
+			if err := json.Unmarshal(msg, &j); err != nil {
+				c.RaiseRuntimeError("websocket readJson error: %s", err)
+			}
+			return jsonToValue(j, c)
+		}).
+		Method("write", func(c *Context, this ValueObject, args []Value) Value {
+			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			if !ok || conn == nil {
+				c.RaiseRuntimeError("websocket write error: no connection")
+			}
+			var err error
+			for _, arg := range args {
+				if bs, ok := arg.(ValueBytes); ok {
+					err = conn.WriteMessage(websocket.BinaryMessage, bs.Value())
+				} else {
+					err = conn.WriteMessage(websocket.TextMessage, []byte(arg.ToString(c)))
+				}
+				if err != nil {
+					c.RaiseRuntimeError("websocket write error: %s", err)
+				}
+			}
+			return Undefined()
+		}).
+		Method("writeJson", func(c *Context, this ValueObject, args []Value) Value {
+			var val Value
+			EnsureFuncParams(c, "writeJson", args, ArgRuleRequired{"value", TypeAny, &val})
+			bs, err := jsonMarshal(val.ToGoValue())
+			if err != nil {
+				c.RaiseRuntimeError("websocket writeJson error: %s", err)
+			}
+			return c.InvokeMethod(this, "write", Args(NewBytes(bs)))
+		}).
+		Build()
+}
+
 func init() {
 	httpRequestContextClass = initHttpRequestContextClass()
 	websocketContextClass = initWebsocketContextClass()
+	websocketClientClass = initHttpWebsocketClientClass()
 	httpRequestClass = initHttpRequestClass()
 	httpResponseClass = initHttpResponseClass()
 	httpFormFileClass = initHttpFormFileClass()
