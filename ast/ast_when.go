@@ -99,7 +99,7 @@ type ValueConditionIsType struct {
 
 func (vc *ValueConditionIsType) IsMatch(c *runtime.Context, v runtime.Value) bool {
 	vc.ExpectedType.Eval(c)
-	et, isType := c.RetVal.(runtime.ValueType)
+	et, isType := runtime.Unbound(c.RetVal).(runtime.ValueType)
 	if !isType {
 		c.RaiseRuntimeError("not a type")
 	}
