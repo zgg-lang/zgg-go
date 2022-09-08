@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"strings"
 
 	"github.com/zgg-lang/zgg-go/runtime"
@@ -820,9 +821,13 @@ func (expr *ExprIsType) Eval(c *runtime.Context) {
 	if overrideRet != nil {
 		c.RetVal = overrideRet
 	} else {
-		rightType, isType := right.(runtime.ValueType)
+		rightType, isType := runtime.Unbound(right).(runtime.ValueType)
 		if !isType {
-			c.RaiseRuntimeError("is expression: right operand is not a Type")
+			if c.IsDebug {
+				c.RaiseRuntimeError("is expression: right operand is not a Type, but a %s", reflect.TypeOf(right))
+			} else {
+				c.RaiseRuntimeError("is expression: right operand is not a Type")
+			}
 		}
 		c.RetVal = runtime.NewBool(left.Type().IsSubOf(rightType))
 	}
