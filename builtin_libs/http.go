@@ -11,6 +11,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
@@ -37,6 +39,7 @@ func libHttp(*Context) ValueObject {
 	lib.SetMember("get", httpGet, nil)
 	lib.SetMember("getJson", httpGetJson, nil)
 	lib.SetMember("postForm", httpPostForm, nil)
+	lib.SetMember("postMultipartForm", httpPostMultipartForm, nil)
 	lib.SetMember("postJson", httpPostJson, nil)
 	lib.SetMember("Request", httpRequestClass, nil)
 	lib.SetMember("WebsocketClient", websocketClientClass, nil)
@@ -212,6 +215,89 @@ var httpPostForm = NewNativeFunction("postForm", func(c *Context, this Value, ar
 		return nil
 	}
 	return NewBytes(content)
+}, "url", "form", "headers")
+
+func httpGetMultipartForm(c *Context, form ValueObject) ([]byte, string) {
+	var buf bytes.Buffer
+	formWriter := multipart.NewWriter(&buf)
+	form.Iterate(func(key string, val Value) {
+		if rd, ok := val.ToGoValue().(io.Reader); ok {
+			filename := ""
+			if file, ok := rd.(*os.File); ok {
+				filename = filepath.Base(file.Name())
+			}
+			if field, err := formWriter.CreateFormFile(key, filename); err == nil {
+				io.Copy(field, rd)
+			} else {
+				c.RaiseRuntimeError("create form file %s error %s", key, err)
+			}
+		} else if callable, ok := c.GetCallable(val); ok {
+			c.Invoke(callable, nil, NoArgs)
+			var (
+				file    = c.RetVal
+				content []byte
+				name    = ""
+			)
+			if arr, ok := file.(ValueArray); ok {
+				if arr.Len() > 1 {
+					name = arr.GetIndex(1, c).ToString(c)
+				}
+				file = arr.GetIndex(0, c)
+			}
+			if bs, ok := file.(ValueBytes); ok {
+				content = bs.Value()
+			} else {
+				content = []byte(file.ToString(c))
+			}
+			if field, err := formWriter.CreateFormFile(key, name); err == nil {
+				field.Write(content)
+			} else {
+				c.RaiseRuntimeError("create form file %s error %s", key, err)
+			}
+		} else {
+			if field, err := formWriter.CreateFormField(key); err == nil {
+				if bs, ok := val.(ValueBytes); ok {
+					field.Write(bs.Value())
+				} else {
+					field.Write([]byte(val.ToString(c)))
+				}
+			}
+		}
+	})
+	formWriter.Close()
+	return buf.Bytes(), formWriter.FormDataContentType()
+}
+
+var httpPostMultipartForm = NewNativeFunction("postMultipartForm", func(c *Context, this Value, args []Value) Value {
+	var (
+		url     ValueStr
+		form    ValueObject
+		headers ValueObject
+	)
+	EnsureFuncParams(c, "http.postMultiPartForm", args,
+		ArgRuleRequired{"url", TypeStr, &url},
+		ArgRuleRequired{"form", TypeObject, &form},
+		ArgRuleOptional{"headers", TypeObject, &headers, NewObject()},
+	)
+	formBs, contentType := httpGetMultipartForm(c, form)
+	request, err := http.NewRequest("POST", url.Value(), bytes.NewReader(formBs))
+	if err != nil {
+		c.RaiseRuntimeError("postMultipartForm url %s new request error %s", url.Value(), err)
+	}
+	request.Header.Set("Content-Type", contentType)
+	headers.Iterate(func(key string, value Value) {
+		request.Header.Add(key, value.ToString(c))
+	})
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		c.RaiseRuntimeError("postMultipartForm url %s do request error %s", url.Value(), err)
+	}
+	defer resp.Body.Close()
+	ret, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.RaiseRuntimeError("postMultipartForm read response error %s", err)
+	}
+	return NewBytes(ret)
 }, "url", "form", "headers")
 
 var httpPostJson = NewNativeFunction("postJson", func(c *Context, this Value, args []Value) Value {
@@ -800,6 +886,16 @@ func initHttpRequestClass() ValueType {
 				form.Set(key, val.ToString(c))
 			})
 			body.PushBack(NewStr(form.Encode()))
+			return this
+		}).
+		Method("multipartForm", func(c *Context, this ValueObject, args []Value) Value {
+			var formArg ValueObject
+			EnsureFuncParams(c, "Request.form", args, ArgRuleRequired{"form", TypeObject, &formArg})
+			formBs, contentType := httpGetMultipartForm(c, formArg)
+			body := this.GetMember("__body", c).(ValueArray)
+			body.PushBack(NewBytes(formBs))
+			headers := this.GetMember("__headers", c).(ValueArray)
+			headers.PushBack(NewArrayByValues(NewStr("Content-Type"), NewStr(contentType)))
 			return this
 		}).
 		Method("header", func(c *Context, this ValueObject, args []Value) Value {
