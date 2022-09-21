@@ -2,6 +2,7 @@ package builtin_libs
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -67,12 +68,33 @@ func libSys(c *Context) ValueObject {
 		if len(args) < 1 {
 			c.RaiseRuntimeError("sys.getResult requires at least 1 argument")
 		}
-		name := args[0].ToString(c)
-		cmdArgs := make([]string, len(args)-1)
+		var (
+			start int
+			name  string
+			env   map[string]string
+		)
+		if o, ok := args[0].(ValueObject); ok {
+			if len(args) < 2 {
+				c.RaiseRuntimeError("sys.getResult with environments requires at least 2 arguments")
+			}
+			name = args[1].ToString(c)
+			start = 2
+			env = make(map[string]string, o.Len())
+			o.Iterate(func(k string, v Value) {
+				env[k] = v.ToString(c)
+			})
+		} else {
+			name = args[0].ToString(c)
+			start = 1
+		}
+		cmdArgs := make([]string, len(args)-start)
 		for i := range cmdArgs {
-			cmdArgs[i] = args[i+1].ToString(c)
+			cmdArgs[i] = args[i+start].ToString(c)
 		}
 		cmd := exec.Command(name, cmdArgs...)
+		for k, v := range env {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+		}
 		bs, err := cmd.CombinedOutput()
 		if err != nil {
 			c.RaiseRuntimeError("sys.getResult: command %s error %s", name, err)
