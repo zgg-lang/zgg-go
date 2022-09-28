@@ -81,7 +81,7 @@ type CanSetIndex interface {
 var (
 	commonValueGet = NewNativeFunction("$get", func(c *Context, this Value, args []Value) Value {
 		var path ValueStr
-		EnsureFuncParams(c, "$get", args, ArgRuleRequired{"path", TypeStr, &path})
+		EnsureFuncParams(c, "$get", args, ArgRuleRequired("path", TypeStr, &path))
 		return GetValueByPath(c, this, path.Value())
 	}, "path")
 )

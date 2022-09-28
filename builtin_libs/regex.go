@@ -48,8 +48,8 @@ func libRegexInner(c *Context, libName string, regexMakeMatchGroup func(*Context
 			text    ValueStr
 		)
 		EnsureFuncParams(c, libName+".findAll", args,
-			ArgRuleRequired{"pattern", TypeStr, &pattern},
-			ArgRuleRequired{"text", TypeStr, &text},
+			ArgRuleRequired("pattern", TypeStr, &pattern),
+			ArgRuleRequired("text", TypeStr, &text),
 		)
 		re, err := regexp.Compile(pattern.Value())
 		if err != nil {
@@ -79,9 +79,9 @@ func libRegexInner(c *Context, libName string, regexMakeMatchGroup func(*Context
 			offset  ValueInt
 		)
 		EnsureFuncParams(c, libName+".find", args,
-			ArgRuleRequired{"pattern", TypeStr, &pattern},
-			ArgRuleRequired{"text", TypeStr, &text},
-			ArgRuleOptional{"offset", TypeInt, &offset, NewInt(0)},
+			ArgRuleRequired("pattern", TypeStr, &pattern),
+			ArgRuleRequired("text", TypeStr, &text),
+			ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)),
 		)
 		re, err := regexp.Compile(pattern.Value())
 		if err != nil {
@@ -122,9 +122,9 @@ func libRegexInner(c *Context, libName string, regexMakeMatchGroup func(*Context
 			repl    ValueStr
 		)
 		EnsureFuncParams(c, libName+".replaceAll", args,
-			ArgRuleRequired{"pattern", TypeStr, &pattern},
-			ArgRuleRequired{"src", TypeStr, &src},
-			ArgRuleRequired{"repl", TypeStr, &repl},
+			ArgRuleRequired("pattern", TypeStr, &pattern),
+			ArgRuleRequired("src", TypeStr, &src),
+			ArgRuleRequired("repl", TypeStr, &repl),
 		)
 		p, err := regexp.Compile(pattern.Value())
 		if err != nil {

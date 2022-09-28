@@ -95,12 +95,12 @@ func libJson(*Context) ValueObject {
 			indentType int
 		)
 		EnsureFuncParams(c, "json.format", args,
-			ArgRuleRequired{"value", TypeAny, &jsonStr},
-			ArgRuleOneOf{
+			ArgRuleRequired("value", TypeAny, &jsonStr),
+			ArgRuleOneOf(
 				"indent",
 				[]ValueType{TypeInt, TypeStr},
 				[]interface{}{&indentSize, &indentStr},
-				&indentType, &indentSize, NewInt(0)},
+				&indentType, &indentSize, NewInt(0)),
 		)
 		var bs []byte
 		switch s := jsonStr.(type) {
@@ -138,8 +138,8 @@ func libJson(*Context) ValueObject {
 			err   error
 		)
 		EnsureFuncParams(c, "json.find", args,
-			ArgRuleRequired{"jsonpath", TypeStr, &path},
-			ArgRuleRequired{"object", TypeAny, &value},
+			ArgRuleRequired("jsonpath", TypeStr, &path),
+			ArgRuleRequired("object", TypeAny, &value),
 		)
 		switch v := value.(type) {
 		case ValueStr:

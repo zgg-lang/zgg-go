@@ -371,7 +371,7 @@ var (
 			return constNil
 		}
 		var targetType GoType
-		EnsureFuncParams(c, "as", args, ArgRuleRequired{"targetType", TypeGoType, &targetType})
+		EnsureFuncParams(c, "as", args, ArgRuleRequired("targetType", TypeGoType, &targetType))
 		return NewGoValue(gv.ReflectedValue().Convert(targetType.GoType()))
 	})
 	goIs = NewNativeFunction("go.is", func(c *Context, this Value, args []Value) Value {
@@ -380,7 +380,7 @@ var (
 			return constNil
 		}
 		var targetType GoType
-		EnsureFuncParams(c, "as", args, ArgRuleRequired{"targetType", TypeGoType, &targetType})
+		EnsureFuncParams(c, "as", args, ArgRuleRequired("targetType", TypeGoType, &targetType))
 		return NewBool(gv.ReflectedValue().Type().ConvertibleTo(targetType.GoType()))
 	})
 )

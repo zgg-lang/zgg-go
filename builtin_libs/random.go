@@ -37,7 +37,7 @@ func libRandom(*Context) ValueObject {
 	lib.SetMember("choice", NewNativeFunction("choice", func(c *Context, this Value, args []Value) Value {
 		var choices ValueArray
 		EnsureFuncParams(c, "random.choice", args,
-			ArgRuleRequired{"choices", TypeArray, &choices},
+			ArgRuleRequired("choices", TypeArray, &choices),
 		)
 		if choices.Len() < 1 {
 			c.RaiseRuntimeError("random.choice(arr): arr cannot be empty")
@@ -51,7 +51,7 @@ func libRandom(*Context) ValueObject {
 		var (
 			arr ValueArray
 		)
-		EnsureFuncParams(c, "shuffle", args, ArgRuleRequired{"array", TypeArray, &arr})
+		EnsureFuncParams(c, "shuffle", args, ArgRuleRequired("array", TypeArray, &arr))
 		n := arr.Len()
 		for i := n - 1; i > 0; i-- {
 			j := rand.Intn(i + 1)

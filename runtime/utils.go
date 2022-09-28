@@ -43,21 +43,25 @@ func storeValue(storeTo interface{}, v Value) {
 	reflect.ValueOf(storeTo).Elem().Set(rv)
 }
 
-type ArgRuleRequired struct {
+type argRuleRequired struct {
 	ArgName      string
 	ExpectedType ValueType
 	StoreTo      interface{}
 }
 
-func (r ArgRuleRequired) name() string {
+func ArgRuleRequired(name string, expectedType ValueType, storeTo interface{}) ArgRule {
+	return argRuleRequired{ArgName: name, ExpectedType: expectedType, StoreTo: storeTo}
+}
+
+func (r argRuleRequired) name() string {
 	return r.ArgName
 }
 
-func (r ArgRuleRequired) expectedTypeName() string {
+func (r argRuleRequired) expectedTypeName() string {
 	return r.ExpectedType.GetName()
 }
 
-func (r ArgRuleRequired) allowed(c *Context, args []Value, i int) bool {
+func (r argRuleRequired) allowed(c *Context, args []Value, i int) bool {
 	if i >= len(args) {
 		return false
 	}
@@ -72,22 +76,26 @@ func (r ArgRuleRequired) allowed(c *Context, args []Value, i int) bool {
 	return true
 }
 
-type ArgRuleOptional struct {
+type argRuleOptional struct {
 	ArgName      string
 	ExpectedType ValueType
 	StoreTo      interface{}
 	DefaultValue Value
 }
 
-func (r ArgRuleOptional) name() string {
+func ArgRuleOptional(name string, expectedType ValueType, storeTo interface{}, defaultValue Value) ArgRule {
+	return argRuleOptional{ArgName: name, ExpectedType: expectedType, StoreTo: storeTo, DefaultValue: defaultValue}
+}
+
+func (r argRuleOptional) name() string {
 	return r.ArgName + "?"
 }
 
-func (r ArgRuleOptional) expectedTypeName() string {
+func (r argRuleOptional) expectedTypeName() string {
 	return r.ExpectedType.GetName()
 }
 
-func (r ArgRuleOptional) allowed(c *Context, args []Value, i int) bool {
+func (r argRuleOptional) allowed(c *Context, args []Value, i int) bool {
 	defaultValue := reflect.ValueOf(r.DefaultValue)
 	if i >= len(args) {
 		if defaultValue.IsValid() {
@@ -109,7 +117,7 @@ func (r ArgRuleOptional) allowed(c *Context, args []Value, i int) bool {
 	return true
 }
 
-type ArgRuleOneOf struct {
+type argRuleOneOf struct {
 	ArgName       string
 	ExpectedTypes []ValueType
 	StoreTos      []interface{}
@@ -118,11 +126,29 @@ type ArgRuleOneOf struct {
 	DefaultValue  Value
 }
 
-func (r ArgRuleOneOf) name() string {
+func ArgRuleOneOf(
+	argName string,
+	expectedTypes []ValueType,
+	storeTos []interface{},
+	selected *int,
+	defaultStore interface{},
+	defaultValue Value,
+) ArgRule {
+	return argRuleOneOf{
+		ArgName:       argName,
+		ExpectedTypes: expectedTypes,
+		StoreTos:      storeTos,
+		Selected:      selected,
+		DefaultStore:  defaultStore,
+		DefaultValue:  defaultValue,
+	}
+}
+
+func (r argRuleOneOf) name() string {
 	return r.ArgName
 }
 
-func (r ArgRuleOneOf) expectedTypeName() string {
+func (r argRuleOneOf) expectedTypeName() string {
 	var b strings.Builder
 	b.WriteString("(")
 	for i, e := range r.ExpectedTypes {
@@ -135,7 +161,7 @@ func (r ArgRuleOneOf) expectedTypeName() string {
 	return b.String()
 }
 
-func (r ArgRuleOneOf) allowed(c *Context, args []Value, i int) bool {
+func (r argRuleOneOf) allowed(c *Context, args []Value, i int) bool {
 	if len(r.ExpectedTypes) < 1 || len(r.ExpectedTypes) != len(r.StoreTos) {
 		panic("ArgRuleOneOf: len(ExpectedTypes) must > 0 && len(ExpectedTypes) must == len(StoreTos)")
 	}
@@ -161,7 +187,7 @@ func (r ArgRuleOneOf) allowed(c *Context, args []Value, i int) bool {
 func EnsureFuncParams(c *Context, funcName string, args []Value, rules ...ArgRule) {
 	minArgs := 0
 	for i := 0; i < len(rules); i++ {
-		if _, ok := rules[i].(ArgRuleRequired); ok {
+		if _, ok := rules[i].(argRuleRequired); ok {
 			minArgs++
 		} else {
 			break

@@ -19,7 +19,7 @@ func init() {
 		Method("addSeries", func(c *Context, this ValueObject, args []Value) Value {
 			var series ValueArray
 			EnsureFuncParams(c, "Chart.addSeries", args,
-				ArgRuleRequired{"series", TypeArray, &series},
+				ArgRuleRequired("series", TypeArray, &series),
 			)
 			allSeries := this.GetMember("__allSeries", c).ToGoValue().([]ValueArray)
 			allSeries = append(allSeries, series)

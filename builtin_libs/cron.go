@@ -29,8 +29,8 @@ func cronGetAppClass() ValueType {
 					callback ValueCallable
 				)
 				EnsureFuncParams(c, "App.add", args,
-					ArgRuleRequired{"spec", TypeStr, &spec},
-					ArgRuleRequired{"callback", TypeCallable, &callback},
+					ArgRuleRequired("spec", TypeStr, &spec),
+					ArgRuleRequired("callback", TypeCallable, &callback),
 				)
 				app := this.GetMember("__app", c).ToGoValue().(*cron.Cron)
 				newContext := c.Clone()
@@ -45,7 +45,7 @@ func cronGetAppClass() ValueType {
 			}).
 			Method("remove", func(c *Context, this ValueObject, args []Value) Value {
 				var jobId ValueInt
-				EnsureFuncParams(c, "App.remove", args, ArgRuleRequired{"jobId", TypeInt, &jobId})
+				EnsureFuncParams(c, "App.remove", args, ArgRuleRequired("jobId", TypeInt, &jobId))
 				app := this.GetMember("__app", c).ToGoValue().(*cron.Cron)
 				app.Remove(cron.EntryID(jobId.AsInt()))
 				return this

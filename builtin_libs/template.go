@@ -20,8 +20,8 @@ func libTemplate(c *Context) ValueObject {
 			params      Value
 		)
 		EnsureFuncParams(c, "template.renderHtml", args,
-			ArgRuleRequired{"templateSrc", TypeStr, &templateSrc},
-			ArgRuleOptional{"params", TypeAny, &params, NewObject()},
+			ArgRuleRequired("templateSrc", TypeStr, &templateSrc),
+			ArgRuleOptional("params", TypeAny, &params, NewObject()),
 		)
 		t, err := htpl.New("tpl").Parse(templateSrc.Value())
 		if err != nil {
@@ -39,8 +39,8 @@ func libTemplate(c *Context) ValueObject {
 			params      Value
 		)
 		EnsureFuncParams(c, "template.renderText", args,
-			ArgRuleRequired{"templateSrc", TypeStr, &templateSrc},
-			ArgRuleOptional{"params", TypeAny, &params, NewObject()},
+			ArgRuleRequired("templateSrc", TypeStr, &templateSrc),
+			ArgRuleOptional("params", TypeAny, &params, NewObject()),
 		)
 		t, err := ttpl.New("tpl").Parse(templateSrc.Value())
 		if err != nil {
@@ -60,7 +60,7 @@ func init() {
 	// 		Constructor(func(c *Context, this ValueObject, args []Value) {
 	// 			var root ValueStr
 	// 			EnsureFuncParams(c, "template.Loader.__init__", args,
-	// 				ArgRuleRequired{"root", TypeStr, &root},
+	// 				ArgRuleRequired("root", TypeStr, &root),
 	// 			)
 	// 			this.SetMember
 	// 		}).

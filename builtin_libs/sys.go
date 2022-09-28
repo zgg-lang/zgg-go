@@ -173,7 +173,7 @@ var sysCommandClass = func() ValueType {
 		}).
 		Method("onStdout", func(c *Context, this ValueObject, args []Value) Value {
 			var callback ValueCallable
-			EnsureFuncParams(c, "sys.Command.onStdout", args, ArgRuleRequired{"callback", TypeFunc, &callback})
+			EnsureFuncParams(c, "sys.Command.onStdout", args, ArgRuleRequired("callback", TypeFunc, &callback))
 			stdoutCallback := this.GetMember("_onStdout", c)
 			if _, isUndefined := stdoutCallback.(ValueUndefined); !isUndefined {
 				c.RaiseRuntimeError("sys.Command.onStdout: stdoutCallback already set")
@@ -190,7 +190,7 @@ var sysCommandClass = func() ValueType {
 		}).
 		Method("onStderr", func(c *Context, this ValueObject, args []Value) Value {
 			var callback ValueCallable
-			EnsureFuncParams(c, "sys.Command.onStderr", args, ArgRuleRequired{"callback", TypeFunc, &callback})
+			EnsureFuncParams(c, "sys.Command.onStderr", args, ArgRuleRequired("callback", TypeFunc, &callback))
 			stderrCallback := this.GetMember("_onStderr", c)
 			if _, isUndefined := stderrCallback.(ValueUndefined); !isUndefined {
 				c.RaiseRuntimeError("sys.Command.onStderr: stderrCallback already set")

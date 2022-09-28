@@ -122,8 +122,8 @@ var httpGet = NewNativeFunction("http.get", func(c *Context, thisArg Value, args
 		headers ValueObject
 	)
 	EnsureFuncParams(c, "http.get", args,
-		ArgRuleRequired{"url", TypeStr, &url},
-		ArgRuleOptional{"headers", TypeObject, &headers, NewObject()},
+		ArgRuleRequired("url", TypeStr, &url),
+		ArgRuleOptional("headers", TypeObject, &headers, NewObject()),
 	)
 	request, err := http.NewRequest("GET", url.Value(), nil)
 	if err != nil {
@@ -275,9 +275,9 @@ var httpPostMultipartForm = NewNativeFunction("postMultipartForm", func(c *Conte
 		headers ValueObject
 	)
 	EnsureFuncParams(c, "http.postMultiPartForm", args,
-		ArgRuleRequired{"url", TypeStr, &url},
-		ArgRuleRequired{"form", TypeObject, &form},
-		ArgRuleOptional{"headers", TypeObject, &headers, NewObject()},
+		ArgRuleRequired("url", TypeStr, &url),
+		ArgRuleRequired("form", TypeObject, &form),
+		ArgRuleOptional("headers", TypeObject, &headers, NewObject()),
 	)
 	formBs, contentType := httpGetMultipartForm(c, form)
 	request, err := http.NewRequest("POST", url.Value(), bytes.NewReader(formBs))
@@ -395,8 +395,8 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 			handleFunc ValueCallable
 		)
 		EnsureFuncParams(c, "routeWebsocket", args,
-			ArgRuleRequired{"path", TypeStr, &routePath},
-			ArgRuleRequired{"handleFunc", TypeFunc, &handleFunc},
+			ArgRuleRequired("path", TypeStr, &routePath),
+			ArgRuleRequired("handleFunc", TypeFunc, &handleFunc),
 		)
 		svr.HandleFunc(routePath.Value(), func(w http.ResponseWriter, r *http.Request) {
 			conn, err := upgrader.Upgrade(w, r, nil)
@@ -468,7 +468,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".query", args,
-				ArgRuleRequired{"name", TypeStr, &argName},
+				ArgRuleRequired("name", TypeStr, &argName),
 			)
 			if arg, found := r.URL.Query()[argName.Value()]; found && len(arg) > 0 {
 				return NewStr(arg[0])
@@ -479,7 +479,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".getHeader", args,
-				ArgRuleRequired{"name", TypeStr, &argName},
+				ArgRuleRequired("name", TypeStr, &argName),
 			)
 			return NewStr(r.Header.Get(argName.Value()))
 		}).
@@ -487,7 +487,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".getHeaders", args,
-				ArgRuleRequired{"name", TypeStr, &argName},
+				ArgRuleRequired("name", TypeStr, &argName),
 			)
 			headers := r.Header.Values(argName.Value())
 			rv := NewArray(len(headers))
@@ -500,7 +500,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".queryAll", args,
-				ArgRuleRequired{"name", TypeStr, &argName},
+				ArgRuleRequired("name", TypeStr, &argName),
 			)
 			if arg, found := r.URL.Query()[argName.Value()]; found {
 				rv := NewArray(len(arg))
@@ -515,7 +515,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			var maxSize ValueInt
 			EnsureFuncParams(c, className+".parseMultipartForm", args,
-				ArgRuleOptional{"maxSize", TypeInt, &maxSize, NewInt(10 * 1024 * 1024)},
+				ArgRuleOptional("maxSize", TypeInt, &maxSize, NewInt(10*1024*1024)),
 			)
 			r.ParseMultipartForm(maxSize.Value())
 			return Nil()
@@ -527,8 +527,8 @@ func initHttpRequestContextClass() ValueType {
 				index ValueInt
 			)
 			EnsureFuncParams(c, className+".file", args,
-				ArgRuleRequired{"name", TypeStr, &name},
-				ArgRuleOptional{"index", TypeInt, &index, NewInt(0)},
+				ArgRuleRequired("name", TypeStr, &name),
+				ArgRuleOptional("index", TypeInt, &index, NewInt(0)),
 			)
 			if r.MultipartForm == nil {
 				c.RaiseRuntimeError("RequestContext.file: cannot get file without parseMultipartForm")
@@ -547,8 +547,8 @@ func initHttpRequestContextClass() ValueType {
 				index ValueInt
 			)
 			EnsureFuncParams(c, className+".file", args,
-				ArgRuleRequired{"name", TypeStr, &name},
-				ArgRuleOptional{"index", TypeInt, &index, NewInt(0)},
+				ArgRuleRequired("name", TypeStr, &name),
+				ArgRuleOptional("index", TypeInt, &index, NewInt(0)),
 			)
 			if r.MultipartForm == nil {
 				c.RaiseRuntimeError("RequestContext.file: cannot get file without parseMultipartForm")
@@ -566,7 +566,7 @@ func initHttpRequestContextClass() ValueType {
 			r.ParseForm()
 			var argName ValueStr
 			EnsureFuncParams(c, className+".form", args,
-				ArgRuleRequired{"name", TypeStr, &argName},
+				ArgRuleRequired("name", TypeStr, &argName),
 			)
 			if arg, found := r.Form[argName.Value()]; found && len(arg) > 0 {
 				return NewStr(arg[0])
@@ -577,7 +577,7 @@ func initHttpRequestContextClass() ValueType {
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".formAll", args,
-				ArgRuleRequired{"name", TypeStr, &argName},
+				ArgRuleRequired("name", TypeStr, &argName),
 			)
 			if arg, found := r.Form[argName.Value()]; found {
 				rv := NewArray(len(arg))
@@ -603,8 +603,8 @@ func initHttpRequestContextClass() ValueType {
 				val ValueStr
 			)
 			EnsureFuncParams(c, "http.RequestContext.addHeader", args,
-				ArgRuleRequired{"key", TypeStr, &key},
-				ArgRuleRequired{"val", TypeStr, &val},
+				ArgRuleRequired("key", TypeStr, &key),
+				ArgRuleRequired("val", TypeStr, &val),
 			)
 			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
 			w.Header().Add(key.Value(), val.Value())
@@ -616,8 +616,8 @@ func initHttpRequestContextClass() ValueType {
 				val ValueStr
 			)
 			EnsureFuncParams(c, "http.RequestContext.setHeader", args,
-				ArgRuleRequired{"key", TypeStr, &key},
-				ArgRuleRequired{"val", TypeStr, &val},
+				ArgRuleRequired("key", TypeStr, &key),
+				ArgRuleRequired("val", TypeStr, &val),
 			)
 			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
 			w.Header().Set(key.Value(), val.Value())
@@ -681,7 +681,7 @@ func initHttpRequestContextClass() ValueType {
 				filename ValueStr
 			)
 			EnsureFuncParams(c, "http.RequestContext.sendFile", args,
-				ArgRuleRequired{"filename", TypeStr, &filename},
+				ArgRuleRequired("filename", TypeStr, &filename),
 			)
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
@@ -696,13 +696,13 @@ func initHttpRequestContextClass() ValueType {
 			switch len(args) {
 			case 1:
 				EnsureFuncParams(c, "http.RequestContext.redirect", args,
-					ArgRuleRequired{"url", TypeStr, &url},
+					ArgRuleRequired("url", TypeStr, &url),
 				)
 				code = NewInt(302)
 			default:
 				EnsureFuncParams(c, "http.RequestContext.redirect", args,
-					ArgRuleRequired{"url", TypeStr, &url},
-					ArgRuleRequired{"code", TypeInt, &code},
+					ArgRuleRequired("url", TypeStr, &url),
+					ArgRuleRequired("code", TypeInt, &code),
 				)
 			}
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
@@ -716,8 +716,8 @@ func initHttpRequestContextClass() ValueType {
 				options ValueObject
 			)
 			EnsureFuncParams(c, "http.RequestContext.forward", args,
-				ArgRuleRequired{"target", TypeStr, &target},
-				ArgRuleOptional{"options", TypeObject, &options, NewObject()},
+				ArgRuleRequired("target", TypeStr, &target),
+				ArgRuleOptional("options", TypeObject, &options, NewObject()),
 			)
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
@@ -840,13 +840,13 @@ func initHttpRequestClass() ValueType {
 			)
 			if len(args) == 1 {
 				EnsureFuncParams(c, "Request.__init__", args,
-					ArgRuleRequired{"url", TypeStr, &url},
+					ArgRuleRequired("url", TypeStr, &url),
 				)
 				this.SetMember("method", NewStr("GET"), c)
 			} else {
 				EnsureFuncParams(c, "Request.__init__", args,
-					ArgRuleRequired{"method", TypeStr, &method},
-					ArgRuleRequired{"url", TypeStr, &url},
+					ArgRuleRequired("method", TypeStr, &method),
+					ArgRuleRequired("url", TypeStr, &url),
 				)
 				this.SetMember("method", method, c)
 			}
@@ -861,9 +861,9 @@ func initHttpRequestClass() ValueType {
 				caFile   ValueStr
 			)
 			EnsureFuncParams(c, "http.Request.certFile", args,
-				ArgRuleRequired{"certFile", TypeStr, &certFile},
-				ArgRuleRequired{"keyFile", TypeStr, &keyFile},
-				ArgRuleOptional{"caFile", TypeStr, &caFile, NewStr("")},
+				ArgRuleRequired("certFile", TypeStr, &certFile),
+				ArgRuleRequired("keyFile", TypeStr, &keyFile),
+				ArgRuleOptional("caFile", TypeStr, &caFile, NewStr("")),
 			)
 			this.SetMember("__certs", NewArrayByValues(certFile, keyFile, caFile), c)
 			return this
@@ -877,7 +877,7 @@ func initHttpRequestClass() ValueType {
 		}).
 		Method("form", func(c *Context, this ValueObject, args []Value) Value {
 			var formArg ValueObject
-			EnsureFuncParams(c, "Request.form", args, ArgRuleRequired{"form", TypeObject, &formArg})
+			EnsureFuncParams(c, "Request.form", args, ArgRuleRequired("form", TypeObject, &formArg))
 			headers := this.GetMember("__headers", c).(ValueArray)
 			headers.PushBack(NewArrayByValues(NewStr("Content-Type"), NewStr("application/x-www-form-urlencoded")))
 			body := this.GetMember("__body", c).(ValueArray)
@@ -890,7 +890,7 @@ func initHttpRequestClass() ValueType {
 		}).
 		Method("multipartForm", func(c *Context, this ValueObject, args []Value) Value {
 			var formArg ValueObject
-			EnsureFuncParams(c, "Request.form", args, ArgRuleRequired{"form", TypeObject, &formArg})
+			EnsureFuncParams(c, "Request.form", args, ArgRuleRequired("form", TypeObject, &formArg))
 			formBs, contentType := httpGetMultipartForm(c, formArg)
 			body := this.GetMember("__body", c).(ValueArray)
 			body.PushBack(NewBytes(formBs))
@@ -918,14 +918,14 @@ func initHttpRequestClass() ValueType {
 		Method("followRedirect", func(c *Context, this ValueObject, args []Value) Value {
 			var shouldFollow ValueBool
 			EnsureFuncParams(c, "Request.followRedirect", args,
-				ArgRuleRequired{"shouldFollow", TypeBool, &shouldFollow})
+				ArgRuleRequired("shouldFollow", TypeBool, &shouldFollow))
 			this.SetMember("__shouldFollowRedirect", shouldFollow, c)
 			return this
 		}).
 		Method("useClient", func(c *Context, this ValueObject, args []Value) Value {
 			var client GoValue
 			EnsureFuncParams(c, "Request.useClient", args,
-				ArgRuleRequired{"goHttpClient", TypeGoValue, &client})
+				ArgRuleRequired("goHttpClient", TypeGoValue, &client))
 			if _, ok := client.ToGoValue().(*http.Client); !ok {
 				c.RaiseRuntimeError("Request.useClient: argument must be a *http.Client")
 			}
@@ -1037,7 +1037,7 @@ func initHttpResponseClass() ValueType {
 		Method("header", func(c *Context, this ValueObject, args []Value) Value {
 			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
 			var h ValueStr
-			EnsureFuncParams(c, "http.Response.header", args, ArgRuleRequired{"header", TypeStr, &h})
+			EnsureFuncParams(c, "http.Response.header", args, ArgRuleRequired("header", TypeStr, &h))
 			return NewStr(resp.Header.Get(h.Value()))
 		}).
 		Method("bytes", func(c *Context, this ValueObject, args []Value) Value {
@@ -1050,7 +1050,7 @@ func initHttpResponseClass() ValueType {
 		}).
 		Method("chunk", func(c *Context, this ValueObject, args []Value) Value {
 			var chunkSize ValueInt
-			EnsureFuncParams(c, "http.Response.chunk", args, ArgRuleOptional{"chunkSize", TypeInt, &chunkSize, NewInt(512 * 1024)})
+			EnsureFuncParams(c, "http.Response.chunk", args, ArgRuleOptional("chunkSize", TypeInt, &chunkSize, NewInt(512*1024)))
 			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
 			var stackBuf [512 * 1024]byte
 			var buf []byte
@@ -1072,7 +1072,7 @@ func initHttpResponseClass() ValueType {
 		}, "chunkSize").
 		Method("iterChunk", func(c *Context, this ValueObject, args []Value) Value {
 			var chunkSize ValueInt
-			EnsureFuncParams(c, "http.Response.iterChunk", args, ArgRuleOptional{"chunkSize", TypeInt, &chunkSize, NewInt(512 * 1024)})
+			EnsureFuncParams(c, "http.Response.iterChunk", args, ArgRuleOptional("chunkSize", TypeInt, &chunkSize, NewInt(512*1024)))
 			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
 			var stackBuf [512 * 1024]byte
 			var buf []byte
@@ -1153,7 +1153,7 @@ func initHttpWebsocketClientClass() ValueType {
 				url ValueStr
 			)
 			EnsureFuncParams(c, "http.WebSocket", args,
-				ArgRuleRequired{"url", TypeStr, &url},
+				ArgRuleRequired("url", TypeStr, &url),
 			)
 			this.SetMember("__url", url, c)
 		}).
@@ -1223,7 +1223,7 @@ func initHttpWebsocketClientClass() ValueType {
 		}).
 		Method("writeJson", func(c *Context, this ValueObject, args []Value) Value {
 			var val Value
-			EnsureFuncParams(c, "writeJson", args, ArgRuleRequired{"value", TypeAny, &val})
+			EnsureFuncParams(c, "writeJson", args, ArgRuleRequired("value", TypeAny, &val))
 			bs, err := jsonMarshal(val.ToGoValue())
 			if err != nil {
 				c.RaiseRuntimeError("websocket writeJson error: %s", err)

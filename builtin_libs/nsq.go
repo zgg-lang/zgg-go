@@ -21,8 +21,8 @@ var nsqConsumerClass = NewClassBuilder("nsq.Consumer").
 			addr  ValueStr
 		)
 		EnsureFuncParams(c, "nsq.Consumer.__init__", args,
-			ArgRuleRequired{"dType", TypeStr, &dType},
-			ArgRuleRequired{"addr", TypeStr, &addr},
+			ArgRuleRequired("dType", TypeStr, &dType),
+			ArgRuleRequired("addr", TypeStr, &addr),
 		)
 		if dt := dType.Value(); dt != "nsqd" && dt != "nsqlookupd" {
 			c.RaiseRuntimeError("nsq.Consumer.__init__ invalid dType %s", dt)
@@ -40,9 +40,9 @@ var nsqConsumerClass = NewClassBuilder("nsq.Consumer").
 			callback ValueCallable
 		)
 		EnsureFuncParams(c, "nsq.Consumer.on", args,
-			ArgRuleRequired{"topic", TypeStr, &topic},
-			ArgRuleRequired{"channel", TypeStr, &channel},
-			ArgRuleRequired{"callback", TypeFunc, &callback},
+			ArgRuleRequired("topic", TypeStr, &topic),
+			ArgRuleRequired("channel", TypeStr, &channel),
+			ArgRuleRequired("callback", TypeFunc, &callback),
 		)
 		conf := nsq.NewConfig()
 		conf.LookupdPollInterval = 60 * time.Second

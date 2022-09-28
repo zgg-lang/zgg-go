@@ -7,7 +7,7 @@ import (
 )
 
 func assertResult(t *testing.T, expected runtime.Value, expr Expr) {
-	c := runtime.NewContext(true)
+	c := runtime.NewContext(true, false, false)
 	expr.Eval(c)
 	if c.RetVal != expected {
 		t.Errorf("计算错误 %s != %s", c.RetVal, expected)

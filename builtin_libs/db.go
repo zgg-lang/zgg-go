@@ -73,8 +73,8 @@ func libDb(*Context) ValueObject {
 			uri = NewStr(uriStr)
 		} else {
 			EnsureFuncParams(c, "db.open", args,
-				ArgRuleRequired{"engine", TypeStr, &engine},
-				ArgRuleRequired{"uri", TypeStr, &uri},
+				ArgRuleRequired("engine", TypeStr, &engine),
+				ArgRuleRequired("uri", TypeStr, &uri),
 			)
 		}
 		driverFound := false
@@ -482,7 +482,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 				requiredArgs = args[:1]
 			}
 			EnsureFuncParams(c, "Database.m", requiredArgs,
-				ArgRuleRequired{"table", TypeStr, &table},
+				ArgRuleRequired("table", TypeStr, &table),
 			)
 			rv := NewObjectAndInit(dbActiveRecordClass, c, this, table)
 			if len(args) > 1 {
@@ -495,7 +495,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 				querySql ValueStr
 			)
 			EnsureFuncParams(c, "Database.query", args,
-				ArgRuleRequired{"querySql", TypeStr, &querySql},
+				ArgRuleRequired("querySql", TypeStr, &querySql),
 			)
 			db := this.GetMember("_db", c)
 			queryArgs := make([]interface{}, len(args)-1)
@@ -525,7 +525,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 				execSql ValueStr
 			)
 			EnsureFuncParams(c, "Database.execute", args,
-				ArgRuleRequired{"querySql", TypeStr, &execSql},
+				ArgRuleRequired("querySql", TypeStr, &execSql),
 			)
 			db := this.GetMember("_db", c)
 			execArgs := make([]interface{}, len(args)-1)
@@ -622,7 +622,7 @@ func initDatabaseSessionClass() ValueType {
 				requiredArgs = args[:1]
 			}
 			EnsureFuncParams(c, "Session.m", requiredArgs,
-				ArgRuleRequired{"table", TypeStr, &table},
+				ArgRuleRequired("table", TypeStr, &table),
 			)
 			rv := NewObjectAndInit(dbActiveRecordClass, c, this, table)
 			if len(args) > 1 {
@@ -635,7 +635,7 @@ func initDatabaseSessionClass() ValueType {
 				querySql ValueStr
 			)
 			EnsureFuncParams(c, "Session.query", args,
-				ArgRuleRequired{"querySql", TypeStr, &querySql},
+				ArgRuleRequired("querySql", TypeStr, &querySql),
 			)
 			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
 			queryArgs := make([]interface{}, len(args)-1)
@@ -654,7 +654,7 @@ func initDatabaseSessionClass() ValueType {
 				execSql ValueStr
 			)
 			EnsureFuncParams(c, "Session.execute", args,
-				ArgRuleRequired{"querySql", TypeStr, &execSql},
+				ArgRuleRequired("querySql", TypeStr, &execSql),
 			)
 			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
 			execArgs := make([]interface{}, len(args)-1)
@@ -863,8 +863,8 @@ func initDatabaseActiveRecordClass() ValueType {
 				table ValueStr
 			)
 			EnsureFuncParams(c, "ActiveRecord.__init__", args,
-				ArgRuleRequired{"conn", TypeObject, &conn},
-				ArgRuleRequired{"table", TypeStr, &table},
+				ArgRuleRequired("conn", TypeObject, &conn),
+				ArgRuleRequired("table", TypeStr, &table),
 			)
 			this.SetMember("conn", conn, c)
 			this.SetMember("_dialect", conn.GetMember("_dialect", c), c)
@@ -926,13 +926,13 @@ func initDatabaseActiveRecordClass() ValueType {
 		}).
 		Method("limit", func(c *Context, this ValueObject, args []Value) Value {
 			var v ValueInt
-			EnsureFuncParams(c, "limit", args, ArgRuleRequired{"limit", TypeInt, &v})
+			EnsureFuncParams(c, "limit", args, ArgRuleRequired("limit", TypeInt, &v))
 			this.SetMember("_limit", v, c)
 			return this
 		}).
 		Method("offset", func(c *Context, this ValueObject, args []Value) Value {
 			var v ValueInt
-			EnsureFuncParams(c, "offset", args, ArgRuleRequired{"offset", TypeInt, &v})
+			EnsureFuncParams(c, "offset", args, ArgRuleRequired("offset", TypeInt, &v))
 			this.SetMember("_offset", v, c)
 			return this
 		}).
@@ -961,7 +961,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		Method("count", func(c *Context, this ValueObject, args []Value) Value {
 			var countField ValueStr
 			EnsureFuncParams(c, "ActiveRecord.count", args,
-				ArgRuleOptional{"countField", TypeStr, &countField, NewStr("(1)")},
+				ArgRuleOptional("countField", TypeStr, &countField, NewStr("(1)")),
 			)
 			args = []Value{countField}
 			res := doQuery(c, this, args)
@@ -980,7 +980,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		}).
 		Method("update", func(c *Context, this ValueObject, args []Value) Value {
 			var updates ValueObject
-			EnsureFuncParams(c, "ActiveRecord.update", args, ArgRuleRequired{"updates", TypeObject, &updates})
+			EnsureFuncParams(c, "ActiveRecord.update", args, ArgRuleRequired("updates", TypeObject, &updates))
 			conn := c.MustObject(this.GetMember("conn", c))
 			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
 			table := c.MustStr(this.GetMember("table", c))
@@ -1095,10 +1095,10 @@ func libDbOp(*Context) ValueObject {
 			sqlArgs ValueArray
 		)
 		EnsureFuncParams(c, name, args,
-			ArgRuleRequired{"dialect", TypeGoValue, &dialect},
-			ArgRuleRequired{"field", TypeStr, &field},
-			ArgRuleRequired{"filters", TypeArray, &filters},
-			ArgRuleRequired{"sqlArgs", TypeArray, &sqlArgs},
+			ArgRuleRequired("dialect", TypeGoValue, &dialect),
+			ArgRuleRequired("field", TypeStr, &field),
+			ArgRuleRequired("filters", TypeArray, &filters),
+			ArgRuleRequired("sqlArgs", TypeArray, &sqlArgs),
 		)
 		return dialect.ToGoValue().(dbDialect), field, filters, sqlArgs
 	}
@@ -1140,7 +1140,7 @@ func libDbOp(*Context) ValueObject {
 	}), nil)
 	lib.SetMember("contains", NewNativeFunction("contains", func(c *Context, this Value, fargs []Value) Value {
 		var subs ValueStr
-		EnsureFuncParams(c, "contains", fargs, ArgRuleRequired{"subs", TypeStr, &subs})
+		EnsureFuncParams(c, "contains", fargs, ArgRuleRequired("subs", TypeStr, &subs))
 		return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
 			dialect, field, filters, sqlArgs := getArgs(c, "contains", args)
 			filters.PushBack(NewStr("%s like ?", dialect.Quote(field.ToString(c))))
@@ -1150,7 +1150,7 @@ func libDbOp(*Context) ValueObject {
 	}), nil)
 	lib.SetMember("startsWith", NewNativeFunction("startsWith", func(c *Context, this Value, fargs []Value) Value {
 		var subs ValueStr
-		EnsureFuncParams(c, "startsWith", fargs, ArgRuleRequired{"subs", TypeStr, &subs})
+		EnsureFuncParams(c, "startsWith", fargs, ArgRuleRequired("subs", TypeStr, &subs))
 		return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
 			dialect, field, filters, sqlArgs := getArgs(c, "startsWith", args)
 			filters.PushBack(NewStr("%s like ?", dialect.Quote(field.ToString(c))))
@@ -1160,7 +1160,7 @@ func libDbOp(*Context) ValueObject {
 	}), nil)
 	lib.SetMember("endsWith", NewNativeFunction("endsWith", func(c *Context, this Value, fargs []Value) Value {
 		var subs ValueStr
-		EnsureFuncParams(c, "endsWith", fargs, ArgRuleRequired{"subs", TypeStr, &subs})
+		EnsureFuncParams(c, "endsWith", fargs, ArgRuleRequired("subs", TypeStr, &subs))
 		return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
 			dialect, field, filters, sqlArgs := getArgs(c, "endsWith", args)
 			filters.PushBack(NewStr("%s like ?", dialect.Quote(field.ToString(c))))

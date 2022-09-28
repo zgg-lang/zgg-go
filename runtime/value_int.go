@@ -118,7 +118,7 @@ var builtinIntMethods = map[string]ValueCallable{
 	}),
 	"str": NewNativeFunction("str", func(c *Context, this Value, args []Value) Value {
 		var base ValueInt
-		EnsureFuncParams(c, "str", args, ArgRuleOptional{"base", TypeInt, &base, NewInt(10)})
+		EnsureFuncParams(c, "str", args, ArgRuleOptional("base", TypeInt, &base, NewInt(10)))
 		b := base.AsInt()
 		if b < 2 || b > 36 {
 			c.RaiseRuntimeError("str: 2 <= base <= 36")
@@ -132,8 +132,8 @@ var builtinIntMethods = map[string]ValueCallable{
 			base  ValueInt
 		)
 		EnsureFuncParams(c, "parse", args,
-			ArgRuleRequired{"value", TypeStr, &value},
-			ArgRuleOptional{"base", TypeInt, &base, NewInt(10)},
+			ArgRuleRequired("value", TypeStr, &value),
+			ArgRuleOptional("base", TypeInt, &base, NewInt(10)),
 		)
 		b := base.AsInt()
 		if b < 2 || b > 36 {

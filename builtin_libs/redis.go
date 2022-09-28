@@ -22,8 +22,8 @@ func libRedis(*Context) ValueObject {
 			initDB    ValueInt
 		)
 		EnsureFuncParams(c, "redis.open", args,
-			ArgRuleOptional{"addr", TypeStr, &redisAddr, NewStr("127.0.0.1:6379")},
-			ArgRuleOptional{"db", TypeInt, &initDB, NewInt(0)},
+			ArgRuleOptional("addr", TypeStr, &redisAddr, NewStr("127.0.0.1:6379")),
+			ArgRuleOptional("db", TypeInt, &initDB, NewInt(0)),
 		)
 		conn, err := redis.Dial("tcp", redisAddr.Value(), redis.DialDatabase(int(initDB.Value())))
 		if err != nil {

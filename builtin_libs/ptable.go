@@ -365,8 +365,8 @@ func initPTableClass() {
 				format ValueStr
 			)
 			EnsureFuncParams(c, "colFormat", args,
-				ArgRuleRequired{"col", TypeInt, &col},
-				ArgRuleRequired{"foramt", TypeStr, &format},
+				ArgRuleRequired("col", TypeInt, &col),
+				ArgRuleRequired("foramt", TypeStr, &format),
 			)
 			_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
 			for i := len(_meta.colFormats); i < col.AsInt()+1; i++ {
@@ -545,7 +545,7 @@ func initPTableClass() {
 				includHeaders ValueBool
 			)
 			EnsureFuncParams(c, "PTable.toArray", args,
-				ArgRuleOptional{"includHeaders", TypeBool, &includHeaders, NewBool(false)},
+				ArgRuleOptional("includHeaders", TypeBool, &includHeaders, NewBool(false)),
 			)
 			incH := includHeaders.Value()
 			_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
@@ -578,7 +578,7 @@ var ptableFromCsvFile = NewNativeFunction("ptable.fromCsvFile", func(c *Context,
 		filename ValueStr
 	)
 	EnsureFuncParams(c, "ptable.fromCsvFile", args,
-		ArgRuleRequired{"filename", TypeStr, &filename},
+		ArgRuleRequired("filename", TypeStr, &filename),
 	)
 	name := filename.Value()
 	f, err := os.Open(name)
@@ -615,9 +615,9 @@ var ptableFromCsv = NewNativeFunction("ptable.fromCsv", func(c *Context, this Va
 		argContent  ValueStr
 	)
 	EnsureFuncParams(c, "ptable.fromCsv", args,
-		ArgRuleOptional{"filename", TypeStr, &argFilename, NewStr("")},
-		ArgRuleOptional{"url", TypeStr, &argUrl, NewStr("")},
-		ArgRuleOptional{"content", TypeStr, &argContent, NewStr("")},
+		ArgRuleOptional("filename", TypeStr, &argFilename, NewStr("")),
+		ArgRuleOptional("url", TypeStr, &argUrl, NewStr("")),
+		ArgRuleOptional("content", TypeStr, &argContent, NewStr("")),
 	)
 	var contentReader io.Reader
 	if content := argContent.Value(); content != "" {

@@ -280,8 +280,8 @@ var builtinStrMethods = map[string]ValueCallable{
 	"replaceAll": NewNativeFunction("str.replaceAll", func(c *Context, thisArg Value, args []Value) Value {
 		var sub, repl ValueStr
 		EnsureFuncParams(c, "str.replaceAll", args,
-			ArgRuleRequired{"sub", TypeStr, &sub},
-			ArgRuleRequired{"repl", TypeStr, &repl},
+			ArgRuleRequired("sub", TypeStr, &sub),
+			ArgRuleRequired("repl", TypeStr, &repl),
 		)
 		str := c.MustStr(thisArg)
 		return NewStr(strings.ReplaceAll(str, sub.Value(), repl.Value()))
@@ -294,8 +294,8 @@ var builtinStrMethods = map[string]ValueCallable{
 			replType int
 		)
 		EnsureFuncParams(c, "str.replace", args,
-			ArgRuleRequired{"pattern", TypeStr, &pattern},
-			ArgRuleOneOf{"repl", []ValueType{TypeStr, TypeCallable}, []interface{}{&repl, &replFunc}, &replType, nil, nil},
+			ArgRuleRequired("pattern", TypeStr, &pattern),
+			ArgRuleOneOf("repl", []ValueType{TypeStr, TypeCallable}, []interface{}{&repl, &replFunc}, &replType, nil, nil),
 		)
 		p, err := regexp.Compile(pattern.Value())
 		if err != nil {
@@ -359,7 +359,7 @@ var builtinStrMethods = map[string]ValueCallable{
 		return NewNativeFunction("str.fillParams", func(c *Context, thisArg Value, args []Value) Value {
 			str := c.MustStr(thisArg)
 			var params ValueObject
-			EnsureFuncParams(c, "str.fillParams", args, ArgRuleRequired{"params", TypeObject, &params})
+			EnsureFuncParams(c, "str.fillParams", args, ArgRuleRequired("params", TypeObject, &params))
 			return NewStr(re.ReplaceAllStringFunc(str, func(s string) string {
 				return params.GetMember(s[1:len(s)-1], c).ToString(c)
 			}))

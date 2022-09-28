@@ -33,7 +33,7 @@ func getKvManagerClass() ValueType {
 		Constructor(func(c *Context, this ValueObject, args []Value) {
 			var adapter Value
 			EnsureFuncParams(c, "Manager.__init__", args,
-				ArgRuleRequired{"scheme", TypeAny, &adapter},
+				ArgRuleRequired("scheme", TypeAny, &adapter),
 			)
 			if adapterScheme, ok := adapter.(ValueStr); ok {
 				u, err := url.Parse(adapterScheme.Value())
@@ -85,7 +85,7 @@ func initKvFileSystemAdapter() {
 				prefix = c.MustStr(this.GetMember("__prefix", c))
 				key    ValueStr
 			)
-			EnsureFuncParams(c, "FileSystemAdapter.get", args, ArgRuleRequired{"key", TypeStr, &key})
+			EnsureFuncParams(c, "FileSystemAdapter.get", args, ArgRuleRequired("key", TypeStr, &key))
 			filename := filepath.Join(root, prefix+key.Value())
 			bs, err := ioutil.ReadFile(filename)
 			if err != nil {
@@ -104,8 +104,8 @@ func initKvFileSystemAdapter() {
 				data   Value
 			)
 			EnsureFuncParams(c, "FileSystemAdapter.set", args,
-				ArgRuleRequired{"key", TypeStr, &key},
-				ArgRuleRequired{"value", TypeAny, &data},
+				ArgRuleRequired("key", TypeStr, &key),
+				ArgRuleRequired("value", TypeAny, &data),
 			)
 			filename := filepath.Join(root, prefix+key.Value())
 			var bs []byte
@@ -171,7 +171,7 @@ func initKvRedisAdapter() {
 				prefix = c.MustStr(this.GetMember("__prefix", c))
 				key    ValueStr
 			)
-			EnsureFuncParams(c, "RedisAdapter.get", args, ArgRuleRequired{"key", TypeStr, &key})
+			EnsureFuncParams(c, "RedisAdapter.get", args, ArgRuleRequired("key", TypeStr, &key))
 			conn := pool.Get()
 			defer conn.Close()
 			bs, err := redis.Bytes(conn.Do("GET", prefix+key.Value()))
@@ -192,8 +192,8 @@ func initKvRedisAdapter() {
 				data   Value
 			)
 			EnsureFuncParams(c, "RedisAdapter.set", args,
-				ArgRuleRequired{"key", TypeStr, &key},
-				ArgRuleRequired{"value", TypeAny, &data},
+				ArgRuleRequired("key", TypeStr, &key),
+				ArgRuleRequired("value", TypeAny, &data),
 			)
 			var bs []byte
 			if b, ok := data.(ValueBytes); ok {
@@ -271,7 +271,7 @@ func initKvRedisHashAdapter() {
 				prefix  = c.MustStr(this.GetMember("__prefix", c))
 				key     ValueStr
 			)
-			EnsureFuncParams(c, "RedisHashAdapter.get", args, ArgRuleRequired{"key", TypeStr, &key})
+			EnsureFuncParams(c, "RedisHashAdapter.get", args, ArgRuleRequired("key", TypeStr, &key))
 			conn := pool.Get()
 			defer conn.Close()
 			bs, err := redis.Bytes(conn.Do("HGET", hashkey.ToString(c), prefix+key.Value()))
@@ -292,8 +292,8 @@ func initKvRedisHashAdapter() {
 				data    Value
 			)
 			EnsureFuncParams(c, "RedisHashAdapter.set", args,
-				ArgRuleRequired{"key", TypeStr, &key},
-				ArgRuleRequired{"value", TypeAny, &data},
+				ArgRuleRequired("key", TypeStr, &key),
+				ArgRuleRequired("value", TypeAny, &data),
 			)
 			var bs []byte
 			if b, ok := data.(ValueBytes); ok {

@@ -699,7 +699,7 @@ var builtinFunctions = map[string]ValueCallable{
 	}),
 	"input": NewNativeFunction("input", func(c *Context, this Value, args []Value) Value {
 		var prompt ValueStr
-		EnsureFuncParams(c, "input", args, ArgRuleOptional{"prompt", TypeStr, &prompt, NewStr("")})
+		EnsureFuncParams(c, "input", args, ArgRuleOptional("prompt", TypeStr, &prompt, NewStr("")))
 		fmt.Fprint(c.Stdout, prompt.Value())
 		scanner := bufio.NewScanner(c.Stdin)
 		if scanner.Scan() {

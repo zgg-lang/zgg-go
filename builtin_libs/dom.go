@@ -8,7 +8,7 @@ import (
 
 func domLoadFromUrl(c *Context, this Value, args []Value) Value {
 	var url ValueStr
-	EnsureFuncParams(c, "fromUrl", args, ArgRuleRequired{"url", TypeStr, &url})
+	EnsureFuncParams(c, "fromUrl", args, ArgRuleRequired("url", TypeStr, &url))
 	doc, err := goquery.NewDocument(url.Value())
 	if err != nil {
 		c.RaiseRuntimeError("dom.fromUrl: load from url fail: %s", err)

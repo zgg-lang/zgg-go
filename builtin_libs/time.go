@@ -17,7 +17,7 @@ func libTime(*Context) ValueObject {
 	}), nil)
 	lib.SetMember("now", NewNativeFunction("now", func(c *Context, this Value, args []Value) Value {
 		var timeType ValueStr
-		EnsureFuncParams(c, "now", args, ArgRuleOptional{"timeType", TypeStr, &timeType, NewStr("")})
+		EnsureFuncParams(c, "now", args, ArgRuleOptional("timeType", TypeStr, &timeType, NewStr("")))
 		nowTs := time.Now().UnixNano()
 		asType := timeType.Value()
 		mod := int64(1)
@@ -42,12 +42,12 @@ func libTime(*Context) ValueObject {
 	}), nil)
 	lib.SetMember("fromUnix", NewNativeFunction("fromUnix", func(c *Context, this Value, args []Value) Value {
 		var ts ValueInt
-		EnsureFuncParams(c, "time.fromUnix", args, ArgRuleRequired{"unixTimestamp", TypeInt, &ts})
+		EnsureFuncParams(c, "time.fromUnix", args, ArgRuleRequired("unixTimestamp", TypeInt, &ts))
 		return NewObjectAndInit(timeClass, c, NewInt(ts.Value()*1e9))
 	}, "timestamp"), nil)
 	lib.SetMember("fromGoTime", NewNativeFunction("fromGoTime", func(c *Context, this Value, args []Value) Value {
 		var gt GoValue
-		EnsureFuncParams(c, "time.fromGoTime", args, ArgRuleRequired{"time", TypeGoValue, &gt})
+		EnsureFuncParams(c, "time.fromGoTime", args, ArgRuleRequired("time", TypeGoValue, &gt))
 		if _, ok := gt.ToGoValue().(time.Time); !ok {
 			c.RaiseRuntimeError("Not a time.Time!")
 		}
@@ -65,7 +65,7 @@ func libTime(*Context) ValueObject {
 	lib.SetMember("timeit", NewNativeFunction("timeit", func(c *Context, this Value, args []Value) (rv Value) {
 		var callable ValueCallable
 		EnsureFuncParams(c, "timeit", args,
-			ArgRuleRequired{"callable", TypeCallable, &callable},
+			ArgRuleRequired("callable", TypeCallable, &callable),
 		)
 		t0 := time.Now()
 		defer func() {
@@ -130,8 +130,8 @@ func initTimeClass() {
 				{
 					var timeStr, layout ValueStr
 					EnsureFuncParams(c, "Time.__init__", args,
-						ArgRuleRequired{"timeStr", TypeStr, &timeStr},
-						ArgRuleRequired{"layout", TypeStr, &layout},
+						ArgRuleRequired("timeStr", TypeStr, &timeStr),
+						ArgRuleRequired("layout", TypeStr, &layout),
 					)
 					t, err := time.Parse(layout.Value(), timeStr.Value())
 					if err != nil {
@@ -143,9 +143,9 @@ func initTimeClass() {
 				{
 					var year, month, day ValueInt
 					EnsureFuncParams(c, "Time.__init__", args,
-						ArgRuleRequired{"year", TypeInt, &year},
-						ArgRuleRequired{"month", TypeInt, &month},
-						ArgRuleRequired{"day", TypeInt, &day},
+						ArgRuleRequired("year", TypeInt, &year),
+						ArgRuleRequired("month", TypeInt, &month),
+						ArgRuleRequired("day", TypeInt, &day),
 					)
 					_t = time.Date(year.AsInt(), time.Month(month.AsInt()), day.AsInt(), 0, 0, 0, 0, time.Local)
 				}
@@ -153,12 +153,12 @@ func initTimeClass() {
 				{
 					var year, month, day, hour, minute, second ValueInt
 					EnsureFuncParams(c, "Time.__init__", args,
-						ArgRuleRequired{"year", TypeInt, &year},
-						ArgRuleRequired{"month", TypeInt, &month},
-						ArgRuleRequired{"day", TypeInt, &day},
-						ArgRuleRequired{"hour", TypeInt, &hour},
-						ArgRuleRequired{"minute", TypeInt, &minute},
-						ArgRuleRequired{"second", TypeInt, &second},
+						ArgRuleRequired("year", TypeInt, &year),
+						ArgRuleRequired("month", TypeInt, &month),
+						ArgRuleRequired("day", TypeInt, &day),
+						ArgRuleRequired("hour", TypeInt, &hour),
+						ArgRuleRequired("minute", TypeInt, &minute),
+						ArgRuleRequired("second", TypeInt, &second),
 					)
 					_t = time.Date(
 						year.AsInt(),
@@ -181,7 +181,7 @@ func initTimeClass() {
 		}).
 		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
 			var field ValueStr
-			EnsureFuncParams(c, "Time.__getAttr__", args, ArgRuleRequired{"field", TypeStr, &field})
+			EnsureFuncParams(c, "Time.__getAttr__", args, ArgRuleRequired("field", TypeStr, &field))
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			switch field.Value() {
 			case "unix":
@@ -205,7 +205,7 @@ func initTimeClass() {
 		}).
 		Method("add", func(c *Context, this ValueObject, args []Value) Value {
 			var duration ValueStr
-			EnsureFuncParams(c, "Time.add", args, ArgRuleRequired{"duration", TypeStr, &duration})
+			EnsureFuncParams(c, "Time.add", args, ArgRuleRequired("duration", TypeStr, &duration))
 			d, err := time.ParseDuration(duration.Value())
 			if err != nil {
 				c.RaiseRuntimeError("Invalid duration %s", duration.Value())
@@ -219,7 +219,7 @@ func initTimeClass() {
 		Method("addDays", func(c *Context, this ValueObject, args []Value) Value {
 			var days ValueInt
 			EnsureFuncParams(c, "Time.addDays", args,
-				ArgRuleRequired{"days", TypeInt, &days},
+				ArgRuleRequired("days", TypeInt, &days),
 			)
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			rv := NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, days.AsInt())))
@@ -229,7 +229,7 @@ func initTimeClass() {
 		Method("addHours", func(c *Context, this ValueObject, args []Value) Value {
 			var hours ValueInt
 			EnsureFuncParams(c, "Time.addHours", args,
-				ArgRuleRequired{"days", TypeInt, &hours},
+				ArgRuleRequired("days", TypeInt, &hours),
 			)
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			rv := NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Duration(hours.AsInt())*time.Hour)))
@@ -238,7 +238,7 @@ func initTimeClass() {
 		}).
 		Method("as", func(c *Context, this ValueObject, args []Value) Value {
 			var asType ValueStr
-			EnsureFuncParams(c, "Time.as", args, ArgRuleRequired{"asType", TypeStr, &asType})
+			EnsureFuncParams(c, "Time.as", args, ArgRuleRequired("asType", TypeStr, &asType))
 			this.SetMember("__as", asType, c)
 			return this
 		}).
@@ -270,8 +270,8 @@ func initTimeClass() {
 				timezone ValueStr
 			)
 			EnsureFuncParams(c, "Time.format", args,
-				ArgRuleRequired{"layout", TypeStr, &layout},
-				ArgRuleOptional{"timezone", TypeStr, &timezone, NewStr("")},
+				ArgRuleRequired("layout", TypeStr, &layout),
+				ArgRuleOptional("timezone", TypeStr, &timezone, NewStr("")),
 			)
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			layoutStr := layoutP.ReplaceAllStringFunc(layout.Value(), func(s string) string {
@@ -304,7 +304,7 @@ func initTimeClass() {
 		}).
 		Method("__add__", func(c *Context, this ValueObject, args []Value) Value {
 			var diff ValueInt
-			EnsureFuncParams(c, "Time.__add__", args, ArgRuleRequired{"add", TypeInt, &diff})
+			EnsureFuncParams(c, "Time.__add__", args, ArgRuleRequired("add", TypeInt, &diff))
 			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
 				var r Value
 				t := this.GetMember("__t", c).ToGoValue().(time.Time)
@@ -329,7 +329,7 @@ func initTimeClass() {
 		}).
 		Method("__sub__", func(c *Context, this ValueObject, args []Value) Value {
 			var diff ValueInt
-			EnsureFuncParams(c, "Time.__sub__", args, ArgRuleRequired{"add", TypeInt, &diff})
+			EnsureFuncParams(c, "Time.__sub__", args, ArgRuleRequired("add", TypeInt, &diff))
 			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
 				var r Value
 				t := this.GetMember("__t", c).ToGoValue().(time.Time)

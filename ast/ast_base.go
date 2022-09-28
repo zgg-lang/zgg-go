@@ -24,5 +24,5 @@ func (p *Pos) Position() (string, int) {
 }
 
 func (p *Pos) PositionStr() string {
-	return fmt.Sprintf("%s:%d")
+	return fmt.Sprintf("%s:%d", p.FileName, p.Line)
 }

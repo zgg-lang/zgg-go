@@ -28,19 +28,19 @@ func libGo(c *Context) ValueObject {
 			initLen = NewInt(0)
 			capacity = NewInt(0)
 			EnsureFuncParams(c, "go.makeSlice", args,
-				ArgRuleRequired{"elemType", TypeGoType, &typ},
+				ArgRuleRequired("elemType", TypeGoType, &typ),
 			)
 		case 2:
 			EnsureFuncParams(c, "go.makeSlice", args,
-				ArgRuleRequired{"elemType", TypeGoType, &typ},
-				ArgRuleRequired{"initLen", TypeInt, &initLen},
+				ArgRuleRequired("elemType", TypeGoType, &typ),
+				ArgRuleRequired("initLen", TypeInt, &initLen),
 			)
 			capacity = initLen
 		case 3:
 			EnsureFuncParams(c, "go.makeSlice", args,
-				ArgRuleRequired{"elemType", TypeGoType, &typ},
-				ArgRuleRequired{"initLen", TypeInt, &initLen},
-				ArgRuleRequired{"capacity", TypeInt, &capacity},
+				ArgRuleRequired("elemType", TypeGoType, &typ),
+				ArgRuleRequired("initLen", TypeInt, &initLen),
+				ArgRuleRequired("capacity", TypeInt, &capacity),
 			)
 		}
 		return NewReflectedGoValue(reflect.MakeSlice(reflect.SliceOf(typ.GoType()), initLen.AsInt(), capacity.AsInt()))
@@ -51,8 +51,8 @@ func libGo(c *Context) ValueObject {
 			size ValueInt
 		)
 		EnsureFuncParams(c, "go.array", args,
-			ArgRuleRequired{"elemType", TypeGoType, &typ},
-			ArgRuleRequired{"size", TypeInt, &size},
+			ArgRuleRequired("elemType", TypeGoType, &typ),
+			ArgRuleRequired("size", TypeInt, &size),
 		)
 		return NewGoType(reflect.ArrayOf(size.AsInt(), typ.GoType()))
 	}), c)
@@ -89,15 +89,15 @@ func libGo(c *Context) ValueObject {
 			valType GoType
 		)
 		EnsureFuncParams(c, "go.map", args,
-			ArgRuleRequired{"keyType", TypeGoType, &keyType},
-			ArgRuleRequired{"valueType", TypeGoType, &valType},
+			ArgRuleRequired("keyType", TypeGoType, &keyType),
+			ArgRuleRequired("valueType", TypeGoType, &valType),
 		)
 		return NewGoType(reflect.MapOf(keyType.GoType(), valType.GoType()))
 	}), c)
 	lib.SetMember("new", NewNativeFunction("go.new", func(c *Context, this Value, args []Value) Value {
 		var typ GoType
 		EnsureFuncParams(c, "go.new", args,
-			ArgRuleRequired{"type", TypeGoType, &typ},
+			ArgRuleRequired("type", TypeGoType, &typ),
 		)
 		return NewReflectedGoValue(reflect.New(typ.GoType()))
 	}), c)
@@ -106,7 +106,7 @@ func libGo(c *Context) ValueObject {
 		if len(args) == 1 {
 			var mapGoType GoType
 			EnsureFuncParams(c, "go.makeMap", args,
-				ArgRuleRequired{"mapType", TypeGoType, &mapGoType},
+				ArgRuleRequired("mapType", TypeGoType, &mapGoType),
 			)
 			mapType = mapGoType.GoType()
 			if mapType.Kind() != reflect.Map {
@@ -118,8 +118,8 @@ func libGo(c *Context) ValueObject {
 				valType GoType
 			)
 			EnsureFuncParams(c, "go.makeMap", args,
-				ArgRuleRequired{"keyType", TypeGoType, &keyType},
-				ArgRuleRequired{"valueType", TypeGoType, &valType},
+				ArgRuleRequired("keyType", TypeGoType, &keyType),
+				ArgRuleRequired("valueType", TypeGoType, &valType),
 			)
 			mapType = reflect.MapOf(keyType.GoType(), valType.GoType())
 		}
@@ -133,10 +133,10 @@ func libGo(c *Context) ValueObject {
 			)
 			switch len(args) {
 			case 1:
-				EnsureFuncParams(c, name, args, ArgRuleRequired{"elemType", TypeGoType, &elemType})
+				EnsureFuncParams(c, name, args, ArgRuleRequired("elemType", TypeGoType, &elemType))
 				size = NewInt(0)
 			default:
-				EnsureFuncParams(c, name, args, ArgRuleRequired{"elemType", TypeGoType, &elemType}, ArgRuleRequired{"size", TypeInt, &size})
+				EnsureFuncParams(c, name, args, ArgRuleRequired("elemType", TypeGoType, &elemType), ArgRuleRequired("size", TypeInt, &size))
 			}
 			chanType := reflect.ChanOf(dir, elemType.GoType())
 			return NewReflectedGoValue(reflect.MakeChan(chanType, size.AsInt()))
@@ -152,7 +152,7 @@ func libGo(c *Context) ValueObject {
 			ok bool
 		)
 		EnsureFuncParams(c, "go.type", args,
-			ArgRuleRequired{"t", TypeGoValue, &t},
+			ArgRuleRequired("t", TypeGoValue, &t),
 		)
 		if tt, ok = t.ToGoValue().(reflect.Type); !ok {
 			c.RaiseRuntimeError("go.type require reflect.Type")
@@ -165,8 +165,8 @@ func libGo(c *Context) ValueObject {
 			targetType GoType
 		)
 		EnsureFuncParams(c, "go.convert", args,
-			ArgRuleRequired{"src", TypeAny, &src},
-			ArgRuleRequired{"targetType", TypeGoType, &targetType},
+			ArgRuleRequired("src", TypeAny, &src),
+			ArgRuleRequired("targetType", TypeGoType, &targetType),
 		)
 		var srcGo GoValue
 		switch srcVal := src.(type) {

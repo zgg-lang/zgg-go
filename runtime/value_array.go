@@ -166,8 +166,8 @@ type arrayMapper struct {
 	mapper func(Value, int, *Context) Value
 }
 
-func (m *arrayMapper) ArgRule(argName string, required bool) ArgRuleOneOf {
-	rv := ArgRuleOneOf{
+func (m *arrayMapper) ArgRule(argName string, required bool) argRuleOneOf {
+	rv := argRuleOneOf{
 		ArgName:       argName,
 		ExpectedTypes: []ValueType{TypeCallable, TypeStr, TypeInt},
 		StoreTos:      []interface{}{&(m.f), &(m.k), &(m.i)},
@@ -360,8 +360,8 @@ var builtinArrayMethods = map[string]ValueCallable{
 			reverse ValueBool
 		)
 		EnsureFuncParams(c, "array.sort", args,
-			ArgRuleOptional{"lessFunc", TypeCallable, &lessFn, nil},
-			ArgRuleOptional{"reverse", TypeBool, &reverse, NewBool(false)},
+			ArgRuleOptional("lessFunc", TypeCallable, &lessFn, nil),
+			ArgRuleOptional("reverse", TypeBool, &reverse, NewBool(false)),
 		)
 		var s sort.Interface = &ArraySort{
 			Array:   thisArr,
@@ -437,7 +437,7 @@ var builtinArrayMethods = map[string]ValueCallable{
 		)
 		thisArr := c.MustArray(this)
 		EnsureFuncParams(c, "array.chunk", args,
-			ArgRuleRequired{"chunkSize", TypeInt, &chunkSize},
+			ArgRuleRequired("chunkSize", TypeInt, &chunkSize),
 		)
 		items := *(thisArr.Values)
 		n := len(items)
@@ -460,8 +460,8 @@ var builtinArrayMethods = map[string]ValueCallable{
 			start   ValueInt
 		)
 		EnsureFuncParams(c, "array.find", args,
-			ArgRuleRequired{"predict", TypeAny, &predict},
-			ArgRuleOptional{"start", TypeInt, &start, NewInt(0)},
+			ArgRuleRequired("predict", TypeAny, &predict),
+			ArgRuleOptional("start", TypeInt, &start, NewInt(0)),
 		)
 		thisArr := c.MustArray(this)
 		index, item := arrayFind(c, thisArr, predict, start.AsInt())
@@ -477,8 +477,8 @@ var builtinArrayMethods = map[string]ValueCallable{
 			start   ValueInt
 		)
 		EnsureFuncParams(c, "array.findIndex", args,
-			ArgRuleRequired{"predict", TypeAny, &predict},
-			ArgRuleOptional{"start", TypeInt, &start, NewInt(0)},
+			ArgRuleRequired("predict", TypeAny, &predict),
+			ArgRuleOptional("start", TypeInt, &start, NewInt(0)),
 		)
 		thisArr := c.MustArray(this)
 		index, _ := arrayFind(c, thisArr, predict, start.AsInt())

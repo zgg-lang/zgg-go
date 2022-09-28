@@ -124,7 +124,7 @@ func init() {
 		}).
 		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
 			var cmd ValueStr
-			EnsureFuncParams(c, "__getAttr__", args, ArgRuleRequired{"name", TypeStr, &cmd})
+			EnsureFuncParams(c, "__getAttr__", args, ArgRuleRequired("name", TypeStr, &cmd))
 			return NewObjectAndInit(shClassCommand, c, cmd, this)
 		}).
 		Build()
@@ -135,8 +135,8 @@ func init() {
 				session ValueObject
 			)
 			EnsureFuncParams(c, "Command.__init__", args,
-				ArgRuleRequired{"cmdName", TypeStr, &cmd},
-				ArgRuleRequired{"session", TypeObject, &session},
+				ArgRuleRequired("cmdName", TypeStr, &cmd),
+				ArgRuleRequired("session", TypeObject, &session),
 			)
 		}).
 		Method("__call__", func(c *Context, this ValueObject, args []Value) Value {

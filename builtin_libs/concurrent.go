@@ -84,7 +84,7 @@ func libConcurrent(*Context) ValueObject {
 			Constructor(func(c *Context, this ValueObject, args []Value) {
 				var n ValueInt
 				EnsureFuncParams(c, "Chan.__init__", args,
-					ArgRuleOptional{"n", TypeInt, &n, NewInt(1)},
+					ArgRuleOptional("n", TypeInt, &n, NewInt(1)),
 				)
 				ch := make(chan Value, n.AsInt())
 				this.SetMember("__ch", NewGoValue(&ch), c)
@@ -97,7 +97,7 @@ func libConcurrent(*Context) ValueObject {
 			Method("recv", func(c *Context, this ValueObject, args []Value) Value {
 				var n ValueFloat
 				EnsureFuncParams(c, "Chan.recv", args,
-					ArgRuleOptional{"timeout", TypeFloat, &n, NewFloat(-1)},
+					ArgRuleOptional("timeout", TypeFloat, &n, NewFloat(-1)),
 				)
 				ch := this.GetMember("__ch", c).ToGoValue().(*chan Value)
 				timeout := n.Value()
