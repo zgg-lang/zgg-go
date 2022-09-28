@@ -382,6 +382,18 @@ func (n *ExprMod) Eval(c *runtime.Context) {
 			c.RetVal = runtime.NewInt(val1.Value() % val2.Value())
 			return
 		}
+	case runtime.ValueStr:
+		switch val2 := right.(type) {
+		case runtime.ValueArray:
+			fargs := make([]interface{}, val2.Len())
+			for i := range fargs {
+				fargs[i] = val2.GetIndex(i, c).ToGoValue()
+			}
+			c.RetVal = runtime.NewStr(fmt.Sprintf(val1.Value(), fargs...))
+		default:
+			c.RetVal = runtime.NewStr(fmt.Sprintf(val1.Value(), val2.ToGoValue()))
+		}
+		return
 	default:
 		{
 			if opFn, ok := val1.GetMember("__mod__", c).(runtime.ValueCallable); ok {
