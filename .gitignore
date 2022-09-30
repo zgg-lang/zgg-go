@@ -11,5 +11,6 @@ bin
 tests
 parser/ZggLexer.g4
 userlibs
+test_*.zgg
 
 fabfile.py

@@ -527,6 +527,30 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return constUndefined
 	}),
+	"groupBy": NewNativeFunction("array.groupBy", func(c *Context, this Value, args []Value) Value {
+		if len(args) == 0 {
+			c.RaiseRuntimeError("groupBy requires at least one mapper")
+		}
+		mappers := make([]*arrayMapper, len(args))
+		for i := range mappers {
+			mappers[i] = &arrayMapper{}
+		}
+		argRules := make([]ArgRule, len(mappers))
+		for i, m := range mappers {
+			argRules[i] = m.ArgRule(fmt.Sprintf("mapper%d", i), true)
+		}
+		EnsureFuncParams(c, "array.groupBy", args, argRules...)
+		for i := range mappers {
+			mappers[i].Build()
+		}
+		groups := newGroupBy(*c.MustArray(this).Values, mappers).Execute(c)
+		res := NewArray(len(groups))
+		for _, g := range groups {
+			item := NewArrayByValues(g...)
+			res.PushBack(item)
+		}
+		return res
+	}),
 }
 
 type ArraySort struct {
