@@ -917,6 +917,12 @@ func initHttpRequestClass() ValueType {
 			c.RaiseRuntimeError("Request.header: invalid argument(s)")
 			return nil
 		}).
+		Method("host", func(c *Context, this ValueObject, args []Value) Value {
+			var host ValueStr
+			EnsureFuncParams(c, "Request.host", args, ArgRuleRequired("hosts", TypeStr, &host))
+			this.SetMember("__host", host, c)
+			return this
+		}).
 		Method("hosts", func(c *Context, this ValueObject, args []Value) Value {
 			var hosts ValueObject
 			EnsureFuncParams(c, "Request.hosts", args, ArgRuleRequired("hosts", TypeObject, &hosts))
@@ -928,6 +934,12 @@ func initHttpRequestClass() ValueType {
 			EnsureFuncParams(c, "Request.followRedirect", args,
 				ArgRuleRequired("shouldFollow", TypeBool, &shouldFollow))
 			this.SetMember("__shouldFollowRedirect", shouldFollow, c)
+			return this
+		}).
+		Method("tlsConfig", func(c *Context, this ValueObject, args []Value) Value {
+			var tlsConfig ValueObject
+			EnsureFuncParams(c, "Request.tlsConfig", args, ArgRuleRequired("config", TypeObject, &tlsConfig))
+			this.SetMember("__tlsConfig", tlsConfig, c)
 			return this
 		}).
 		Method("useClient", func(c *Context, this ValueObject, args []Value) Value {
@@ -1028,14 +1040,42 @@ func initHttpRequestClass() ValueType {
 							DialContext: dialContext,
 						}
 					} else if tr, ok := httpClient.Transport.(*http.Transport); ok {
+						if tr.DialContext != nil {
+							c.RaiseRuntimeError("DailContext already exists")
+						}
 						tr.DialContext = dialContext
 					} else {
-						c.RaiseRuntimeError("DailContext already exists")
+						c.RaiseRuntimeError("Cannot set DialContext")
+					}
+				}
+				if tlsConfig, ok := this.GetMember("__tlsConfig", c).(ValueObject); ok {
+					if httpClient == nil {
+						httpClient = &http.Client{}
+					}
+					var transport *http.Transport
+					if httpClient.Transport == nil {
+						transport = &http.Transport{}
+						httpClient.Transport = transport
+					} else if tr, ok := httpClient.Transport.(*http.Transport); ok {
+						transport = tr
+					} else {
+						c.RaiseRuntimeError("Get transport failed")
+					}
+					if transport.TLSClientConfig == nil {
+						transport.TLSClientConfig = &tls.Config{}
+					}
+					if jsonBs, err := json.Marshal(tlsConfig.ToGoValue()); err != nil {
+						c.RaiseRuntimeError("set tls config error: %+v", err)
+					} else if err := json.Unmarshal(jsonBs, transport.TLSClientConfig); err != nil {
+						c.RaiseRuntimeError("set tls config error: %+v", err)
 					}
 				}
 				if httpClient == nil {
 					httpClient = http.DefaultClient
 				}
+			}
+			if host, ok := this.GetMember("__host", c).(ValueStr); ok {
+				req.Host = host.Value()
 			}
 			resp, err := httpClient.Do(req)
 			if err != nil {
