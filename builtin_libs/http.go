@@ -2,9 +2,11 @@ package builtin_libs
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -915,6 +917,12 @@ func initHttpRequestClass() ValueType {
 			c.RaiseRuntimeError("Request.header: invalid argument(s)")
 			return nil
 		}).
+		Method("hosts", func(c *Context, this ValueObject, args []Value) Value {
+			var hosts ValueObject
+			EnsureFuncParams(c, "Request.hosts", args, ArgRuleRequired("hosts", TypeObject, &hosts))
+			this.SetMember("__hosts", hosts, c)
+			return this
+		}).
 		Method("followRedirect", func(c *Context, this ValueObject, args []Value) Value {
 			var shouldFollow ValueBool
 			EnsureFuncParams(c, "Request.followRedirect", args,
@@ -1001,6 +1009,28 @@ func initHttpRequestClass() ValueType {
 					}
 					httpClient.CheckRedirect = func(*http.Request, []*http.Request) error {
 						return http.ErrUseLastResponse
+					}
+				}
+				if hosts, ok := this.GetMember("__hosts", c).(ValueObject); ok {
+					if httpClient == nil {
+						httpClient = &http.Client{}
+					}
+					hostsMap := hosts.ToGoValue().(map[string]interface{})
+					var dialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+						if mapped, exists := hostsMap[addr]; exists {
+							addr = fmt.Sprint(mapped)
+						}
+						var d net.Dialer
+						return d.DialContext(ctx, network, addr)
+					}
+					if httpClient.Transport == nil {
+						httpClient.Transport = &http.Transport{
+							DialContext: dialContext,
+						}
+					} else if tr, ok := httpClient.Transport.(*http.Transport); ok {
+						tr.DialContext = dialContext
+					} else {
+						c.RaiseRuntimeError("DailContext already exists")
 					}
 				}
 				if httpClient == nil {
