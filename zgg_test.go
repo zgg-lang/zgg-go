@@ -3,6 +3,9 @@ package zgg
 import (
 	"strings"
 	"testing"
+
+	"github.com/zgg-lang/zgg-go/parser"
+	"github.com/zgg-lang/zgg-go/runtime"
 )
 
 func TestRunCode(t *testing.T) {
@@ -43,6 +46,17 @@ func TestRunner(t *testing.T) {
 	runner.Var("a", 1000)
 	runner.Run("println(a + b)")
 	t.Log(outbuf.String())
+}
+
+func TestCustomImport(t *testing.T) {
+	myImport := func(c *runtime.Context, name string, code string, importType string, reloadIfNewer bool) (runtime.Value, int64, bool) {
+		if name == "sys" {
+			return nil, 0, false
+		}
+		return parser.SimpleImport(c, name, code, importType, reloadIfNewer)
+	}
+	exported, err := RunCode(`a := @sys.getResult('ls')`, ImportFunc(myImport))
+	t.Log(exported, err)
 }
 
 func BenchmarkWithoutPrecompile(b *testing.B) {

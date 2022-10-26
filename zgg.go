@@ -28,6 +28,7 @@ type (
 	Val struct {
 		Value interface{}
 	}
+	ImportFunc func(*runtime.Context, string, string, string, bool) (runtime.Value, int64, bool)
 )
 
 func NewRunner() *Runner {
@@ -145,7 +146,11 @@ func (v Var) Apply(runner *Runner) {
 	runner.Var(v.Name, v.Value)
 }
 
-func (r *Runner) Run(code interface{}, opts ...ExecOption) (interface{}, error) {
+func (f ImportFunc) Apply(runner *Runner) {
+	runner.context.ImportFunc = f
+}
+
+func (r *Runner) Run(code interface{}) (interface{}, error) {
 	return r.execute(code, r.compileCode)
 }
 
