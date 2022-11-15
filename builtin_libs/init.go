@@ -6,8 +6,43 @@ import (
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
-var findLock sync.Mutex
-var libs = map[string]ValueObject{}
+type LibInfo struct {
+	name   string
+	getter func(*Context) ValueObject
+}
+
+var (
+	findLock  sync.Mutex
+	libs      = map[string]ValueObject{}
+	StdLibMap = map[string]LibInfo{
+		"base64":     LibInfo{name: "base64", getter: libBase64},
+		"chart":      LibInfo{name: "chart", getter: libChart},
+		"concurrent": LibInfo{name: "concurrent", getter: libConcurrent},
+		"cron":       LibInfo{name: "cron", getter: libCron},
+		"db":         LibInfo{name: "db", getter: libDb},
+		"dbop":       LibInfo{name: "db/op", getter: libDbOp},
+		"db/op":      LibInfo{name: "db/op", getter: libDbOp},
+		"dom":        LibInfo{name: "dom", getter: libDom},
+		"file":       LibInfo{name: "file", getter: libFile},
+		"go":         LibInfo{name: "go", getter: libGo},
+		"graph":      LibInfo{name: "graph", getter: libGraph},
+		"http":       LibInfo{name: "http", getter: libHttp},
+		"json":       LibInfo{name: "json", getter: libJson},
+		"kv":         LibInfo{name: "kv", getter: libKv},
+		"msgpack":    LibInfo{name: "msgpack", getter: libMsgpack},
+		"nsq":        LibInfo{name: "nsq", getter: libNsq},
+		"ptable":     LibInfo{name: "ptable", getter: libPtable},
+		"random":     LibInfo{name: "random", getter: libRandom},
+		"redis":      LibInfo{name: "redis", getter: libRedis},
+		"regex":      LibInfo{name: "regex", getter: libRegex},
+		"regex2":     LibInfo{name: "regex2", getter: libRegex2},
+		"sh":         LibInfo{name: "sh", getter: libSh},
+		"sys":        LibInfo{name: "sys", getter: libSys},
+		"template":   LibInfo{name: "template", getter: libTemplate},
+		"time":       LibInfo{name: "time", getter: libTime},
+		"url":        LibInfo{name: "url", getter: libUrl},
+	}
+)
 
 func getLib(c *Context, name string, getter func(*Context) ValueObject) ValueObject {
 	findLock.Lock()

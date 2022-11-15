@@ -71,6 +71,11 @@ func (v *ParseVisitor) VisitLiteralBigNum(ctx *LiteralBigNumContext) interface{}
 }
 
 func (v *ParseVisitor) VisitStringLiteral(ctx *StringLiteralContext) interface{} {
+	if ps := ctx.RSTRING(); ps != nil {
+		s := ps.GetText()
+		l := len(s)
+		return &ast.ExprStr{Value: runtime.NewStr(s[3 : l-3])}
+	}
 	if ps := ctx.STRING(); ps != nil {
 		s := ps.GetText()
 		l := len(s)

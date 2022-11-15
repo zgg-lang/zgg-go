@@ -101,6 +101,27 @@ func libSys(c *Context) ValueObject {
 		}
 		return NewStr(string(bs))
 	}), nil)
+	lib.SetMember("shellResult", NewNativeFunction("sys.shellResult", func(c *Context, this Value, args []Value) Value {
+		var (
+			shellCommands ValueStr
+			env           ValueObject
+		)
+		EnsureFuncParams(c, "sys.shellResult", args,
+			ArgRuleRequired("commands", TypeStr, &shellCommands),
+			ArgRuleOptional("env", TypeObject, &env, NewObject()),
+		)
+		cmd := exec.Command(os.Getenv("SHELL"), "-c", shellCommands.Value())
+		if env.Len() > 0 {
+			env.Iterate(func(k string, v Value) {
+				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v.ToString(c)))
+			})
+		}
+		bs, err := cmd.CombinedOutput()
+		if err != nil {
+			c.RaiseRuntimeError("sys.getResult: command %s error %s", shellCommands.Value(), err)
+		}
+		return NewStr(string(bs))
+	}, "shellCommands", "env"), nil)
 	return lib
 }
 

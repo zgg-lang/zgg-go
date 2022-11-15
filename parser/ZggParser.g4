@@ -259,6 +259,7 @@ keyValue
 
 stringLiteral
     : STRING
+    | RSTRING
     | templateString
     ;
 

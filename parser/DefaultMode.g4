@@ -69,6 +69,13 @@ fragment RSTRCHAR
             ;
 STRING      : [rR] '\'' RSTRCHAR* '\'';
 
+fragment RSTRCHAR2
+            : ~[']
+            | '\'' ~[']
+            | '\'' '\'' ~[']
+            ;
+RSTRING     : '\'' '\'' '\'' RSTRCHAR2* '\'' '\'' '\'';
+
 // 符号
 MORE_ARGS   : '...';
 LEAD_TO     : '->';
