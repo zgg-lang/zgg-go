@@ -445,11 +445,17 @@ func (n *ExprPow) Eval(c *runtime.Context) {
 	c.RaiseRuntimeError(fmt.Sprintf("Cannot pow between %s and %s", left.Type().Name, right.Type().Name))
 }
 
+type IsAssign interface {
+	itIsAnAssignExpr()
+}
+
 type ExprAssign struct {
 	Pos
 	Lval Lval
 	Expr Expr
 }
+
+func (ExprAssign) itIsAnAssignExpr() {}
 
 func (assign *ExprAssign) Eval(c *runtime.Context) {
 	assign.Expr.Eval(c)
@@ -467,6 +473,8 @@ type ExprLocalNewAssign struct {
 	Expr Expr
 }
 
+func (ExprLocalNewAssign) itIsAnAssignExpr() {}
+
 func (assign *ExprLocalNewAssign) Eval(c *runtime.Context) {
 	assign.Expr.Eval(c)
 	obj := c.MustObject(c.RetVal)
@@ -483,6 +491,8 @@ type ExprLocalAssign struct {
 	Type       int
 	Expr       Expr
 }
+
+func (ExprLocalAssign) itIsAnAssignExpr() {}
 
 func (assign *ExprLocalAssign) Eval(c *runtime.Context) {
 	if len(assign.Names) < 1 {

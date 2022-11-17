@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/zgg-lang/zgg-go/ast"
 	"github.com/zgg-lang/zgg-go/parser"
 	"github.com/zgg-lang/zgg-go/runtime"
 )
@@ -15,6 +16,23 @@ type ReplContext interface {
 	WriteResult(string)
 	OnEnter()
 	OnExit()
+}
+
+type ReplContextWithShouldWriteResult interface {
+	ShouldWriteResult(codeAst ast.Node) bool
+}
+
+func shouldWriteResult(c ReplContext, codeAst ast.Node) bool {
+	if swr, is := c.(ReplContextWithShouldWriteResult); is {
+		return swr.ShouldWriteResult(codeAst)
+	}
+	if _, is := codeAst.(ast.Expr); !is {
+		return false
+	}
+	if _, is := codeAst.(ast.IsAssign); is {
+		return false
+	}
+	return true
 }
 
 func ReplLoop(context ReplContext, shouldRecover bool) {
@@ -70,7 +88,9 @@ func ReplLoop(context ReplContext, shouldRecover bool) {
 				context.WriteResult("parse code fail")
 			} else {
 				codeAst.Eval(c)
-				context.WriteResult(c.RetVal.ToString(c))
+				if shouldWriteResult(context, codeAst) {
+					context.WriteResult(c.RetVal.ToString(c))
+				}
 			}
 		}()
 	}

@@ -244,7 +244,7 @@ var builtinFunctions = map[string]ValueCallable{
 							vi, err = strconv.ParseInt(vs[2:], 16, 64)
 						} else if strings.HasPrefix(vs, "0b") || strings.HasPrefix(vs, "0b") {
 							vi, err = strconv.ParseInt(vs[2:], 2, 64)
-						} else if len(vs) > 1 && strings.HasPrefix(vs, "0") || strings.HasPrefix(vs, "0") {
+						} else if len(vs) > 1 && strings.HasPrefix(vs, "0") {
 							vi, err = strconv.ParseInt(vs[1:], 8, 64)
 						} else {
 							vi, err = strconv.ParseInt(vs, 10, 64)

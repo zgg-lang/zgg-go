@@ -365,6 +365,33 @@ var builtinStrMethods = map[string]ValueCallable{
 			}))
 		})
 	}(),
+	"code": NewNativeFunction("str.code", func(c *Context, thisArg Value, args []Value) Value {
+		this, isStr := Unbound(thisArg).(ValueStr)
+		if !isStr {
+			c.RaiseRuntimeError("this is not a string!")
+		}
+		var argIndex ValueInt
+		EnsureFuncParams(c, "str.code", args, ArgRuleOptional("index", TypeInt, &argIndex, NewInt(0)))
+		index := argIndex.AsInt()
+		if index < 0 {
+			index += this.Len()
+		}
+		if index < 0 || index >= this.Len() {
+			c.RaiseRuntimeError("code index %d out of range [%d, %d)", index, -this.Len(), this.Len())
+		}
+		return NewInt(int64(this.v[index]))
+	}),
+	"codes": NewNativeFunction("str.codes", func(c *Context, thisArg Value, args []Value) Value {
+		this, isStr := Unbound(thisArg).(ValueStr)
+		if !isStr {
+			c.RaiseRuntimeError("this is not a string!")
+		}
+		rv := NewArray(this.Len())
+		for _, c := range this.v {
+			rv.PushBack(NewInt(int64(c)))
+		}
+		return rv
+	}),
 }
 
 func init() {
