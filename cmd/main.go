@@ -160,6 +160,8 @@ func main() {
 			runDeps(os.Args[2:])
 		case "add":
 			runAddDep(os.Args[2:])
+		case "ws":
+			runWebsocket(isDebug, os.Args[2])
 		default:
 			if f, err := os.Open(os.Args[1]); err == nil {
 				defer f.Close()
