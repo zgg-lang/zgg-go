@@ -17,6 +17,10 @@ func (e *SyntaxErrorInfo) String() string {
 	return fmt.Sprintf("%s: line %d:%d: %s", e.FileName, e.Line, e.Column, e.Msg)
 }
 
+func (e *SyntaxErrorInfo) Error() string {
+	return e.String()
+}
+
 type zggErrorListener struct {
 	antlr.DefaultErrorListener
 	FileName string

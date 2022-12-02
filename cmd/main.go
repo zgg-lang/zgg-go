@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zgg-lang/zgg-go/builtin_libs"
 	"github.com/zgg-lang/zgg-go/parser"
 	"github.com/zgg-lang/zgg-go/repl"
 	"github.com/zgg-lang/zgg-go/runtime"
@@ -137,9 +138,11 @@ func main() {
 				moduleName := os.Args[2]
 				filename := parser.GetModulePath(nil, moduleName)
 				if filename == "" {
-					return
-				}
-				if f, err := os.Open(filename); err == nil {
+					if _, found := builtin_libs.StdLibMap[moduleName]; !found {
+						return
+					}
+
+				} else if f, err := os.Open(filename); err == nil {
 					defer f.Close()
 					runFile(filename, f, os.Stdout, os.Stderr, filepath.Dir(filename), os.Args[3:], isDebug)
 				} else {

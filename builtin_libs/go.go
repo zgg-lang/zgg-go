@@ -3,20 +3,18 @@ package builtin_libs
 import (
 	"reflect"
 
+	"github.com/modern-go/reflect2"
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
-type DemoStruct struct {
-	Name string
-	Val  int
-}
-
 func libGo(c *Context) ValueObject {
 	lib := NewObject()
-	// lib.SetMember("", NewNativeFunction("go.ptrOf", func(c *Context, this Value, args []Value) Value {
-	// 	return args[0].GetMember("ptr", c)
-	// }), c)
-	lib.SetMember("DemoStruct", NewGoType(reflect.TypeOf(DemoStruct{})), c)
+	lib.SetMember("getType", NewNativeFunction("go.getType", func(c *Context, this Value, args []Value) Value {
+		var name ValueStr
+		EnsureFuncParams(c, "go.getType", args, ArgRuleRequired("typeName", TypeStr, &name))
+		t := reflect2.TypeByName(name.Value())
+		return NewGoType(t.Type1())
+	}, "typeName"), c)
 	lib.SetMember("makeSlice", NewNativeFunction("go.makeSlice", func(c *Context, this Value, args []Value) Value {
 		var (
 			typ      GoType

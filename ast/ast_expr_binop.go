@@ -458,6 +458,7 @@ type ExprAssign struct {
 func (ExprAssign) itIsAnAssignExpr() {}
 
 func (assign *ExprAssign) Eval(c *runtime.Context) {
+	c.EnsureNotReadonly()
 	assign.Expr.Eval(c)
 	assign.Lval.SetValue(c, c.RetVal)
 }
@@ -476,6 +477,7 @@ type ExprLocalNewAssign struct {
 func (ExprLocalNewAssign) itIsAnAssignExpr() {}
 
 func (assign *ExprLocalNewAssign) Eval(c *runtime.Context) {
+	c.EnsureNotReadonly()
 	assign.Expr.Eval(c)
 	obj := c.MustObject(c.RetVal)
 	obj.Iterate(func(k string, v runtime.Value) {
@@ -495,6 +497,7 @@ type ExprLocalAssign struct {
 func (ExprLocalAssign) itIsAnAssignExpr() {}
 
 func (assign *ExprLocalAssign) Eval(c *runtime.Context) {
+	c.EnsureNotReadonly()
 	if len(assign.Names) < 1 {
 		return
 	}

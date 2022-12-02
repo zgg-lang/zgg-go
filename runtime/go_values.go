@@ -521,6 +521,7 @@ func (v GoFunc) GetRefs() []string {
 }
 
 func (v GoFunc) Invoke(c *Context, this Value, args []Value) {
+	c.EnsureNotReadonly()
 	c.PushFuncStack(v.GetName())
 	defer c.PopStack()
 	method := v.GoValue.v.Type()

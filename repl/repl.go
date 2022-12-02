@@ -1,26 +1,42 @@
 package repl
 
 import (
+	"errors"
 	"fmt"
 	"strings"
-	"unicode"
 
 	"github.com/zgg-lang/zgg-go/ast"
 	"github.com/zgg-lang/zgg-go/parser"
 	"github.com/zgg-lang/zgg-go/runtime"
 )
 
-type ReplContext interface {
-	Context() *runtime.Context
-	ReadCode(bool, string) (string, bool)
-	WriteResult(string)
-	OnEnter()
-	OnExit()
-}
+type (
+	ReplAction interface {
+		Handle(context ReplContext, shouldRecover bool) (continueRunning bool)
+	}
 
-type ReplContextWithShouldWriteResult interface {
-	ShouldWriteResult(codeAst ast.Node) bool
-}
+	ReplRunCode struct {
+		Err      error
+		Compiled runtime.IEval
+	}
+
+	ReplHintCode string
+
+	ReplExit struct{}
+	ReplNoop struct{}
+
+	ReplContext interface {
+		Context() *runtime.Context
+		ReadAction(bool) ReplAction
+		WriteResult(interface{})
+		OnEnter()
+		OnExit()
+	}
+
+	ReplContextWithShouldWriteResult interface {
+		ShouldWriteResult(codeAst ast.Node) bool
+	}
+)
 
 func shouldWriteResult(c ReplContext, codeAst ast.Node) bool {
 	if swr, is := c.(ReplContextWithShouldWriteResult); is {
@@ -35,64 +51,94 @@ func shouldWriteResult(c ReplContext, codeAst ast.Node) bool {
 	return true
 }
 
-func ReplLoop(context ReplContext, shouldRecover bool) {
-	c := context.Context()
-	context.OnEnter()
-	code := ""
-	continueInput := false
-	indent := ""
-	for {
-		if !continueInput {
-			code = ""
-			indent = ""
+func ParseInputCode(code string, shouldRecover bool) (compiled runtime.IEval, err error) {
+	codeAst, errs := parser.ParseReplFromString(code, shouldRecover)
+	if len(errs) > 0 {
+		e := errs[0]
+		lines := strings.Split(code, "\n")
+		if e.Line != len(lines) || e.Column != len(lines[len(lines)-1]) {
+			err = &e
 		}
-		inputCode, shouldRun := context.ReadCode(!continueInput, indent)
-		if !shouldRun {
+	} else if codeAst == nil {
+		err = errors.New("parse code fail")
+	} else {
+		compiled = codeAst
+	}
+	return
+}
+
+func ReplLoop(context ReplContext, shouldRecover bool) {
+	context.OnEnter()
+	for {
+		action := context.ReadAction(shouldRecover)
+		if action == nil || !action.Handle(context, shouldRecover) {
 			break
 		}
-		code = code + "\n" + inputCode
-		continueInput = false
-		if strings.TrimSpace(code) == "" {
-			continue
-		}
-		func() {
-			defer func() {
-				if shouldRecover {
-					if err := recover(); err != nil {
-						if exc, ok := err.(runtime.Exception); ok {
-							context.WriteResult(exc.MessageWithStack())
-						} else {
-							context.WriteResult(fmt.Sprintf("ERR! %s", err))
-						}
-					}
-				}
-			}()
-			codeAst, errs := parser.ParseReplFromString(code, shouldRecover)
-			if len(errs) > 0 {
-				e := errs[0]
-				lines := strings.Split(code, "\n")
-				if e.Line == len(lines) && e.Column == len(lines[len(lines)-1]) {
-					s := 0
-					inputRunes := []rune(inputCode)
-					for ; s < len(inputCode) && unicode.IsSpace(inputRunes[s]); s++ {
-					}
-					indent = string(inputRunes[:s])
-					if strings.HasSuffix(inputCode, "{") || strings.HasSuffix(inputCode, "(") || strings.HasSuffix(inputCode, "[") {
-						indent += "  "
-					}
-					continueInput = true
-				} else {
-					context.WriteResult(errs[0].String())
-				}
-			} else if codeAst == nil {
-				context.WriteResult("parse code fail")
-			} else {
-				codeAst.Eval(c)
-				if shouldWriteResult(context, codeAst) {
-					context.WriteResult(c.RetVal.ToString(c))
-				}
-			}
-		}()
 	}
 	context.OnExit()
+}
+
+func (rrc ReplRunCode) Handle(context ReplContext, shouldRecover bool) (shouldContinue bool) {
+	shouldContinue = true
+	if rrc.Err != nil {
+		context.WriteResult(rrc.Err)
+		return
+	}
+	codeAst := rrc.Compiled
+	if codeAst == nil {
+		return
+	}
+	c := context.Context()
+	defer func() {
+		if shouldRecover {
+			if err := recover(); err != nil {
+				if exc, ok := err.(runtime.Exception); ok {
+					context.WriteResult(exc.MessageWithStack())
+				} else {
+					context.WriteResult(fmt.Sprintf("ERR! %s", err))
+				}
+			}
+		}
+	}()
+	codeAst.Eval(c)
+	retVal := c.RetVal
+	if shouldWriteResult(context, codeAst) {
+		context.WriteResult(retVal)
+	}
+	c.ForceSetLocalValue("__last__", retVal)
+	return
+}
+
+func (rrc ReplHintCode) Handle(context ReplContext, shouldRecover bool) bool {
+	c := context.Context()
+	code := string(rrc)
+	defer func() {
+		if shouldRecover {
+			if err := recover(); err != nil {
+				if exc, ok := err.(runtime.Exception); ok {
+					context.WriteResult(exc.MessageWithStack())
+				} else {
+					context.WriteResult(fmt.Sprintf("ERR! %s", err))
+				}
+			}
+		}
+	}()
+	codeAst, errs := parser.ParseReplFromString(code, shouldRecover)
+	if len(errs) > 0 {
+		context.WriteResult(errs[0].String())
+	} else if codeAst == nil {
+		context.WriteResult("parse code fail")
+	} else {
+		c.EvalConst(codeAst)
+		context.WriteResult(c.RetVal)
+	}
+	return true
+}
+
+func (ReplExit) Handle(context ReplContext, shouldRecover bool) bool {
+	return false
+}
+
+func (ReplNoop) Handle(context ReplContext, shouldRecover bool) bool {
+	return true
 }

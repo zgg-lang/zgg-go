@@ -127,7 +127,25 @@ func initPTableClass() {
 		}
 		return defaultAlign
 	}
-	renderAscii := func(c *Context, this ValueObject, formatFn, filterFn ValueCallable, alignConf Value, isMarkdown bool, tchars *ptableTextChars) Value {
+	getColor := func(c *Context, colorConf, v Value, i, j int) string {
+		switch ac := colorConf.(type) {
+		case ValueCallable:
+			c.Invoke(ac, nil, Args(v, NewInt(int64(i)), NewInt(int64(j))))
+			return c.RetVal.ToString(c)
+		case ValueStr:
+			return ac.Value()
+		case ValueArray:
+			return ac.GetIndex(j, c).ToString(c)
+		}
+		return ""
+	}
+	withColor := func(color, text string) string {
+		if color == "" {
+			return text
+		}
+		return fmt.Sprintf("\x1b[%s;1m%s\x1b[0m", color, text)
+	}
+	renderAscii := func(c *Context, this ValueObject, formatFn, filterFn ValueCallable, alignConf, colorConf Value, isMarkdown bool, tchars *ptableTextChars) Value {
 		_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
 		_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
 		rowsText := make([][]ptableAsciiCellInfo, 0, len(_rows))
@@ -171,6 +189,9 @@ func initPTableClass() {
 			rowLines = append(rowLines, n)
 		}
 		var b strings.Builder
+		if !IsUndefined(colorConf) {
+			b.WriteString("\x1b[0m")
+		}
 		// head line
 		if !isMarkdown {
 			b.WriteString(tchars.topLeft)
@@ -267,7 +288,8 @@ func initPTableClass() {
 							}
 						}
 						align := getAlign(c, alignConf, _rows[i][j], i, j, defaultAlign)
-						line := item.lines[k]
+						color := getColor(c, colorConf, _rows[i][j], i, j)
+						line := withColor(color, item.lines[k])
 						lw := item.widths[k]
 						switch align {
 						case "l":
@@ -319,6 +341,21 @@ func initPTableClass() {
 		Method("add", func(c *Context, this ValueObject, args []Value) Value {
 			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
 			_rows = append(_rows, args)
+			this.SetMember("_rows", NewGoValue(_rows), c)
+			return this
+		}).
+		Method("addArray", func(c *Context, this ValueObject, args []Value) Value {
+			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			var arr ValueArray
+			EnsureFuncParams(c, "addArray", args, ArgRuleRequired("array", TypeArray, &arr))
+			for i := 0; i < arr.Len(); i++ {
+				row := arr.GetIndex(i, c)
+				if rowArr, is := row.(ValueArray); !is {
+					c.RaiseRuntimeError("PTable.addArray: every array items must be an array")
+				} else {
+					_rows = append(_rows, *rowArr.Values)
+				}
+			}
 			this.SetMember("_rows", NewGoValue(_rows), c)
 			return this
 		}).
@@ -380,6 +417,7 @@ func initPTableClass() {
 				formatFn  ValueCallable
 				filterFn  ValueCallable
 				alignConf Value
+				colorConf Value
 			)
 			if len(args) > 0 {
 				opt := args[0]
@@ -390,10 +428,14 @@ func initPTableClass() {
 					filterFn = f
 				}
 				alignConf = opt.GetMember("align", c)
+				colorConf = opt.GetMember("color", c)
 			}
-			return renderAscii(c, this, formatFn, filterFn, alignConf, false, &ptableAsciiChars)
+			return renderAscii(c, this, formatFn, filterFn, alignConf, colorConf, false, &ptableAsciiChars)
 		}).
 		Method("txt", func(c *Context, this ValueObject, args []Value) Value {
+			return c.InvokeMethod(this, "ascii", Args(args...))
+		}).
+		Method("text", func(c *Context, this ValueObject, args []Value) Value {
 			return c.InvokeMethod(this, "ascii", Args(args...))
 		}).
 		Method("unicode", func(c *Context, this ValueObject, args []Value) Value {
@@ -401,6 +443,7 @@ func initPTableClass() {
 				formatFn  ValueCallable
 				filterFn  ValueCallable
 				alignConf Value
+				colorConf Value
 			)
 			if len(args) > 0 {
 				opt := args[0]
@@ -411,14 +454,16 @@ func initPTableClass() {
 					filterFn = f
 				}
 				alignConf = opt.GetMember("align", c)
+				colorConf = opt.GetMember("color", c)
 			}
-			return renderAscii(c, this, formatFn, filterFn, alignConf, false, &ptableUnicodeChars)
+			return renderAscii(c, this, formatFn, filterFn, alignConf, colorConf, false, &ptableUnicodeChars)
 		}).
 		Method("markdown", func(c *Context, this ValueObject, args []Value) Value {
 			var (
 				formatFn  ValueCallable
 				filterFn  ValueCallable
 				alignConf Value
+				colorConf Value
 			)
 			if len(args) > 0 {
 				opt := args[0]
@@ -429,8 +474,9 @@ func initPTableClass() {
 					filterFn = f
 				}
 				alignConf = opt.GetMember("align", c)
+				colorConf = opt.GetMember("color", c)
 			}
-			return renderAscii(c, this, formatFn, filterFn, alignConf, true, &ptableAsciiChars)
+			return renderAscii(c, this, formatFn, filterFn, alignConf, colorConf, true, &ptableAsciiChars)
 		}).
 		Method("md", func(c *Context, this ValueObject, args []Value) Value {
 			return c.InvokeMethod(this, "markdown", Args(args...))

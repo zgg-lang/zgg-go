@@ -18,9 +18,10 @@ import (
 
 type ValueBuiltinFunction struct {
 	ValueBase
-	name string
-	args []string
-	body func(*Context, Value, []Value) Value
+	name                 string
+	args                 []string
+	body                 func(*Context, Value, []Value) Value
+	canRunInReadonlyMode bool
 }
 
 func NewNativeFunction(name string, body func(*Context, Value, []Value) Value, args ...string) *ValueBuiltinFunction {
@@ -29,6 +30,11 @@ func NewNativeFunction(name string, body func(*Context, Value, []Value) Value, a
 		body: body,
 		args: args,
 	}
+}
+
+func (f *ValueBuiltinFunction) setReadonly() *ValueBuiltinFunction {
+	f.canRunInReadonlyMode = true
+	return f
 }
 
 func (f *ValueBuiltinFunction) GoType() reflect.Type {
@@ -91,6 +97,9 @@ func (f *ValueBuiltinFunction) GetRefs() []string {
 }
 
 func (f *ValueBuiltinFunction) Invoke(c *Context, thisArg Value, args []Value) {
+	if !f.canRunInReadonlyMode {
+		c.EnsureNotReadonly()
+	}
 	c.PushFuncStack(f.name)
 	defer c.PopStack()
 	c.RetVal = f.body(c, thisArg, args)
@@ -503,8 +512,15 @@ var builtinFunctions = map[string]ValueCallable{
 			c.RaiseRuntimeError("import requires only one or two argument(s)")
 			return nil
 		}
+		readonly := false
+		if strings.HasPrefix(modName, "gostd/") {
+			readonly = true
+		}
+		if !readonly {
+			c.EnsureNotReadonly()
+		}
 		return c.ImportModule(modName, reloadIfNewer, importType)
-	}, "name", "force", "type"),
+	}, "name", "force", "type").setReadonly(),
 	"isUndefined": &ValueBuiltinFunction{
 		name: "isUndefined",
 		body: func(c *Context, thisArg Value, args []Value) Value {

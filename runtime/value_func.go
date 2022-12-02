@@ -100,6 +100,7 @@ func (v *ValueFunc) GetArgNames(*Context) []string {
 }
 
 func (v *ValueFunc) Invoke(c *Context, thisArg Value, args []Value) {
+	c.EnsureNotReadonly()
 	if e := v.env; e != nil {
 		cur := c.curFrame
 		froot := c.funcRootFrame

@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
 )
 
 type ValueStr struct {
@@ -391,6 +393,10 @@ var builtinStrMethods = map[string]ValueCallable{
 			rv.PushBack(NewInt(int64(c)))
 		}
 		return rv
+	}),
+	"width": NewNativeFunction("str.width", func(c *Context, thisArg Value, args []Value) Value {
+		str := c.MustStr(thisArg)
+		return NewInt(int64(runewidth.StringWidth(str)))
 	}),
 }
 

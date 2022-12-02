@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -27,6 +28,10 @@ type contextFrame struct {
 	lineNum   int
 	defers    []deferCall
 }
+
+var (
+	CantRunInReadonlyMode = errors.New("Cannot run in readonly mode")
+)
 
 func newContextFrame(parent *contextFrame) *contextFrame {
 	f := &contextFrame{
@@ -92,10 +97,7 @@ type ModuleInfo struct {
 }
 
 type Context struct {
-	lock            sync.Mutex
-	main            bool
 	IsDebug         bool
-	debugLogger     *log.Logger
 	Path            string
 	ImportPaths     []string
 	Args            []string
@@ -110,13 +112,18 @@ type Context struct {
 	Returned        bool
 	ExportValue     ValueObject
 	ImportFunc      func(*Context, string, string, string, bool) (Value, int64, bool)
-	modules         *sync.Map
-	curFrame        *contextFrame
-	funcRootFrame   *contextFrame
-	rootFrame       *contextFrame
-	local           ValueObject
-	builtins        *sync.Map
 	CanEval         bool
+
+	lock          sync.Mutex
+	main          bool
+	debugLogger   *log.Logger
+	modules       *sync.Map
+	curFrame      *contextFrame
+	funcRootFrame *contextFrame
+	rootFrame     *contextFrame
+	local         ValueObject
+	builtins      *sync.Map
+	readonly      bool
 }
 
 func GetImportPaths() []string {
@@ -502,6 +509,12 @@ func (c *Context) GetCallable(value interface{}) (ValueCallable, bool) {
 	return nil, false
 }
 
+func (c *Context) EnsureNotReadonly() {
+	if c.readonly {
+		panic(CantRunInReadonlyMode)
+	}
+}
+
 func (c *Context) Invoke(calleeVal Value, this Value, getArgs func() []Value) bool {
 	switch callee := calleeVal.(type) {
 	case ValueCallable:
@@ -681,4 +694,12 @@ func (c *Context) ValuesLessEqual(v1, v2 Value) bool {
 
 func (c *Context) ValuesGreaterEqual(v1, v2 Value) bool {
 	return c.valuesCompare(v1, v2, "__gt__", CompareResultGreater, CompareResultEqual)
+}
+
+func (c *Context) EvalConst(n IEval) {
+	c.readonly = true
+	defer func() {
+		c.readonly = false
+	}()
+	n.Eval(c)
 }

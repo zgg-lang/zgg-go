@@ -2,10 +2,12 @@ package ws_repl
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/zgg-lang/zgg-go/parser"
+	"github.com/zgg-lang/zgg-go/repl"
 	"github.com/zgg-lang/zgg-go/runtime"
 )
 
@@ -49,22 +51,66 @@ func (c *WebsocketReplContext) onStderr(bs []byte) {
 
 func (c *WebsocketReplContext) Context() *runtime.Context { return c.c }
 
-func (c *WebsocketReplContext) ReadCode(newCode bool, initCode string) (string, bool) {
+func (c *WebsocketReplContext) ReadAction(shouldRecover bool) repl.ReplAction {
 	_, msg, err := c.conn.ReadMessage()
 	if err != nil {
-		return "", false
+		return nil
 	}
 	var input payload
 	if err := json.Unmarshal(msg, &input); err != nil {
-		return "", false
+		return nil
 	}
-	return input.Content, true
+	switch input.Type {
+	}
+	compiled, err := repl.ParseInputCode(input.Content, shouldRecover)
+	return repl.ReplRunCode{Compiled: compiled, Err: err}
 }
 
-func (c *WebsocketReplContext) WriteResult(result string) {
+func (c *WebsocketReplContext) writePtable(content string, obj runtime.Value) bool {
+	cc := c.Context()
+	cc.InvokeMethod(obj, "toArray", runtime.Args(runtime.NewBool(true)))
+	arr, is := c.Context().RetVal.(runtime.ValueArray)
+	if !is {
+		return false
+	}
+	data := make([][]string, arr.Len())
+	for i := 0; i < arr.Len(); i++ {
+		item, is := arr.GetIndex(i, cc).(runtime.ValueArray)
+		if !is {
+			return false
+		}
+		row := make([]string, item.Len())
+		for j := range row {
+			row[j] = item.GetIndex(j, cc).ToString(cc)
+		}
+		data[i] = row
+	}
+	c.write(payload{
+		Type:    writeTable,
+		Content: content,
+		Data:    data,
+	})
+	return true
+}
+
+func (c *WebsocketReplContext) WriteResult(result interface{}) {
+	var content string
+	switch rv := result.(type) {
+	case runtime.Value:
+		content = rv.ToString(c.Context())
+		if rv.Type().Name == "PTable" {
+			if c.writePtable(content, rv) {
+				return
+			}
+		}
+	case string:
+		content = rv
+	default:
+		content = fmt.Sprint(rv)
+	}
 	c.write(payload{
 		Type:    writeReturn,
-		Content: result,
+		Content: content,
 	})
 }
 
@@ -77,4 +123,3 @@ func (c *WebsocketReplContext) OnEnter() {
 
 func (*WebsocketReplContext) OnExit() {
 }
-
