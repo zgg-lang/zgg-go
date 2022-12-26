@@ -25,17 +25,21 @@ type (
 	}
 
 	dbCommonDialect struct{}
-	dbMysqlDialect  struct{}
+	dbMySQLDialect  struct{}
+	dbSQLiteDialect struct{}
 )
 
 func (dbCommonDialect) Quote(name string) string { return name }
 func (dbCommonDialect) ShowTablesSQL() string    { return "SHOW TABLES" }
-func (dbMysqlDialect) Quote(name string) string  { return fmt.Sprintf("`%s`", name) }
-func (dbMysqlDialect) ShowTablesSQL() string     { return "SHOW TABLES" }
+func (dbMySQLDialect) Quote(name string) string  { return fmt.Sprintf("`%s`", name) }
+func (dbMySQLDialect) ShowTablesSQL() string     { return "SHOW TABLES" }
+func (dbSQLiteDialect) Quote(name string) string { return fmt.Sprintf("`%s`", name) }
+func (dbSQLiteDialect) ShowTablesSQL() string    { return ".TABLES" }
 
 var (
 	dbDialectMap = map[string]dbDialect{
-		"mysql": dbMysqlDialect{},
+		"mysql":  dbMySQLDialect{},
+		"sqlite": dbSQLiteDialect{},
 	}
 )
 

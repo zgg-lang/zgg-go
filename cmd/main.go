@@ -17,6 +17,7 @@ import (
 	"github.com/zgg-lang/zgg-go/repl"
 	"github.com/zgg-lang/zgg-go/runtime"
 
+	_ "github.com/glebarez/go-sqlite"
 	_ "github.com/go-sql-driver/mysql"
 )
 

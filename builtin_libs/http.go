@@ -1228,12 +1228,24 @@ func initHttpWebsocketClientClass() ValueType {
 			this.SetMember("__url", url, c)
 		}).
 		Method("connect", func(c *Context, this ValueObject, args []Value) Value {
+			var argHeaders ValueObject
+			EnsureFuncParams(c, "http.WebSocketClient.connect", args, ArgRuleOptional("headers", TypeObject, &argHeaders, NewObject()))
 			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
 			if ok && conn != nil {
 				conn.Close()
 			}
 			var err error
-			conn, _, err = websocket.DefaultDialer.Dial(this.GetMember("__url", c).ToString(c), nil)
+			headers := http.Header{}
+			argHeaders.Iterate(func(key string, val Value) {
+				if valArr, ok := val.(ValueArray); ok {
+					for i := 0; i < valArr.Len(); i++ {
+						headers.Add(key, valArr.GetIndex(i, c).ToString(c))
+					}
+				} else {
+					headers.Add(key, val.ToString(c))
+				}
+			})
+			conn, _, err = websocket.DefaultDialer.Dial(this.GetMember("__url", c).ToString(c), headers)
 			this.SetMember("__conn", NewGoValue(conn), c)
 			if err != nil {
 				c.RaiseRuntimeError("websocket connect error: %s", err)

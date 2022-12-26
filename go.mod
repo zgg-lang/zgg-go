@@ -5,7 +5,8 @@ go 1.16
 require (
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211213210530-5d6a78255383 // indirect
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
+	github.com/chzyer/readline v1.5.0 // indirect
+	github.com/glebarez/go-sqlite v1.19.5 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gomodule/redigo v1.8.6 // indirect

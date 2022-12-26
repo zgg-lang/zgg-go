@@ -200,6 +200,8 @@ func initTimeClass() {
 				return NewInt(int64(t.Minute()))
 			case "second":
 				return NewInt(int64(t.Second()))
+			case "weekday":
+				return NewInt(int64(t.Weekday()))
 			}
 			return Undefined()
 		}).

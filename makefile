@@ -7,7 +7,7 @@ GOBUILD 	:= go build
 .PHONY: lexer parser cmd linuxamd64 darwinamd64 darwinarm64 devtools
 
 cmd:
-	$(GOBUILD) -o bin/zgg $@/*.go
+	CGO_ENABLED=0 $(GOBUILD) -o bin/zgg $@/*.go
 
 devtools:
 	$(GOBUILD) -o bin/$@ $@/*.go
