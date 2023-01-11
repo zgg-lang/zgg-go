@@ -3,6 +3,7 @@ package builtin_libs
 import (
 	"reflect"
 	"strings"
+	"time"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
 
@@ -17,15 +18,46 @@ var (
 func libRedis(*Context) ValueObject {
 	lib := NewObject()
 	lib.SetMember("open", NewNativeFunction("open", func(c *Context, this Value, args []Value) Value {
-		var (
-			redisAddr ValueStr
-			initDB    ValueInt
-		)
+		var redisAddr ValueStr
 		EnsureFuncParams(c, "redis.open", args,
 			ArgRuleOptional("addr", TypeStr, &redisAddr, NewStr("127.0.0.1:6379")),
-			ArgRuleOptional("db", TypeInt, &initDB, NewInt(0)),
 		)
-		conn, err := redis.Dial("tcp", redisAddr.Value(), redis.DialDatabase(int(initDB.Value())))
+		opts := make([]redis.DialOption, 0)
+		for i := 1; i < len(args); i++ {
+			switch v := args[i].(type) {
+			case ValueInt:
+				opts = append(opts, redis.DialDatabase(v.AsInt()))
+			case ValueObject:
+				if val, ok := v.GetMember("username", c).(ValueStr); ok {
+					opts = append(opts, redis.DialUsername(val.Value()))
+				}
+				if val, ok := v.GetMember("password", c).(ValueStr); ok {
+					opts = append(opts, redis.DialPassword(val.Value()))
+				}
+				if val, ok := v.GetMember("database", c).(ValueInt); ok {
+					opts = append(opts, redis.DialDatabase(val.AsInt()))
+				}
+				switch val := v.GetMember("readTimeout", c).(type) {
+				case ValueFloat:
+					opts = append(opts, redis.DialReadTimeout(time.Duration(val.Value())*time.Second))
+				case ValueInt:
+					opts = append(opts, redis.DialReadTimeout(time.Duration(val.Value())*time.Second))
+				}
+				switch val := v.GetMember("connTimeout", c).(type) {
+				case ValueFloat:
+					opts = append(opts, redis.DialConnectTimeout(time.Duration(val.Value())*time.Second))
+				case ValueInt:
+					opts = append(opts, redis.DialConnectTimeout(time.Duration(val.Value())*time.Second))
+				}
+				switch val := v.GetMember("writeTimeout", c).(type) {
+				case ValueFloat:
+					opts = append(opts, redis.DialWriteTimeout(time.Duration(val.Value())*time.Second))
+				case ValueInt:
+					opts = append(opts, redis.DialWriteTimeout(time.Duration(val.Value())*time.Second))
+				}
+			}
+		}
+		conn, err := redis.Dial("tcp", redisAddr.Value(), opts...)
 		if err != nil {
 			c.RaiseRuntimeError("redis.open error: %s", err)
 			return nil
