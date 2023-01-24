@@ -18,6 +18,9 @@ type ValueStr struct {
 }
 
 func NewStr(v string, args ...interface{}) ValueStr {
+	if v == "" {
+		return emptyStr
+	}
 	if len(args) > 0 {
 		v = fmt.Sprintf(v, args...)
 	}
@@ -396,6 +399,10 @@ var builtinStrMethods = map[string]ValueCallable{
 		return NewInt(int64(runewidth.StringWidth(str)))
 	}),
 }
+
+var (
+	emptyStr = ValueStr{ValueBase: &ValueBase{}, v: []rune{}}
+)
 
 func init() {
 	addMembersAndStatics(TypeStr, builtinStrMethods)

@@ -115,6 +115,14 @@ func libHttp(*Context) ValueObject {
 		}
 		return nil
 	}), nil)
+	// 命令行功能
+	lib.SetMember("static", NewNativeFunction("static", func(c *Context, this Value, args []Value) Value {
+		addr := c.Args[0]
+		fs := http.FileServer(http.Dir("."))
+		http.Handle("/", fs)
+		http.ListenAndServe(addr, nil)
+		return Undefined()
+	}), nil)
 	return lib
 }
 

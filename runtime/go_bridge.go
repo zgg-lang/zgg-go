@@ -99,33 +99,33 @@ func toGoValue(c *Context, v Value, goVal reflect.Value) {
 	}
 	switch goTyp.Kind() {
 	case reflect.Int:
-		goVal.Set(reflect.ValueOf(int(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(int(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Int8:
-		goVal.Set(reflect.ValueOf(int8(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(int8(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Int16:
-		goVal.Set(reflect.ValueOf(int16(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(int16(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Int32:
-		goVal.Set(reflect.ValueOf(int32(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(int32(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Int64:
-		goVal.Set(reflect.ValueOf(int64(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(int64(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Uint:
-		goVal.Set(reflect.ValueOf(uint(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(uint(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Uint8:
-		goVal.Set(reflect.ValueOf(uint8(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(uint8(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Uint16:
-		goVal.Set(reflect.ValueOf(uint16(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(uint16(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Uint32:
-		goVal.Set(reflect.ValueOf(uint32(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(uint32(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Uint64:
-		goVal.Set(reflect.ValueOf(uint64(c.MustInt(v))))
+		goVal.Set(reflect.ValueOf(uint64(c.MustInt(v))).Convert(goVal.Type()))
 	case reflect.Float32:
-		goVal.Set(reflect.ValueOf(float32(c.MustFloat(v))))
+		goVal.Set(reflect.ValueOf(float32(c.MustFloat(v))).Convert(goVal.Type()))
 	case reflect.Float64:
-		goVal.Set(reflect.ValueOf(c.MustFloat(v)))
+		goVal.Set(reflect.ValueOf(c.MustFloat(v)).Convert(goVal.Type()))
 	case reflect.Bool:
-		goVal.Set(reflect.ValueOf(c.MustBool(v)))
+		goVal.Set(reflect.ValueOf(c.MustBool(v)).Convert(goVal.Type()))
 	case reflect.String:
-		goVal.Set(reflect.ValueOf(c.MustStr(v)))
+		goVal.Set(reflect.ValueOf(c.MustStr(v)).Convert(goVal.Type()))
 	case reflect.Slice:
 		elType := goTyp.Elem()
 		arr := c.MustArray(v)
@@ -190,6 +190,8 @@ func toGoValue(c *Context, v Value, goVal reflect.Value) {
 		}
 	}
 }
+
+var ToGoValue = toGoValue
 
 func WrapGoFunction(f interface{}) *ValueBuiltinFunction {
 	fVal := reflect.ValueOf(f)

@@ -3,7 +3,9 @@ package builtin_libs
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"math"
+	"os"
 	"reflect"
 	"strings"
 
@@ -93,21 +95,29 @@ func libJson(*Context) ValueObject {
 			indentSize ValueInt
 			indentStr  ValueStr
 			indentType int
+			bs         []byte
+			isCmd      bool
 		)
-		EnsureFuncParams(c, "json.format", args,
-			ArgRuleRequired("value", TypeAny, &jsonStr),
-			ArgRuleOneOf(
-				"indent",
-				[]ValueType{TypeInt, TypeStr},
-				[]interface{}{&indentSize, &indentStr},
-				&indentType, &indentSize, NewInt(0)),
-		)
-		var bs []byte
-		switch s := jsonStr.(type) {
-		case ValueBytes:
-			bs = s.Value()
-		default:
-			bs = []byte(s.ToString(c))
+		if len(args) == 0 {
+			bs, _ = io.ReadAll(os.Stdin)
+			indentSize = NewInt(4)
+			indentType = 0
+			isCmd = true
+		} else {
+			EnsureFuncParams(c, "json.format", args,
+				ArgRuleRequired("value", TypeAny, &jsonStr),
+				ArgRuleOneOf(
+					"indent",
+					[]ValueType{TypeInt, TypeStr},
+					[]interface{}{&indentSize, &indentStr},
+					&indentType, &indentSize, NewInt(0)),
+			)
+			switch s := jsonStr.(type) {
+			case ValueBytes:
+				bs = s.Value()
+			default:
+				bs = []byte(s.ToString(c))
+			}
 		}
 		var j interface{}
 		if err := json.Unmarshal(bs, &j); err != nil {
@@ -127,6 +137,9 @@ func libJson(*Context) ValueObject {
 		}
 		if err != nil {
 			c.RaiseRuntimeError("json.format: marshal failed %s", err)
+		}
+		if isCmd {
+			c.Stdout.Write(outs)
 		}
 		return NewStr(string(outs))
 	}), nil)

@@ -30,16 +30,25 @@ func argTypeMatched(c *Context, arg Value, typ ValueType) bool {
 	if typ == TypeCallable {
 		return c.IsCallable(arg)
 	}
+	if _, is := arg.(ValueInt); is && typ == TypeFloat {
+		return true
+	}
 	return arg.Type().IsSubOf(typ)
 }
 
 func storeValue(storeTo interface{}, v Value) {
-	rv := reflect.ValueOf(v)
 	if _, ok := v.(ValueBoundMethod); ok {
 		if _, ok := storeTo.(*ValueBoundMethod); !ok {
-			rv = reflect.ValueOf(Unbound(v))
+			v = Unbound(v)
 		}
 	}
+	if toFloat, is := storeTo.(*ValueFloat); is {
+		if vi, isInt := v.(ValueInt); isInt {
+			*toFloat = NewFloat(float64(vi.Value()))
+			return
+		}
+	}
+	rv := reflect.ValueOf(v)
 	reflect.ValueOf(storeTo).Elem().Set(rv)
 }
 
