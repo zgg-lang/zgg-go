@@ -1,8 +1,10 @@
 package builtin_libs
 
 import (
+	"bytes"
 	"image"
 	"image/color"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -10,7 +12,9 @@ import (
 	"strings"
 
 	"github.com/fogleman/gg"
+	"github.com/golang/freetype/truetype"
 	. "github.com/zgg-lang/zgg-go/runtime"
+	"golang.org/x/image/font"
 )
 
 func libDrawing(c *Context) ValueObject {
@@ -105,18 +109,17 @@ func drawingUseColor(c *Context, dc *gg.Context, cs ValueStr, f func()) {
 		var stroke, fill string
 		if len(colors) == 1 {
 			stroke = colors[0]
-			fill = colors[0]
 		} else {
 			stroke = colors[0]
 			fill = colors[1]
 		}
 		defer func() {
 			if stroke != "" {
-				dc.SetStrokeStyle(gg.NewSolidPattern(drawingMustParseColor(c, stroke)))
+				dc.SetColor(drawingMustParseColor(c, stroke))
 				dc.Stroke()
 			}
 			if fill != "" {
-				dc.SetFillStyle(gg.NewSolidPattern(drawingMustParseColor(c, fill)))
+				dc.SetColor(drawingMustParseColor(c, fill))
 				dc.Fill()
 			}
 		}()
@@ -127,19 +130,36 @@ func drawingUseColor(c *Context, dc *gg.Context, cs ValueStr, f func()) {
 var (
 	drawingFontClass = NewClassBuilder("Font").
 				Constructor(func(c *Context, this ValueObject, args []Value) {
-			var (
-				filename ValueStr
-				points   ValueFloat
-			)
+			var filename ValueStr
 			EnsureFuncParams(c, "Font.__init__", args,
 				ArgRuleRequired("filename", TypeStr, &filename),
+			)
+			if ttf, err := os.ReadFile(filename.Value()); err != nil {
+				c.RaiseRuntimeError("load font file %s error %s", filename.Value(), err)
+			} else if f, err := truetype.Parse(ttf); err != nil {
+				c.RaiseRuntimeError("parse font file %s error %s", filename.Value(), err)
+			} else {
+				this.SetMember("__font", NewGoValue(f), c)
+			}
+		}).
+		Method("measure", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				text   ValueStr
+				points ValueFloat
+			)
+			EnsureFuncParams(c, "Font.measure", args,
+				ArgRuleRequired("text", TypeStr, &text),
 				ArgRuleRequired("points", TypeFloat, &points),
 			)
-			ff, err := gg.LoadFontFace(filename.Value(), points.Value())
-			if err != nil {
-				c.RaiseRuntimeError("load fontface file %s error %s", filename.Value(), err)
-			}
-			this.SetMember("__ff", NewGoValue(ff), c)
+			fo := this.GetMember("__font", c).ToGoValue().(*truetype.Font)
+			sz := points.Value()
+			ff := truetype.NewFace(fo, &truetype.Options{Size: sz})
+			fd := &font.Drawer{Face: ff}
+			a := fd.MeasureString(text.Value())
+			return NewArrayByValues(
+				NewFloat(float64(a>>6)),
+				NewFloat(sz*72/96),
+			)
 		}).
 		Build()
 	drawingCanvasClass = NewClassBuilder("Canvas").
@@ -301,16 +321,29 @@ var (
 			return this
 		}).
 		Method("useFont", func(c *Context, this ValueObject, args []Value) Value {
-			var font ValueObject
-			EnsureFuncParams(c, "Canvas.useFont", args, ArgRuleRequired("font", TypeObject, &font))
-			ff, is := font.GetMember("__ff", c).ToGoValue().(font.Face)
+			var (
+				fontObj ValueObject
+				points  ValueFloat
+			)
+			EnsureFuncParams(c, "Canvas.useFont", args,
+				ArgRuleRequired("font", TypeObject, &fontObj),
+				ArgRuleRequired("points", TypeFloat, &points),
+			)
+			f, is := fontObj.GetMember("__font", c).ToGoValue().(*truetype.Font)
 			if !is {
-				c.RaiseRuntimeError("Cannot get font face from argument")
+				c.RaiseRuntimeError("Cannot get font from argument")
 			}
 			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
-			dc.SetFontFace(ff)
+			dc.SetFontFace(truetype.NewFace(f, &truetype.Options{Size: points.Value()}))
 			return this
 		}).
+		Method("rotate", func(c *Context, this ValueObject, args []Value) Value {
+			var angle ValueFloat
+			EnsureFuncParams(c, "Canvas.rotate", args, ArgRuleRequired("angle", TypeFloat, &angle))
+			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc.Rotate(angle.Value())
+			return this
+		}, "angle").
 		Method("text", func(c *Context, this ValueObject, args []Value) Value {
 			var (
 				s  ValueStr
@@ -325,9 +358,10 @@ var (
 				ArgRuleOptional("c", TypeStr, &cl, NewStr("")),
 			)
 			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
-			drawingUseColor(c, dc, cl, func() {
-				dc.DrawString(s.Value(), x.Value(), y.Value())
-			})
+			if colorStr := cl.Value(); colorStr != "" {
+				dc.SetColor(drawingMustParseColor(c, colorStr))
+			}
+			dc.DrawString(s.Value(), x.Value(), y.Value())
 			return this
 		}).
 		Method("measureText", func(c *Context, this ValueObject, args []Value) Value {
@@ -362,12 +396,36 @@ var (
 			return this
 		}).
 		Method("save", func(c *Context, this ValueObject, args []Value) Value {
-			var filename ValueStr
+			var (
+				filename ValueStr
+				writer   GoValue
+				selected int
+				defVal   ValueInt
+			)
 			EnsureFuncParams(c, "Canvas.save", args,
-				ArgRuleRequired("filename", TypeStr, &filename),
+				ArgRuleOneOf("target",
+					[]ValueType{TypeStr, TypeGoValue},
+					[]interface{}{&filename, &writer},
+					&selected,
+					&defVal,
+					NewInt(0),
+				),
 			)
 			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
-			dc.SavePNG(filename.Value())
+			switch selected {
+			case 0:
+				dc.SavePNG(filename.Value())
+			case 1:
+				if w, is := writer.ToGoValue().(io.Writer); !is {
+					c.RaiseRuntimeError("not an io.Writer")
+				} else {
+					dc.EncodePNG(w)
+				}
+			default:
+				buf := bytes.NewBuffer(nil)
+				dc.EncodePNG(buf)
+				return NewBytes(buf.Bytes())
+			}
 			return this
 		}).
 		Method("show", func(c *Context, this ValueObject, args []Value) Value {

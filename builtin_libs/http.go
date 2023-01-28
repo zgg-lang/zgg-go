@@ -897,17 +897,17 @@ func initHttpRequestClass() ValueType {
 			})
 			body.PushBack(NewStr(form.Encode()))
 			return this
-		}).
+		}, "form").
 		Method("multipartForm", func(c *Context, this ValueObject, args []Value) Value {
 			var formArg ValueObject
-			EnsureFuncParams(c, "Request.form", args, ArgRuleRequired("form", TypeObject, &formArg))
+			EnsureFuncParams(c, "Request.multipartForm", args, ArgRuleRequired("form", TypeObject, &formArg))
 			formBs, contentType := httpGetMultipartForm(c, formArg)
 			body := this.GetMember("__body", c).(ValueArray)
 			body.PushBack(NewBytes(formBs))
 			headers := this.GetMember("__headers", c).(ValueArray)
 			headers.PushBack(NewArrayByValues(NewStr("Content-Type"), NewStr(contentType)))
 			return this
-		}).
+		}, "form").
 		Method("header", func(c *Context, this ValueObject, args []Value) Value {
 			headers := this.GetMember("__headers", c).(ValueArray)
 			switch len(args) {
@@ -927,29 +927,29 @@ func initHttpRequestClass() ValueType {
 		}).
 		Method("host", func(c *Context, this ValueObject, args []Value) Value {
 			var host ValueStr
-			EnsureFuncParams(c, "Request.host", args, ArgRuleRequired("hosts", TypeStr, &host))
+			EnsureFuncParams(c, "Request.host", args, ArgRuleRequired("host", TypeStr, &host))
 			this.SetMember("__host", host, c)
 			return this
-		}).
+		}, "host").
 		Method("hosts", func(c *Context, this ValueObject, args []Value) Value {
 			var hosts ValueObject
 			EnsureFuncParams(c, "Request.hosts", args, ArgRuleRequired("hosts", TypeObject, &hosts))
 			this.SetMember("__hosts", hosts, c)
 			return this
-		}).
+		}, "hosts").
 		Method("followRedirect", func(c *Context, this ValueObject, args []Value) Value {
 			var shouldFollow ValueBool
 			EnsureFuncParams(c, "Request.followRedirect", args,
 				ArgRuleRequired("shouldFollow", TypeBool, &shouldFollow))
 			this.SetMember("__shouldFollowRedirect", shouldFollow, c)
 			return this
-		}).
+		}, "shouldFollow").
 		Method("tlsConfig", func(c *Context, this ValueObject, args []Value) Value {
 			var tlsConfig ValueObject
 			EnsureFuncParams(c, "Request.tlsConfig", args, ArgRuleRequired("config", TypeObject, &tlsConfig))
 			this.SetMember("__tlsConfig", tlsConfig, c)
 			return this
-		}).
+		}, "config").
 		Method("useClient", func(c *Context, this ValueObject, args []Value) Value {
 			var client GoValue
 			EnsureFuncParams(c, "Request.useClient", args,
@@ -959,7 +959,7 @@ func initHttpRequestClass() ValueType {
 			}
 			this.SetMember("__goHttpClient", client, c)
 			return this
-		}).
+		}, "goHttpClient").
 		Method("call", func(c *Context, this ValueObject, args []Value) Value {
 			body := this.GetMember("__body", c).(ValueArray)
 			var reqBody io.Reader
