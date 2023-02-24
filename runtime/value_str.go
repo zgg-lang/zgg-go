@@ -15,6 +15,7 @@ import (
 type ValueStr struct {
 	*ValueBase
 	v []rune
+	s string
 }
 
 func NewStr(v string, args ...interface{}) ValueStr {
@@ -24,11 +25,11 @@ func NewStr(v string, args ...interface{}) ValueStr {
 	if len(args) > 0 {
 		v = fmt.Sprintf(v, args...)
 	}
-	return ValueStr{ValueBase: &ValueBase{}, v: []rune(v)}
+	return ValueStr{ValueBase: &ValueBase{}, v: []rune(v), s: v}
 }
 
 func NewStrByRunes(v []rune) ValueStr {
-	return ValueStr{ValueBase: &ValueBase{}, v: v}
+	return ValueStr{ValueBase: &ValueBase{}, v: v, s: string(v)}
 }
 
 func (v ValueStr) GoType() reflect.Type {
@@ -45,7 +46,7 @@ func (v ValueStr) GetIndex(index int, c *Context) Value {
 	if index < 0 || index >= len(chs) {
 		return constUndefined
 	}
-	return NewStr(string(chs[index : index+1]))
+	return NewStrByRunes(chs[index : index+1])
 }
 
 func (v ValueStr) GetMember(name string, c *Context) Value {
@@ -57,7 +58,7 @@ func (ValueStr) Type() ValueType {
 }
 
 func (v ValueStr) Value() string {
-	return string(v.v)
+	return v.s
 }
 
 func (v ValueStr) Runes() []rune {
@@ -86,7 +87,7 @@ func (v ValueStr) CompareTo(other Value, c *Context) CompareResult {
 }
 
 func (v ValueStr) ToString(*Context) string {
-	return string(v.v)
+	return v.s
 }
 
 var builtinStrMethods = map[string]ValueCallable{
@@ -146,7 +147,7 @@ var builtinStrMethods = map[string]ValueCallable{
 			for i := begin; i < end; i++ {
 				sliceChars[i-begin] = charSeq[i]
 			}
-			return NewStr(string(sliceChars))
+			return NewStrByRunes(sliceChars)
 		},
 	},
 	"upper": &ValueBuiltinFunction{
@@ -335,7 +336,7 @@ var builtinStrMethods = map[string]ValueCallable{
 	"__next__": NewNativeFunction("__next__", func(c *Context, this Value, args []Value) Value {
 		s := this.(ValueStr)
 		if len(s.v) == 1 {
-			return NewStr(string([]rune{s.v[0] + 1}))
+			return NewStrByRunes([]rune{s.v[0] + 1})
 		} else {
 			return constUndefined
 		}
@@ -401,9 +402,20 @@ var builtinStrMethods = map[string]ValueCallable{
 }
 
 var (
-	emptyStr = ValueStr{ValueBase: &ValueBase{}, v: []rune{}}
+	emptyStr = ValueStr{ValueBase: &ValueBase{}, v: []rune{}, s: ""}
 )
 
 func init() {
 	addMembersAndStatics(TypeStr, builtinStrMethods)
+	TypeStr.Statics.Store("fromCodes", NewNativeFunction("Str.fromCodes", func(c *Context, this Value, args []Value) Value {
+		if len(args) < 1 {
+			return NewStr("")
+		}
+		s := make([]rune, 0, len(args))
+		for _, a := range args {
+			code := c.MustInt(a)
+			s = append(s, rune(code))
+		}
+		return NewStrByRunes(s)
+	}))
 }

@@ -175,6 +175,14 @@ var builtinBytesMethods = map[string]ValueCallable{
 		thisBytes := thisArg.(ValueBytes)
 		return NewStr(base64.StdEncoding.EncodeToString(thisBytes.v))
 	}),
+	"toArray": NewNativeFunction("bytes.toArray", func(c *Context, thisArg Value, args []Value) Value {
+		bs := thisArg.(ValueBytes).v
+		rv := NewArray(len(bs))
+		for _, b := range bs {
+			rv.PushBack(NewInt(int64(b)))
+		}
+		return rv
+	}),
 }
 
 func init() {
