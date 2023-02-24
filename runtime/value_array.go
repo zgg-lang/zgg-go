@@ -551,6 +551,21 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return res
 	}),
+	"reverse": NewNativeFunction("array.reverse", func(c *Context, this Value, args []Value) Value {
+		var (
+			arr  = *c.MustArray(this).Values
+			n    = len(arr)
+			last = n - 1
+			half = n / 2
+		)
+		for i := 0; i < half; i++ {
+			j := last - i
+			t := arr[i]
+			arr[i] = arr[j]
+			arr[j] = t
+		}
+		return this
+	}),
 }
 
 type ArraySort struct {
