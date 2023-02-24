@@ -418,7 +418,7 @@ var builtinFunctions = map[string]ValueCallable{
 		last := args[1]
 		rv := NewArray()
 		rv.PushBack(next)
-		for {
+		for !c.ValuesEqual(next, last) {
 			nextFn := next.GetMember("__next__", c)
 			if !c.IsCallable(nextFn) {
 				c.RaiseRuntimeError("not all the items in seq has __next__ method")
@@ -426,9 +426,6 @@ var builtinFunctions = map[string]ValueCallable{
 			c.Invoke(nextFn, next, Args())
 			next = c.RetVal
 			rv.PushBack(next)
-			if c.ValuesEqual(next, last) {
-				break
-			}
 		}
 		return rv
 	}),
