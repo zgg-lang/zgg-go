@@ -42,6 +42,7 @@ var (
 		"template":   LibInfo{name: "template", getter: libTemplate},
 		"time":       LibInfo{name: "time", getter: libTime},
 		"url":        LibInfo{name: "url", getter: libUrl},
+		"yaml":       LibInfo{name: "yaml", getter: libYaml},
 	}
 )
 

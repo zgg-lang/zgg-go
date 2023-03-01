@@ -187,4 +187,24 @@ var builtinBytesMethods = map[string]ValueCallable{
 
 func init() {
 	addMembersAndStatics(TypeBytes, builtinBytesMethods)
+	TypeBytes.Statics.Store("fromHex", NewNativeFunction("Bytes.fromHex", func(c *Context, this Value, args []Value) Value {
+		var hexStr ValueStr
+		EnsureFuncParams(c, "Bytes.fromHex", args, ArgRuleRequired("hexStr", TypeStr, &hexStr))
+		str := hexStr.Value()
+		bs, err := hex.DecodeString(str)
+		if err != nil {
+			c.RaiseRuntimeError("Bytes.fromHex decode failed: %s", err)
+		}
+		return NewBytes(bs)
+	}))
+	TypeBytes.Statics.Store("fromBase64", NewNativeFunction("Bytes.fromBase64", func(c *Context, this Value, args []Value) Value {
+		var b64Str ValueStr
+		EnsureFuncParams(c, "Bytes.fromBase64", args, ArgRuleRequired("b64Str", TypeStr, &b64Str))
+		str := b64Str.Value()
+		bs, err := base64.StdEncoding.DecodeString(str)
+		if err != nil {
+			c.RaiseRuntimeError("Bytes.fromBase64 decode failed: %s", err)
+		}
+		return NewBytes(bs)
+	}))
 }

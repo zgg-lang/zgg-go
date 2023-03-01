@@ -3,6 +3,7 @@ package builtin_libs
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
+	"gopkg.in/yaml.v2"
 
 	"github.com/oliveagle/jsonpath"
 )
@@ -176,7 +178,7 @@ func libJson(*Context) ValueObject {
 	return lib
 }
 
-func jsonToValue(src interface{}, c *Context) Value {
+func jsonToValue(src interface{}, c *Context) (_r Value) {
 	if src == nil {
 		return Nil()
 	}
@@ -186,6 +188,26 @@ func jsonToValue(src interface{}, c *Context) Value {
 			return NewInt(int64(srcVal))
 		}
 		return NewFloat(srcVal)
+	case int64:
+		return NewInt(srcVal)
+	case int:
+		return NewInt(int64(srcVal))
+	case int8:
+		return NewInt(int64(srcVal))
+	case int16:
+		return NewInt(int64(srcVal))
+	case int32:
+		return NewInt(int64(srcVal))
+	case uint:
+		return NewInt(int64(srcVal))
+	case uint8:
+		return NewInt(int64(srcVal))
+	case uint16:
+		return NewInt(int64(srcVal))
+	case uint32:
+		return NewInt(int64(srcVal))
+	case uint64:
+		return NewInt(int64(srcVal))
 	case bool:
 		return NewBool(srcVal)
 	case string:
@@ -206,6 +228,52 @@ func jsonToValue(src interface{}, c *Context) Value {
 			}
 			return rv
 		}
+	case map[interface{}]interface{}:
+		{
+			rv := NewObject()
+			for k, elemVal := range srcVal {
+				c.DebugLog("-- key %v value %v", fmt.Sprint(k), elemVal)
+				rv.SetMember(fmt.Sprint(k), jsonToValue(elemVal, c), c)
+			}
+			return rv
+		}
 	}
 	return Undefined()
+}
+
+func libYaml(c *Context) ValueObject {
+	lib := NewObject()
+	lib.SetMember("encode", NewNativeFunction("yaml.encode", func(c *Context, this Value, args []Value) Value {
+		var val Value
+		EnsureFuncParams(c, "yaml.encode", args, ArgRuleRequired("value", TypeAny, &val))
+		bs, err := yaml.Marshal(val.ToGoValue())
+		if err != nil {
+			c.RaiseRuntimeError("yaml.encode error %v", err)
+		}
+		return NewStr(string(bs))
+	}, "value"), nil)
+	lib.SetMember("decode", NewNativeFunction("yaml.decode", func(c *Context, this Value, args []Value) Value {
+		if len(args) != 1 {
+			c.RaiseRuntimeError("yaml.decode: requires 1 argument")
+			return nil
+		}
+		var bs []byte
+		switch arg := args[0].(type) {
+		case ValueStr:
+			bs = []byte(arg.Value())
+		case ValueBytes:
+			bs = arg.Value()
+		default:
+			c.RaiseRuntimeError("yaml.decode: argument must be a string or a bytes")
+			return nil
+		}
+		var j interface{}
+		if err := yaml.Unmarshal(bs, &j); err != nil {
+			c.RaiseRuntimeError("yaml.decode error %v", err)
+			return nil
+		}
+		rv := jsonToValue(j, c)
+		return rv
+	}, "yaml"), nil)
+	return lib
 }
