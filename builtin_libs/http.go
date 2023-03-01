@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
 
@@ -950,6 +951,12 @@ func initHttpRequestClass() ValueType {
 			this.SetMember("__tlsConfig", tlsConfig, c)
 			return this
 		}, "config").
+		Method("timeout", func(c *Context, this ValueObject, args []Value) Value {
+			var timeout ValueFloat
+			EnsureFuncParams(c, "Request.timeout", args, ArgRuleRequired("timeout", TypeFloat, &timeout))
+			this.SetMember("__timeout", timeout, c)
+			return this
+		}, "timeout").
 		Method("useClient", func(c *Context, this ValueObject, args []Value) Value {
 			var client GoValue
 			EnsureFuncParams(c, "Request.useClient", args,
@@ -980,7 +987,7 @@ func initHttpRequestClass() ValueType {
 			}
 			method := c.MustStr(this.GetMember("method", c))
 			url := c.MustStr(this.GetMember("url", c))
-			req, err := http.NewRequest(method, url, reqBody)
+			req, err := http.NewRequest(strings.ToUpper(method), url, reqBody)
 			if err != nil {
 				c.RaiseRuntimeError("Request.build: make request error %s", err)
 			}
@@ -1077,6 +1084,12 @@ func initHttpRequestClass() ValueType {
 					} else if err := json.Unmarshal(jsonBs, transport.TLSClientConfig); err != nil {
 						c.RaiseRuntimeError("set tls config error: %+v", err)
 					}
+				}
+				if timeout, ok := this.GetMember("__timeout", c).(ValueFloat); ok {
+					if httpClient == nil {
+						httpClient = &http.Client{}
+					}
+					httpClient.Timeout = time.Duration(timeout.Value() * float64(time.Second))
 				}
 				if httpClient == nil {
 					httpClient = http.DefaultClient
