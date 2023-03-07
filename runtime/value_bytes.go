@@ -187,6 +187,29 @@ var builtinBytesMethods = map[string]ValueCallable{
 
 func init() {
 	addMembersAndStatics(TypeBytes, builtinBytesMethods)
+	TypeBytes.Statics.Store("fromArray", NewNativeFunction("Bytes.fromArray", func(c *Context, this Value, args []Value) Value {
+		var bs ValueArray
+		EnsureFuncParams(c, "Bytes.fromArray", args, ArgRuleRequired("array", TypeArray, &bs))
+		rv := make([]byte, bs.Len())
+		for i := range rv {
+			v, ok := bs.GetIndex(i, c).(ValueInt)
+			if !ok {
+				c.RaiseRuntimeError("Bytes.fromArray array item[%d] is not an integer", i)
+				return nil
+			}
+			vv := v.AsInt()
+			if vv > 255 || vv < -128 {
+				c.RaiseRuntimeError("Bytes.fromArray item[%d] value %d out of range", i, vv)
+				return nil
+			}
+			if vv < 0 {
+				rv[i] = byte(vv + 256)
+			} else {
+				rv[i] = byte(vv)
+			}
+		}
+		return NewBytes(rv)
+	}))
 	TypeBytes.Statics.Store("fromHex", NewNativeFunction("Bytes.fromHex", func(c *Context, this Value, args []Value) Value {
 		var hexStr ValueStr
 		EnsureFuncParams(c, "Bytes.fromHex", args, ArgRuleRequired("hexStr", TypeStr, &hexStr))
