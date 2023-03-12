@@ -424,11 +424,15 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 		return thisArg
 	}, "path", "handleFunc"), nil)
 	rv.SetMember("serve", NewNativeFunction("serve", func(c *Context, thisArgs Value, args []Value) Value {
-		if len(args) != 1 {
-			c.RaiseRuntimeError("http.server: serve requires 1 argument")
-			return nil
-		}
-		addr := c.MustStr(args[0], "http.server.serve(listenAddr): listenAddr")
+		var (
+			addrStr ValueStr
+			options ValueObject
+		)
+		EnsureFuncParams(c, "serve", args,
+			ArgRuleRequired("address", TypeStr, &addrStr),
+			ArgRuleOptional("options", TypeObject, &options, NewObject()),
+		)
+		addr := addrStr.Value()
 		if strings.HasPrefix(addr, httpUnixPrefix) {
 			unixAddr, err := net.ResolveUnixAddr("unix", addr[len(httpUnixPrefix):])
 			if err != nil {
@@ -444,7 +448,22 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 				c.RaiseRuntimeError("http serve on %s error %s", addr, err)
 			}
 		} else {
-			if err := http.ListenAndServe(addr, svr); err != nil {
+			var certFile, keyFile string
+			useTls := false
+			if cf, ok := options.GetMember("certFile", c).(ValueStr); ok {
+				if kf, ok := options.GetMember("keyFile", c).(ValueStr); ok {
+					useTls = true
+					certFile = cf.Value()
+					keyFile = kf.Value()
+				}
+			}
+			var err error
+			if useTls {
+				err = http.ListenAndServeTLS(addr, certFile, keyFile, svr)
+			} else {
+				err = http.ListenAndServe(addr, svr)
+			}
+			if err != nil {
 				c.RaiseRuntimeError("http.server.serve fail: %s", err)
 				return nil
 			}
@@ -608,6 +627,31 @@ func initHttpRequestContextClass() ValueType {
 			}
 			return NewStr(string(body))
 		}).
+		Method("cookie", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				name ValueStr
+			)
+			EnsureFuncParams(c, className+".setCookie", args,
+				ArgRuleRequired("name", TypeStr, &name),
+			)
+			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			cookie, err := r.Cookie(name.Value())
+			if err == http.ErrNoCookie {
+				return Nil()
+			} else if err != nil {
+				c.RaiseRuntimeError("get cookie error %+v", err)
+			}
+			return NewStr(cookie.Value)
+		}).
+		Method("cookies", func(c *Context, this ValueObject, args []Value) Value {
+			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			cookies := r.Cookies()
+			rv := NewObject()
+			for _, cookie := range cookies {
+				rv.SetMember(cookie.Name, NewStr(cookie.Value), c)
+			}
+			return rv
+		}).
 		Method("addHeader", func(c *Context, this ValueObject, args []Value) Value {
 			var (
 				key ValueStr
@@ -632,6 +676,50 @@ func initHttpRequestContextClass() ValueType {
 			)
 			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
 			w.Header().Set(key.Value(), val.Value())
+			return Undefined()
+		}).
+		Method("setCookie", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				name    ValueStr
+				value   ValueStr
+				options ValueObject
+			)
+			EnsureFuncParams(c, className+".setCookie", args,
+				ArgRuleRequired("name", TypeStr, &name),
+				ArgRuleRequired("value", TypeStr, &value),
+				ArgRuleOptional("options", TypeObject, &options, NewObject()),
+			)
+			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			var cookie http.Cookie
+			cookie.Name = name.Value()
+			cookie.Value = value.Value()
+			if v, ok := options.GetMember("path", c).(ValueStr); ok {
+				cookie.Path = v.Value()
+			}
+			if v, ok := options.GetMember("domain", c).(ValueStr); ok {
+				cookie.Domain = v.Value()
+			}
+			if v, ok := options.GetMember("maxAge", c).(ValueInt); ok {
+				cookie.MaxAge = v.AsInt()
+			}
+			if v, ok := options.GetMember("secure", c).(ValueBool); ok {
+				cookie.Secure = v.Value()
+			}
+			if v, ok := options.GetMember("httpOnly", c).(ValueBool); ok {
+				cookie.HttpOnly = v.Value()
+			}
+			http.SetCookie(w, &cookie)
+			return Undefined()
+		}).
+		Method("delCookie", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				name ValueStr
+			)
+			EnsureFuncParams(c, className+".setCookie", args,
+				ArgRuleRequired("name", TypeStr, &name),
+			)
+			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			http.SetCookie(w, &http.Cookie{Name: name.Value(), MaxAge: -1})
 			return Undefined()
 		}).
 		Method("write", func(c *Context, this ValueObject, args []Value) Value {
@@ -704,18 +792,10 @@ func initHttpRequestContextClass() ValueType {
 				url  ValueStr
 				code ValueInt
 			)
-			switch len(args) {
-			case 1:
-				EnsureFuncParams(c, "http.RequestContext.redirect", args,
-					ArgRuleRequired("url", TypeStr, &url),
-				)
-				code = NewInt(302)
-			default:
-				EnsureFuncParams(c, "http.RequestContext.redirect", args,
-					ArgRuleRequired("url", TypeStr, &url),
-					ArgRuleRequired("code", TypeInt, &code),
-				)
-			}
+			EnsureFuncParams(c, "http.RequestContext.redirect", args,
+				ArgRuleRequired("url", TypeStr, &url),
+				ArgRuleOptional("code", TypeInt, &code, NewInt(200)),
+			)
 			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
 			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
 			http.Redirect(w, r, url.Value(), code.AsInt())
@@ -819,6 +899,20 @@ func initWebsocketContextClass() ValueType {
 				return NewBytes(pkg)
 			}
 			return nil
+		}).
+		Method("readJson", func(c *Context, this ValueObject, args []Value) Value {
+			conn := this.GetMember("_conn", c).ToGoValue().(*websocket.Conn)
+			_, pkg, err := conn.ReadMessage()
+			if err != nil {
+				c.RaiseRuntimeError("websocket read message error %s", err)
+			}
+			var j interface{}
+			if err := json.Unmarshal(pkg, &j); err != nil {
+				c.RaiseRuntimeError("json.decode error %v", err)
+				return nil
+			}
+			rv := jsonToValue(j, c)
+			return rv
 		}).
 		Method("write", func(c *Context, this ValueObject, args []Value) Value {
 			conn := this.GetMember("_conn", c).ToGoValue().(*websocket.Conn)
