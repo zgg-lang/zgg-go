@@ -406,6 +406,43 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return rv
 	}),
+	"count": NewNativeFunction("array.count", func(c *Context, this Value, args []Value) Value {
+		thisArr := c.MustArray(this)
+		var (
+			keyMapper arrayMapper
+		)
+		EnsureFuncParams(c, "array.count", args,
+			keyMapper.ArgRule("keyMapper", false),
+		)
+		keyMapper.Build()
+		cm := map[string]int64{}
+		for i, item := range *(thisArr.Values) {
+			k := keyMapper.Map(item, i, c).ToString(c)
+			cm[k]++
+		}
+		rv := NewObject()
+		for k, cnt := range cm {
+			rv.SetMember(k, NewInt(cnt), c)
+		}
+		return rv
+	}),
+	"countIf": NewNativeFunction("array.countIf", func(c *Context, this Value, args []Value) Value {
+		thisArr := c.MustArray(this)
+		var (
+			predict ValueCallable
+		)
+		EnsureFuncParams(c, "array.countIf", args,
+			ArgRuleRequired("predict", TypeCallable, &predict),
+		)
+		cnt := 0
+		for i, item := range *(thisArr.Values) {
+			c.Invoke(predict, nil, Args(item, NewInt(int64(i))))
+			if c.RetVal.IsTrue() {
+				cnt++
+			}
+		}
+		return NewInt(int64(cnt))
+	}),
 	"toGroup": NewNativeFunction("array.toGroup", func(c *Context, this Value, args []Value) Value {
 		thisArr := c.MustArray(this)
 		var (
