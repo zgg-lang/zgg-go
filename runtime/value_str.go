@@ -90,6 +90,16 @@ func (v ValueStr) ToString(*Context) string {
 	return v.s
 }
 
+func (v ValueStr) Hash() int64 {
+	str := v.s
+	seed := uint64(131) // 31 131 1313 13131 131313 etc..
+	hash := uint64(0)
+	for i := 0; i < len(str); i++ {
+		hash = (hash * seed) + uint64(str[i])
+	}
+	return int64(hash & 0x7FFFFFFF)
+}
+
 var builtinStrMethods = map[string]ValueCallable{
 	"substr": &ValueBuiltinFunction{
 		name: "str.substr",
@@ -190,13 +200,7 @@ var builtinStrMethods = map[string]ValueCallable{
 		},
 	},
 	"hash": NewNativeFunction("str.hash", func(c *Context, thisArg Value, args []Value) Value {
-		str := c.MustStr(thisArg)
-		seed := uint64(131) // 31 131 1313 13131 131313 etc..
-		hash := uint64(0)
-		for i := 0; i < len(str); i++ {
-			hash = (hash * seed) + uint64(str[i])
-		}
-		return NewInt(int64(hash & 0x7FFFFFFF))
+		return NewInt(thisArg.(ValueStr).Hash())
 	}),
 	"split": NewNativeFunction("str.split", func(c *Context, thisArg Value, args []Value) Value {
 		str := c.MustStr(thisArg)

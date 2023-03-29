@@ -521,15 +521,13 @@ func (c *Context) Invoke(calleeVal Value, this Value, getArgs func() []Value) bo
 		callee.Invoke(c, this, getArgs())
 		return true
 	case ValueType:
-		{
-			newObj := NewObject(callee)
-			initMember := newObj.GetMember("__init__", c)
-			if initFunc, isCallable := c.GetCallable(initMember); isCallable {
-				c.Invoke(initFunc, newObj, getArgs)
-			}
-			c.RetVal = newObj
-			return true
+		newObj := NewObject(callee)
+		initMember := newObj.GetMember("__init__", c)
+		if initFunc, isCallable := c.GetCallable(initMember); isCallable {
+			c.Invoke(initFunc, newObj, getArgs)
 		}
+		c.RetVal = newObj
+		return true
 	}
 	return false
 }

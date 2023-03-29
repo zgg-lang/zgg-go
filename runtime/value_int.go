@@ -88,6 +88,10 @@ func (v ValueInt) ToString(*Context) string {
 	return strconv.FormatInt(v.Value(), 10)
 }
 
+func (v ValueInt) Hash() int64 {
+	return v.v
+}
+
 var intPool [poolMax - poolMin + 1]ValueInt
 
 func initIntPool() {

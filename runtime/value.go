@@ -78,6 +78,10 @@ type CanSetIndex interface {
 	SetIndex(int, Value, *Context)
 }
 
+type CanHash interface {
+	Hash() int64
+}
+
 var (
 	commonValueGet = NewNativeFunction("$get", func(c *Context, this Value, args []Value) Value {
 		var path ValueStr

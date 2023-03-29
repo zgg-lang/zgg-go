@@ -12,6 +12,7 @@ const (
 	builtinTypeFunc
 	builtinTypeArray
 	builtinTypeObject
+	builtinTypeMap
 	builtinTypeType
 	builtinTypeGoValue
 	builtinTypeGoType
@@ -31,6 +32,7 @@ var (
 	TypeFunc      = NewType(builtinTypeFunc, "Func")
 	TypeArray     = NewType(builtinTypeArray, "Array")
 	TypeObject    = NewType(builtinTypeObject, "Object")
+	TypeMap       = NewTypeWithCreator(builtinTypeObject, "Map", func([]Value) Value { return NewMap() })
 	TypeType      = NewType(builtinTypeType, "Type")
 	TypeGoValue   = NewType(builtinTypeGoValue, "GoValue")
 	TypeGoType    = NewType(builtinTypeGoType, "GoType")
@@ -54,6 +56,7 @@ func init() {
 		TypeFunc,
 		TypeArray,
 		TypeObject,
+		TypeMap,
 		TypeType,
 		TypeGoValue,
 		TypeGoType,

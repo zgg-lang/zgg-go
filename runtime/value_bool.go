@@ -58,6 +58,14 @@ func (v ValueBool) ToString(*Context) string {
 	return strconv.FormatBool(v.Value())
 }
 
+func (v ValueBool) Hash() int64 {
+	if v.v {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 var (
 	boolTrue  = ValueBool{ValueBase: &ValueBase{}, v: true}
 	boolFalse = ValueBool{ValueBase: &ValueBase{}, v: false}

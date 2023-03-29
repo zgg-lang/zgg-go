@@ -15,6 +15,7 @@ type (
 		superType *valueType
 		TypeId    int
 		Name      string
+		New       func(args []Value) Value
 		Members   *sync.Map
 		Statics   *sync.Map
 	}
@@ -24,6 +25,13 @@ type (
 func NewType(id int, name string) ValueType {
 	rv := &valueType{ValueBase: &ValueBase{}, TypeId: id, Name: name, Members: new(sync.Map), Statics: new(sync.Map)}
 	rv.Statics.Store("__name__", NewStr(name))
+	return rv
+}
+
+func NewTypeWithCreator(id int, name string, creator func([]Value) Value) ValueType {
+	rv := &valueType{ValueBase: &ValueBase{}, TypeId: id, Name: name, Members: new(sync.Map), Statics: new(sync.Map)}
+	rv.Statics.Store("__name__", NewStr(name))
+	rv.New = creator
 	return rv
 }
 
@@ -145,11 +153,15 @@ func (t *valueType) GetArgNames(c *Context) []string {
 }
 
 func (t *valueType) Invoke(c *Context, this Value, args []Value) {
-	rv := NewObject(t)
-	if initFn := t.getInitFunc(c); initFn != nil {
-		c.Invoke(initFn, rv, func() []Value { return args })
+	if t.New != nil {
+		c.RetVal = t.New(args)
+	} else {
+		rv := NewObject(t)
+		if initFn := t.getInitFunc(c); initFn != nil {
+			c.Invoke(initFn, rv, func() []Value { return args })
+		}
+		c.RetVal = rv
 	}
-	c.RetVal = rv
 }
 
 func (t *valueType) findMember(name string) Value {
@@ -162,6 +174,10 @@ func (t *valueType) findMember(name string) Value {
 		}
 	}
 	return nil
+}
+
+func (t *valueType) Hash() int64 {
+	return int64(t.TypeId)
 }
 
 var nextTypeId int32 = 100000

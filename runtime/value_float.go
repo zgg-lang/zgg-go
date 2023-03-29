@@ -3,6 +3,7 @@ package runtime
 import (
 	"fmt"
 	"reflect"
+	"unsafe"
 )
 
 type ValueFloat struct {
@@ -67,4 +68,8 @@ func (ValueFloat) Type() ValueType {
 
 func (v ValueFloat) ToString(*Context) string {
 	return fmt.Sprint(v.Value())
+}
+
+func (v ValueFloat) Hash() int64 {
+	return *(*int64)(unsafe.Pointer(&v.v))
 }
