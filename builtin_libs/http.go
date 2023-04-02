@@ -847,6 +847,7 @@ func initHttpRequestContextClass() ValueType {
 					}
 				}
 			}
+			request.Host = r.Host
 			var client http.Client
 			client.CheckRedirect = func(*http.Request, []*http.Request) error {
 				return http.ErrUseLastResponse
