@@ -839,15 +839,15 @@ func initHttpRequestContextClass() ValueType {
 				c.RaiseRuntimeError("make forward request error: %s", err)
 			}
 			for field, values := range r.Header {
-				if strings.ToLower(field) == "host" {
-					request.Header.Set(field, host)
-				} else {
-					for _, value := range values {
-						request.Header.Add(field, value)
-					}
+				for _, value := range values {
+					request.Header.Add(field, value)
 				}
 			}
-			request.Host = r.Host
+			if optHost := options.GetMember("host"); !IsUndefined(optHost) {
+				request.Host = optHost.ToString(c)
+			} else {
+				request.Host = r.Host
+			}
 			var client http.Client
 			client.CheckRedirect = func(*http.Request, []*http.Request) error {
 				return http.ErrUseLastResponse
