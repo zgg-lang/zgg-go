@@ -69,7 +69,8 @@ func (e *basicComprehension) evalWithBuiltinIterable(c *runtime.Context, iterata
 			e.tryPushItem(c, v, v, setResult)
 		}
 	case runtime.CanLen:
-		if o, ok := iteratable.(runtime.ValueObject); ok {
+		switch o := iteratable.(type) {
+		case runtime.ValueObject:
 			o.Each(func(key string, value runtime.Value) bool {
 				e.tryPushItem(c,
 					runtime.NewStr(key),
@@ -77,7 +78,15 @@ func (e *basicComprehension) evalWithBuiltinIterable(c *runtime.Context, iterata
 					setResult)
 				return true
 			})
-		} else {
+		case runtime.ValueMap:
+			o.Each(func(key, value runtime.Value) bool {
+				e.tryPushItem(c,
+					key,
+					value,
+					setResult)
+				return true
+			})
+		default:
 			l := it.Len()
 			for i := 0; i < l; i++ {
 				e.tryPushItem(c,

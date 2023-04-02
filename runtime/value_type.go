@@ -15,7 +15,7 @@ type (
 		superType *valueType
 		TypeId    int
 		Name      string
-		New       func(args []Value) Value
+		New       func(c *Context, args []Value) Value
 		Members   *sync.Map
 		Statics   *sync.Map
 	}
@@ -28,7 +28,7 @@ func NewType(id int, name string) ValueType {
 	return rv
 }
 
-func NewTypeWithCreator(id int, name string, creator func([]Value) Value) ValueType {
+func NewTypeWithCreator(id int, name string, creator func(*Context, []Value) Value) ValueType {
 	rv := &valueType{ValueBase: &ValueBase{}, TypeId: id, Name: name, Members: new(sync.Map), Statics: new(sync.Map)}
 	rv.Statics.Store("__name__", NewStr(name))
 	rv.New = creator
@@ -154,7 +154,7 @@ func (t *valueType) GetArgNames(c *Context) []string {
 
 func (t *valueType) Invoke(c *Context, this Value, args []Value) {
 	if t.New != nil {
-		c.RetVal = t.New(args)
+		c.RetVal = t.New(c, args)
 	} else {
 		rv := NewObject(t)
 		if initFn := t.getInitFunc(c); initFn != nil {

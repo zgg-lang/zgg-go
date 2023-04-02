@@ -140,8 +140,9 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 	}
 	switch v := iteratable.(type) {
 	case runtime.CanLen:
-		if obj, ok := iteratable.(runtime.ValueObject); ok {
-			obj.Each(func(key string, value runtime.Value) bool {
+		switch vv := iteratable.(type) {
+		case runtime.ValueObject:
+			vv.Each(func(key string, value runtime.Value) bool {
 				c.ForceSetLocalValue(s.IdValue, value)
 				if id := s.IdIndex; id != "" {
 					c.ForceSetLocalValue(id, runtime.NewStr(key))
@@ -151,7 +152,18 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 				}
 				return true
 			})
-		} else {
+		case runtime.ValueMap:
+			vv.Each(func(key, value runtime.Value) bool {
+				c.ForceSetLocalValue(s.IdValue, value)
+				if id := s.IdIndex; id != "" {
+					c.ForceSetLocalValue(id, key)
+				}
+				if !execLoopBody(s.Label, s.Exec, c) {
+					return false
+				}
+				return true
+			})
+		default:
 			l := v.Len()
 			for i := 0; i < l; i++ {
 				value := iteratable.GetIndex(i, c)

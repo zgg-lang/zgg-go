@@ -26,6 +26,18 @@ func NewMap() ValueMap {
 	}
 }
 
+func NewMapWithPairs(c *Context, kvs []Value) Value {
+	n := len(kvs)
+	if n != 0 {
+		c.RaiseRuntimeError("NewMap arguments number must be an even number")
+	}
+	rv := NewMap()
+	for i := 0; i < n; i += 2 {
+		rv.set(c, kvs[i], kvs[i+1])
+	}
+	return rv
+}
+
 func (m ValueMap) getHash(c *Context, key Value) (int64, bool) {
 	if h, ok := key.(CanHash); ok {
 		return h.Hash(), true
@@ -151,9 +163,9 @@ func (m ValueMap) IsTrue() bool {
 func (m ValueMap) Len() int { return len(m.ma) }
 
 var builtinMapMethods = map[string]ValueCallable{
-	"load": NewNativeFunction("load", func(c *Context, this Value, args []Value) Value {
+	"get": NewNativeFunction("get", func(c *Context, this Value, args []Value) Value {
 		var key Value
-		EnsureFuncParams(c, "Map.load", args, ArgRuleRequired("key", TypeAny, &key))
+		EnsureFuncParams(c, "Map.get", args, ArgRuleRequired("key", TypeAny, &key))
 		m := this.(ValueMap)
 		if rv, found := m.get(c, key); found {
 			return rv
@@ -161,16 +173,46 @@ var builtinMapMethods = map[string]ValueCallable{
 			return constUndefined
 		}
 	}, "key"),
-	"store": NewNativeFunction("store", func(c *Context, this Value, args []Value) Value {
+	"put": NewNativeFunction("put", func(c *Context, this Value, args []Value) Value {
 		var key, value Value
-		EnsureFuncParams(c, "Map.store", args,
+		EnsureFuncParams(c, "Map.put", args,
 			ArgRuleRequired("key", TypeAny, &key),
 			ArgRuleRequired("value", TypeAny, &value),
 		)
 		m := this.(ValueMap)
 		m.set(c, key, value)
-		return constUndefined
+		return this
 	}, "key", "value"),
+	"keys": NewNativeFunction("keys", func(c *Context, this Value, args []Value) Value {
+		m := this.(ValueMap)
+		rv := NewArray(m.Len())
+		m.Each(func(key, _ Value) bool {
+			rv.PushBack(key)
+			return true
+		})
+		return rv
+	}),
+	"values": NewNativeFunction("values", func(c *Context, this Value, args []Value) Value {
+		m := this.(ValueMap)
+		rv := NewArray(m.Len())
+		m.Each(func(_, value Value) bool {
+			rv.PushBack(value)
+			return true
+		})
+		return rv
+	}),
+	"pairs": NewNativeFunction("pairs", func(c *Context, this Value, args []Value) Value {
+		m := this.(ValueMap)
+		rv := NewArray(m.Len())
+		m.Each(func(key, value Value) bool {
+			p := NewObject()
+			p.SetMember("key", key, c)
+			p.SetMember("value", value, c)
+			rv.PushBack(p)
+			return true
+		})
+		return rv
+	}),
 }
 
 func init() {

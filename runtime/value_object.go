@@ -8,7 +8,7 @@ import (
 
 type ValueObject struct {
 	*ValueBase
-	t        ValueType
+	t        *valueType
 	this     *ValueObject
 	m        *sync.Map
 	size     *int
