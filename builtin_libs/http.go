@@ -843,7 +843,7 @@ func initHttpRequestContextClass() ValueType {
 					request.Header.Add(field, value)
 				}
 			}
-			if optHost := options.GetMember("host"); !IsUndefined(optHost) {
+			if optHost := options.GetMember("host", c); !IsUndefined(optHost) {
 				request.Host = optHost.ToString(c)
 			} else {
 				request.Host = r.Host
