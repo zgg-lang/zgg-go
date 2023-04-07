@@ -248,6 +248,33 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return rv
 	}),
+	"filterMap": NewNativeFunction("filterMap", func(c *Context, thisArg Value, args []Value) Value {
+		if len(args) != 1 {
+			c.RaiseRuntimeError("array.filterMap: arguments length must be 1")
+			return nil
+		}
+		f, isCallable := c.GetCallable(args[0])
+		if !isCallable {
+			c.RaiseRuntimeError("array.filterMap: argument 0 must be callable")
+			return nil
+		}
+		thisArr := thisArg.(ValueArray)
+		l := thisArr.Len()
+		rv := NewArray(l)
+		for i := 0; i < l; i++ {
+			v := thisArr.GetIndex(i, c)
+			f.Invoke(c, constUndefined, []Value{v, NewInt(int64(i))})
+			if retArr, isArr := c.RetVal.(ValueArray); !isArr || retArr.Len() != 2 {
+				c.RaiseRuntimeError("filterMap arg 0 must return an array with 2 elements")
+			} else {
+				targetVal, accepted := retArr.GetIndex(0, c), retArr.GetIndex(1, c)
+				if accepted.IsTrue() {
+					rv.PushBack(targetVal)
+				}
+			}
+		}
+		return rv
+	}),
 	"reduce": NewNativeFunction("reduce", func(c *Context, thisArg Value, args []Value) Value {
 		thisArr := thisArg.(ValueArray)
 		l := thisArr.Len()
