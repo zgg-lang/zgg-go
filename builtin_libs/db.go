@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
@@ -106,19 +107,48 @@ func libDb(*Context) ValueObject {
 	return lib
 }
 
-func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, cols []string) (ret ValueArray) {
+func dbScanRowsMakeFields(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, cols []string) []interface{} {
 	var err error
 	if colTypes == nil {
 		colTypes, err = rows.ColumnTypes()
 		if err != nil {
 			c.RaiseRuntimeError("QueryResult.__init__ get column types error %s", err)
-			return
+			return nil
 		}
 	}
 	fields := make([]interface{}, len(colTypes))
 	for i, ct := range colTypes {
-		fields[i] = reflect.New(ct.ScanType()).Interface()
+		st := ct.ScanType()
+		if st == nil {
+			dtn := strings.ToUpper(ct.DatabaseTypeName())
+			switch dtn {
+			case "INT", "INTEGER", "TINYINT", "SMALLINT", "MEDIUMINT", "BIGINT", "UNSIGNED BIG INT", "INT2", "INT8":
+				st = reflect.TypeOf((*int64)(nil)).Elem()
+			case "BOOL":
+				st = reflect.TypeOf((*bool)(nil)).Elem()
+			case "DECIMAL", "REAL", "DOUBLE", "DOUBLE PRECISION", "FLOAT":
+				st = reflect.TypeOf((*float64)(nil)).Elem()
+			case "TEXT":
+				st = reflect.TypeOf((*string)(nil)).Elem()
+			case "DATETIME":
+				st = reflect.TypeOf((*time.Time)(nil)).Elem()
+			default:
+				if strings.HasPrefix(dtn, "VARCHAR(") ||
+					strings.HasPrefix(dtn, "NVARCHAR(") ||
+					strings.HasPrefix(dtn, "CHARACTER(") {
+					st = reflect.TypeOf((*string)(nil)).Elem()
+				} else {
+					c.RaiseRuntimeError("unknown colType.DatabaseTypeName() %s", dtn)
+				}
+			}
+		}
+		fields[i] = reflect.New(st).Interface()
 	}
+	return fields
+}
+
+func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, cols []string) (ret ValueArray) {
+	fields := dbScanRowsMakeFields(c, rows, colTypes, cols)
 	if err := rows.Scan(fields...); err != nil {
 		c.RaiseRuntimeError("QueryResult.next scan fields error %s", err)
 		return
@@ -206,18 +236,7 @@ func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, c
 }
 
 func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, cols []string) (ret ValueObject) {
-	var err error
-	if colTypes == nil {
-		colTypes, err = rows.ColumnTypes()
-		if err != nil {
-			c.RaiseRuntimeError("QueryResult.__init__ get column types error %s", err)
-			return
-		}
-	}
-	fields := make([]interface{}, len(colTypes))
-	for i, ct := range colTypes {
-		fields[i] = reflect.New(ct.ScanType()).Interface()
-	}
+	fields := dbScanRowsMakeFields(c, rows, colTypes, cols)
 	if err := rows.Scan(fields...); err != nil {
 		c.RaiseRuntimeError("QueryResult.next scan fields error %s", err)
 		return
