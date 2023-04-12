@@ -22,17 +22,15 @@ type (
 	ValueType = *valueType
 )
 
-func NewType(id int, name string) ValueType {
-	rv := &valueType{ValueBase: &ValueBase{}, TypeId: id, Name: name, Members: new(sync.Map), Statics: new(sync.Map)}
-	rv.Statics.Store("__name__", NewStr(name))
-	return rv
-}
-
 func NewTypeWithCreator(id int, name string, creator func(*Context, []Value) Value) ValueType {
 	rv := &valueType{ValueBase: &ValueBase{}, TypeId: id, Name: name, Members: new(sync.Map), Statics: new(sync.Map)}
 	rv.Statics.Store("__name__", NewStr(name))
 	rv.New = creator
 	return rv
+}
+
+func NewType(id int, name string) ValueType {
+	return NewTypeWithCreator(id, name, nil)
 }
 
 func (*valueType) Type() ValueType {
