@@ -778,11 +778,74 @@ func initPTableClass() {
 			)
 			return query(c, querySQL, queryArgs)
 		}).
+		Method("slice", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				rows     = this.GetMember("_rows", c).ToGoValue().([][]Value)
+				n        = len(rows)
+				beginArg ValueInt
+				endArg   ValueInt
+			)
+			EnsureFuncParams(c, "PTable.slice", args,
+				ArgRuleRequired("begin", TypeInt, &beginArg),
+				ArgRuleOptional("end", TypeInt, &endArg, NewInt(int64(n))),
+			)
+			var (
+				meta  = this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+				begin = beginArg.AsInt()
+				end   = endArg.AsInt()
+				rv    = NewObjectAndInit(ptablePTableClass, c, lo.Map(meta.headers, func(n string, _ int) Value {
+					return NewStr(n)
+				})...)
+			)
+			if begin < 0 {
+				begin += n
+			}
+			if end < 0 {
+				end += n
+			}
+			rv.SetMember("_rows", NewGoValue(lo.Slice(rows, begin, end)), c)
+			return rv
+		}).
+		Method("columns", func(c *Context, this ValueObject, args []Value) Value {
+			meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+			return NewArrayByValues(lo.Map(meta.headers, func(n string, _ int) Value {
+				return NewStr(n)
+			})...)
+		}).
+		Method("addCol", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				colName   ValueStr
+				fillValue ValueCallable
+			)
+			EnsureFuncParams(c, "PTable.addCol", args,
+				ArgRuleRequired("colName", TypeStr, &colName),
+				ArgRuleOptional("fillValue", TypeCallable, &fillValue, ptableFillBlank),
+			)
+			var (
+				meta = this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+				rows = this.GetMember("_rows", c).ToGoValue().([][]Value)
+			)
+			meta.headers = append(meta.headers, colName.Value())
+			for i, row := range rows {
+				c.Invoke(fillValue, nil, func() []Value {
+					return []Value{
+						NewArrayByValues(row...),
+						NewInt(int64(i)),
+					}
+				})
+				rows[i] = append(row, c.RetVal)
+			}
+			return this
+		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
 			return c.InvokeMethod(this, "ascii", Args(args...))
 		}).
 		Build()
 }
+
+var ptableFillBlank = NewNativeFunction("", func(*Context, Value, []Value) Value {
+	return NewStr("")
+})
 
 var ptableFromCsvFile = NewNativeFunction("ptable.fromCsvFile", func(c *Context, this Value, args []Value) Value {
 	var (
