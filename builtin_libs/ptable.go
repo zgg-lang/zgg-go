@@ -1,6 +1,7 @@
 package builtin_libs
 
 import (
+	"database/sql"
 	"encoding/csv"
 	"fmt"
 	"html"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/samber/lo"
 	. "github.com/zgg-lang/zgg-go/runtime"
 
 	runewidth "github.com/mattn/go-runewidth"
@@ -613,6 +615,115 @@ func initPTableClass() {
 			}
 			return rv
 		}, "includeHeaders").
+		Method("query", func(c *Context, this ValueObject, args []Value) Value {
+			if len(args) < 1 {
+				c.RaiseRuntimeError("PTable.query: requires at least 1 argument")
+			}
+			queryCondition := args[0].ToString(c)
+			meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+			rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			if len(rows) < 1 {
+				tableArgs := lo.Map(meta.headers, func(n string, _ int) Value {
+					return NewStr(n)
+				})
+				rv := NewObjectAndInit(ptablePTableClass, c, tableArgs...)
+				return rv
+			}
+			tmpDB, err := sql.Open("sqlite", ":memory:")
+			if err != nil {
+				c.RaiseRuntimeError("PTable.query: open temp database error %+v", err)
+			}
+			defer tmpDB.Close()
+			// Build create table statment
+			var (
+				createStmtBuilder strings.Builder
+				insertStmtBuilder strings.Builder
+			)
+			createStmtBuilder.WriteString("CREATE TABLE self (")
+			insertStmtBuilder.WriteString("INSERT INTO self VALUES (")
+			for i, h := range meta.headers {
+				if i >= len(rows[0]) {
+					c.RaiseRuntimeError("PTable.query: not enough values in first row")
+				}
+				dbType := "INT"
+				if len(rows) > 0 {
+					v := rows[0][i]
+					switch v.(type) {
+					case ValueInt:
+						dbType = "INT"
+					case ValueStr:
+						dbType = "VARCHAR(1024)"
+					case ValueFloat:
+						dbType = "REAL"
+					case ValueBool:
+						dbType = "TINYINT"
+					default:
+						c.RaiseRuntimeError("PTable.query: unsupported value type %s",
+							v.Type().Name)
+					}
+				}
+				if i > 0 {
+					createStmtBuilder.WriteString(", ")
+					insertStmtBuilder.WriteString(", ?")
+				} else {
+					insertStmtBuilder.WriteString("?")
+				}
+				createStmtBuilder.WriteRune('`')
+				createStmtBuilder.WriteString(h)
+				createStmtBuilder.WriteString("` ")
+				createStmtBuilder.WriteString(dbType)
+			}
+			createStmtBuilder.WriteString(")")
+			insertStmtBuilder.WriteString(")")
+			if _, err := tmpDB.Exec(createStmtBuilder.String()); err != nil {
+				c.RaiseRuntimeError("PTable.query: create temp table error %+v", err)
+			}
+			var (
+				insertValues = make([]interface{}, len(meta.headers))
+				insertSQL    = insertStmtBuilder.String()
+			)
+			for rowIndex, row := range rows {
+				for i := range insertValues {
+					insertValues[i] = row[i].ToGoValue()
+				}
+				if _, err := tmpDB.Exec(insertSQL, insertValues...); err != nil {
+					c.RaiseRuntimeError("PTable.query: insert values in row %d error %+v",
+						rowIndex, err)
+				}
+			}
+			queryArgs := make([]interface{}, len(args)-1)
+			for i := range queryArgs {
+				queryArgs[i] = args[i+1].ToGoValue()
+			}
+			retRows, err := tmpDB.Query(queryCondition, queryArgs...)
+			if err != nil {
+				c.RaiseRuntimeError("PTable.query: query error %+v", err)
+			}
+			defer func() {
+				if err := retRows.Close(); err != nil {
+					c.RaiseRuntimeError("PTable.query: query close error %+v", err)
+				}
+			}()
+			colTypes, err := retRows.ColumnTypes()
+			if err != nil {
+				c.RaiseRuntimeError("PTable.query: read rows get column types error %+v", err)
+			}
+			cols, err := retRows.Columns()
+			if err != nil {
+				c.RaiseRuntimeError("PTable.query: read rows get columns error %+v", err)
+			}
+			rv := NewObjectAndInit(ptablePTableClass, c, lo.Map(cols, func(n string, _ int) Value {
+				return NewStr(n)
+			})...)
+			rvRows := make([][]Value, 0)
+			for retRows.Next() {
+				row := *(dbScanRowsToArray(c, retRows, colTypes, cols).Values)
+				rvRows = append(rvRows, row)
+			}
+			rv.SetMember("_rows", NewGoValue(rvRows), c)
+			return rv
+
+		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
 			return c.InvokeMethod(this, "ascii", Args(args...))
 		}).

@@ -138,7 +138,9 @@ func dbScanRowsMakeFields(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType
 					strings.HasPrefix(dtn, "CHARACTER(") {
 					st = reflect.TypeOf((*string)(nil)).Elem()
 				} else {
-					c.RaiseRuntimeError("unknown colType.DatabaseTypeName() %s", dtn)
+					st = reflect.TypeOf((*string)(nil)).Elem()
+					//fmt.Printf("unknown colType.DatabaseTypeName() '%s'(%+v)\n", dtn, ct)
+					//c.RaiseRuntimeError("unknown colType.DatabaseTypeName() '%s'(%+v)", dtn, ct)
 				}
 			}
 		}
