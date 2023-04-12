@@ -27,6 +27,9 @@ func libPtable(c *Context) ValueObject {
 	lib.SetMember("__call__", ptablePTableClass, c)
 	lib.SetMember("fromCsvFile", ptableFromCsvFile, c)
 	lib.SetMember("fromCsv", ptableFromCsv, c)
+	lib.SetMember("query", NewNativeFunction("ptable.query", func(c *Context, this Value, args []Value) Value {
+		return c.InvokeMethod(ptablePTableClass, "query", Args(args...))
+	}), c)
 	return lib
 }
 
@@ -77,14 +80,10 @@ var (
 		bottomRight: "-+",
 	}
 	ptableUnicodeChars = ptableTextChars{
-		topLeft:  "┏━",
-		top:      "━",
-		topMid:   "━┯━",
-		topRight: "━┓",
-		// sepLeft:     "┠─",
-		// sep:         "─",
-		// sepMid:      "─┼─",
-		// sepRight:    "─┨",
+		topLeft:     "┏━",
+		top:         "━",
+		topMid:      "━┯━",
+		topRight:    "━┓",
 		sepLeft:     "┣━",
 		sep:         "━",
 		sepMid:      "━┿━",
@@ -430,6 +429,44 @@ func initPTableClass() {
 			}
 		}
 	}
+	query := func(c *Context, querySQL string, queryArgs []any) Value {
+		tmpDB, err := sql.Open("sqlite", ":memory:")
+		if err != nil {
+			c.RaiseRuntimeError("PTable.query: open temp database error %+v", err)
+		}
+		defer tmpDB.Close()
+		for _, table := range findTables(c, querySQL) {
+			addTableToDB(c, tmpDB, table.instance, table.name)
+		}
+		retRows, err := tmpDB.Query(querySQL, queryArgs...)
+		if err != nil {
+			c.RaiseRuntimeError("PTable.query: query error %+v", err)
+		}
+		defer func() {
+			if err := retRows.Close(); err != nil {
+				c.RaiseRuntimeError("PTable.query: query close error %+v", err)
+			}
+		}()
+		colTypes, err := retRows.ColumnTypes()
+		if err != nil {
+			c.RaiseRuntimeError("PTable.query: read rows get column types error %+v", err)
+		}
+		cols, err := retRows.Columns()
+		if err != nil {
+			c.RaiseRuntimeError("PTable.query: read rows get columns error %+v", err)
+		}
+		rv := NewObjectAndInit(ptablePTableClass, c, lo.Map(cols, func(n string, _ int) Value {
+			return NewStr(n)
+		})...)
+		rvRows := make([][]Value, 0)
+		for retRows.Next() {
+			row := *(dbScanRowsToArray(c, retRows, colTypes, cols).Values)
+			rvRows = append(rvRows, row)
+		}
+		rv.SetMember("_rows", NewGoValue(rvRows), c)
+		return rv
+
+	}
 	ptablePTableClass = NewClassBuilder("PTable").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
 			_meta := &ptableMeta{
@@ -722,52 +759,28 @@ func initPTableClass() {
 			if len(args) < 1 {
 				c.RaiseRuntimeError("PTable.query: requires at least 1 argument")
 			}
-			querySQL := args[0].ToString(c)
-			tmpDB, err := sql.Open("sqlite", ":memory:")
-			if err != nil {
-				c.RaiseRuntimeError("PTable.query: open temp database error %+v", err)
+			var (
+				querySQL  = args[0].ToString(c)
+				queryArgs = lo.Map(args[1:], func(v Value, _ int) any {
+					return v.ToGoValue()
+				})
+			)
+			c.PushStack()
+			defer c.PopStack()
+			c.SetLocalValue("this", this)
+			return query(c, querySQL, queryArgs)
+		}).
+		StaticMethod("query", func(c *Context, this Value, args []Value) Value {
+			if len(args) < 1 {
+				c.RaiseRuntimeError("PTable.query: requires at least 1 argument")
 			}
-			defer tmpDB.Close()
-			tables := findTables(c, querySQL)
-			for _, table := range tables {
-				if table.name == "__self__" {
-					addTableToDB(c, tmpDB, this, table.name)
-				} else {
-					addTableToDB(c, tmpDB, table.instance, table.name)
-				}
-			}
-			queryArgs := make([]interface{}, len(args)-1)
-			for i := range queryArgs {
-				queryArgs[i] = args[i+1].ToGoValue()
-			}
-			retRows, err := tmpDB.Query(querySQL, queryArgs...)
-			if err != nil {
-				c.RaiseRuntimeError("PTable.query: query error %+v", err)
-			}
-			defer func() {
-				if err := retRows.Close(); err != nil {
-					c.RaiseRuntimeError("PTable.query: query close error %+v", err)
-				}
-			}()
-			colTypes, err := retRows.ColumnTypes()
-			if err != nil {
-				c.RaiseRuntimeError("PTable.query: read rows get column types error %+v", err)
-			}
-			cols, err := retRows.Columns()
-			if err != nil {
-				c.RaiseRuntimeError("PTable.query: read rows get columns error %+v", err)
-			}
-			rv := NewObjectAndInit(ptablePTableClass, c, lo.Map(cols, func(n string, _ int) Value {
-				return NewStr(n)
-			})...)
-			rvRows := make([][]Value, 0)
-			for retRows.Next() {
-				row := *(dbScanRowsToArray(c, retRows, colTypes, cols).Values)
-				rvRows = append(rvRows, row)
-			}
-			rv.SetMember("_rows", NewGoValue(rvRows), c)
-			return rv
-
+			var (
+				querySQL  = args[0].ToString(c)
+				queryArgs = lo.Map(args[1:], func(v Value, _ int) any {
+					return v.ToGoValue()
+				})
+			)
+			return query(c, querySQL, queryArgs)
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
 			return c.InvokeMethod(this, "ascii", Args(args...))
