@@ -345,10 +345,6 @@ func initPTableClass() {
 					if _, found := tableMap[name]; found {
 						continue
 					}
-					if name == "__self__" {
-						tableMap[name] = NewObject()
-						continue
-					}
 					v, exists := c.FindValue(name)
 					if !exists {
 						c.RaiseRuntimeError("cannot find table %s in context", name)
