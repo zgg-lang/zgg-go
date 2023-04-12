@@ -214,9 +214,9 @@ func (h *ClassBuilder) Method(name string, f func(*Context, ValueObject, []Value
 	return h
 }
 
-func (h *ClassBuilder) StaticMethod(name string, f func(*Context, ValueObject, []Value) Value, args ...string) *ClassBuilder {
+func (h *ClassBuilder) StaticMethod(name string, f func(*Context, Value, []Value) Value, args ...string) *ClassBuilder {
 	h.t.Statics.Store(name, NewNativeFunction(h.t.Name+"."+name, func(c *Context, this Value, args []Value) Value {
-		return f(c, c.MustObject(this), args)
+		return f(c, this, args)
 	}, args...))
 	return h
 }
