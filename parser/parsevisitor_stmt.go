@@ -66,7 +66,7 @@ func (v *ParseVisitor) VisitStmtDoWhile(ctx *StmtDoWhileContext) interface{} {
 }
 
 func (v *ParseVisitor) VisitStmtWhile(ctx *StmtWhileContext) interface{} {
-	r := &ast.StmtDoWhile{
+	r := &ast.StmtWhile{
 		Pos:   getPos(v, ctx),
 		Check: ctx.GetCheckExpr().Accept(v).(ast.Expr),
 		Exec:  ctx.GetExecBlock().Accept(v).(*ast.Block),
