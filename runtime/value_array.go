@@ -248,6 +248,30 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return rv
 	}),
+	"flatMap": NewNativeFunction("flatMap", func(c *Context, thisArg Value, args []Value) Value {
+		var (
+			mapper arrayMapper
+		)
+		EnsureFuncParams(c, "array.flatMap", args,
+			mapper.ArgRule("mapper", true),
+		)
+		mapper.Build()
+		thisArr := thisArg.(ValueArray)
+		l := thisArr.Len()
+		rv := NewArray(l)
+		for i := 0; i < l; i++ {
+			v := thisArr.GetIndex(i, c)
+			mapped := mapper.Map(v, i, c)
+			if mappedArray, is := mapped.(ValueArray); !is {
+				c.RaiseRuntimeError("flatMap's mapper must return an array")
+			} else {
+				for _, v := range *mappedArray.Values {
+					rv.PushBack(v)
+				}
+			}
+		}
+		return rv
+	}),
 	"filterMap": NewNativeFunction("filterMap", func(c *Context, thisArg Value, args []Value) Value {
 		if len(args) != 1 {
 			c.RaiseRuntimeError("array.filterMap: arguments length must be 1")
