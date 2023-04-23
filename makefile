@@ -4,7 +4,7 @@ BUILD_HASH	:= $(shell git rev-parse HEAD)
 FLAGS		:= -ldflags "-X main.BUILD_TIME=${BUILD_TIME} -X main.BUILD_HASH=${BUILD_HASH}"
 GOBUILD 	:= go build
 
-.PHONY: lexer parser cmd linuxamd64 darwinamd64 darwinarm64 devtools
+.PHONY: lexer parser cmd linuxamd64 linuxarm64 darwinamd64 darwinarm64 devtools
 
 cmd:
 	CGO_ENABLED=0 $(GOBUILD) -o bin/zgg $@/*.go
@@ -14,6 +14,9 @@ devtools:
 
 linuxamd64:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/linux_amd64/zgg cmd/*.go
+
+linuxarm64:
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/linux_arm64/zgg cmd/*.go
 
 linuxcgo:
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-musl-gcc CGO_LDFLAGS="-static" $(GOBUILD) $(FLAGS) -o bin/linux_amd64/zgg cmd/*.go
