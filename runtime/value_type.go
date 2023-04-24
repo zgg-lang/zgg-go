@@ -214,6 +214,13 @@ func (h *ClassBuilder) Method(name string, f func(*Context, ValueObject, []Value
 	return h
 }
 
+func (h *ClassBuilder) Methods(names []string, f func(*Context, ValueObject, []Value) Value, args ...string) *ClassBuilder {
+	for _, name := range names {
+		h.Method(name, f, args...)
+	}
+	return h
+}
+
 func (h *ClassBuilder) StaticMethod(name string, f func(*Context, Value, []Value) Value, args ...string) *ClassBuilder {
 	h.t.Statics.Store(name, NewNativeFunction(h.t.Name+"."+name, func(c *Context, this Value, args []Value) Value {
 		return f(c, this, args)

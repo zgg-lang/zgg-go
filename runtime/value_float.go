@@ -2,7 +2,9 @@ package runtime
 
 import (
 	"fmt"
+	"math"
 	"reflect"
+	"time"
 	"unsafe"
 )
 
@@ -72,4 +74,44 @@ func (v ValueFloat) ToString(*Context) string {
 
 func (v ValueFloat) Hash() int64 {
 	return *(*int64)(unsafe.Pointer(&v.v))
+}
+
+func floatToDuration(c *Context, v Value, unit time.Duration) Value {
+	timeMod := c.ImportModule("time", false, ImportTypeScript).(ValueObject)
+	du := time.Duration(c.MustFloat(v) * float64(unit))
+	duClass := Unbound(timeMod.GetMember("Duration", c)).(ValueType)
+	return NewObjectAndInit(duClass, c, NewGoValue(du))
+}
+
+var builtinFloatMethods = map[string]ValueCallable{
+	// math methods
+	"floor": NewNativeFunction("floor", func(c *Context, this Value, args []Value) Value {
+		return NewInt(int64(math.Floor(c.MustFloat(this))))
+	}),
+	"ceil": NewNativeFunction("ceil", func(c *Context, this Value, args []Value) Value {
+		return NewInt(int64(math.Ceil(c.MustFloat(this))))
+	}),
+	"round": NewNativeFunction("round", func(c *Context, this Value, args []Value) Value {
+		return NewInt(int64(math.Round(c.MustFloat(this))))
+	}),
+	// duration methods
+	"seconds": NewNativeFunction("seconds", func(c *Context, this Value, args []Value) Value {
+		return floatToDuration(c, this, time.Second)
+	}),
+	"minutes": NewNativeFunction("seconds", func(c *Context, this Value, args []Value) Value {
+		return floatToDuration(c, this, time.Minute)
+	}),
+	"hours": NewNativeFunction("seconds", func(c *Context, this Value, args []Value) Value {
+		return floatToDuration(c, this, time.Hour)
+	}),
+	"days": NewNativeFunction("days", func(c *Context, this Value, args []Value) Value {
+		return floatToDuration(c, this, 24*time.Hour)
+	}),
+	"weeks": NewNativeFunction("weeks", func(c *Context, this Value, args []Value) Value {
+		return floatToDuration(c, this, 7*24*time.Hour)
+	}),
+}
+
+func init() {
+	addMembersAndStatics(TypeFloat, builtinFloatMethods)
 }

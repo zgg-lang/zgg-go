@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"sync"
+	"time"
 )
 
 const (
@@ -105,6 +106,13 @@ func init() {
 	addMembersAndStatics(TypeInt, builtinIntMethods)
 }
 
+func intToDuration(c *Context, v Value, unit time.Duration) Value {
+	timeMod := c.ImportModule("time", false, ImportTypeScript).(ValueObject)
+	du := time.Duration(c.MustInt(v)) * unit
+	duClass := Unbound(timeMod.GetMember("Duration", c)).(ValueType)
+	return NewObjectAndInit(duClass, c, NewGoValue(du))
+}
+
 var builtinIntMethods = map[string]ValueCallable{
 	"times": NewNativeFunction("times", func(c *Context, this Value, args []Value) Value {
 		times := c.MustInt(this)
@@ -151,5 +159,21 @@ var builtinIntMethods = map[string]ValueCallable{
 	}, "value", "base"),
 	"__next__": NewNativeFunction("__next__", func(c *Context, this Value, args []Value) Value {
 		return NewInt(c.MustInt(this) + 1)
+	}),
+	// duration methods
+	"seconds": NewNativeFunction("seconds", func(c *Context, this Value, args []Value) Value {
+		return intToDuration(c, this, time.Second)
+	}),
+	"minutes": NewNativeFunction("minutes", func(c *Context, this Value, args []Value) Value {
+		return intToDuration(c, this, time.Minute)
+	}),
+	"hours": NewNativeFunction("hours", func(c *Context, this Value, args []Value) Value {
+		return intToDuration(c, this, time.Hour)
+	}),
+	"days": NewNativeFunction("days", func(c *Context, this Value, args []Value) Value {
+		return intToDuration(c, this, 24*time.Hour)
+	}),
+	"weeks": NewNativeFunction("weeks", func(c *Context, this Value, args []Value) Value {
+		return intToDuration(c, this, 7*24*time.Hour)
 	}),
 }

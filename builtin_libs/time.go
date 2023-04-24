@@ -7,11 +7,15 @@ import (
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
-var timeClass ValueType
+var (
+	timeTimeClass     ValueType
+	timeDurationClass ValueType
+)
 
-func libTime(*Context) ValueObject {
+func libTime(c *Context) ValueObject {
 	lib := NewObject()
-	lib.SetMember("Time", timeClass, nil)
+	lib.SetMember("Time", timeTimeClass, nil)
+	lib.SetMember("Duration", timeDurationClass, nil)
 	lib.SetMember("time", NewNativeFunction("time", func(c *Context, this Value, args []Value) Value {
 		return NewInt(time.Now().Unix())
 	}), nil)
@@ -34,7 +38,7 @@ func libTime(*Context) ValueObject {
 		default:
 			c.RaiseRuntimeError("Invalid time type %s", asType)
 		}
-		now := NewObjectAndInit(timeClass, c, NewInt(nowTs-nowTs%mod))
+		now := NewObjectAndInit(timeTimeClass, c, NewInt(nowTs-nowTs%mod))
 		if asType != "" {
 			now.SetMember("__as", timeType, c)
 		}
@@ -43,7 +47,7 @@ func libTime(*Context) ValueObject {
 	lib.SetMember("fromUnix", NewNativeFunction("fromUnix", func(c *Context, this Value, args []Value) Value {
 		var ts ValueInt
 		EnsureFuncParams(c, "time.fromUnix", args, ArgRuleRequired("unixTimestamp", TypeInt, &ts))
-		return NewObjectAndInit(timeClass, c, NewInt(ts.Value()*1e9))
+		return NewObjectAndInit(timeTimeClass, c, NewInt(ts.Value()*1e9))
 	}, "timestamp"), nil)
 	lib.SetMember("fromGoTime", NewNativeFunction("fromGoTime", func(c *Context, this Value, args []Value) Value {
 		var gt GoValue
@@ -51,9 +55,9 @@ func libTime(*Context) ValueObject {
 		if _, ok := gt.ToGoValue().(time.Time); !ok {
 			c.RaiseRuntimeError("Not a time.Time!")
 		}
-		return NewObjectAndInit(timeClass, c, gt)
+		return NewObjectAndInit(timeTimeClass, c, gt)
 	}, "time"), nil)
-	lib.SetMember("sleep", NewNativeFunction("time", func(c *Context, this Value, args []Value) Value {
+	lib.SetMember("sleep", NewNativeFunction("sleep", func(c *Context, this Value, args []Value) Value {
 		if len(args) != 1 {
 			c.RaiseRuntimeError("sleep: requires 1 argument")
 			return nil
@@ -62,6 +66,95 @@ func libTime(*Context) ValueObject {
 		time.Sleep(time.Duration(sleepSeconds * float64(time.Second)))
 		return Undefined()
 	}), nil)
+	lib.SetMember("since", NewNativeFunction("since", func(c *Context, this Value, args []Value) Value {
+		if len(args) != 1 {
+			c.RaiseRuntimeError("since: requires 1 argument")
+		}
+		t0 := c.MustObject(args[0])
+		if t0.Type().TypeId != timeTimeClass.TypeId {
+			c.RaiseRuntimeError("since: begin time must be a Time object")
+		}
+		from := t0.GetMember("__t", c).ToGoValue().(time.Time)
+		du := time.Since(from)
+		return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
+	}), nil)
+	oneDay := NewObjectAndInit(timeDurationClass, c, NewGoValue(24*time.Hour))
+	_getTime := func(o *ValueObject, s ValueStr, i ValueInt, by int) {
+		switch by {
+		case 1:
+			*o = NewObjectAndInit(timeTimeClass, c, s)
+		case 2:
+			if ts := i.Value(); ts < 10000000000 {
+				*o = NewObjectAndInit(timeTimeClass, c, NewInt(ts*1000000000))
+			} else if ts := i.Value(); ts < 10000000000000 {
+				*o = NewObjectAndInit(timeTimeClass, c, NewInt(ts*1000000))
+			} else {
+				*o = NewObjectAndInit(timeTimeClass, c, i)
+			}
+		}
+	}
+	_iter := func(c *Context, args []Value, canCallback bool) (begin, end, step ValueObject, callback ValueCallable) {
+		var (
+			beginStr  ValueStr
+			beginInt  ValueInt
+			beginBy   int
+			endStr    ValueStr
+			endInt    ValueInt
+			endBy     int
+			stepStr   ValueStr
+			stepBy    int
+			timeTypes = []ValueType{timeTimeClass, TypeStr, TypeInt}
+			rules     = []ArgRule{
+				ArgRuleOneOf("begin", timeTypes, []any{&begin, &beginStr, &beginInt}, &beginBy, nil, nil),
+				ArgRuleOneOf("end", timeTypes, []any{&end, &endStr, &endInt}, &endBy, nil, nil),
+				ArgRuleOneOf("step", []ValueType{timeDurationClass, TypeStr}, []any{&step, &stepStr}, &stepBy, &step, oneDay),
+			}
+		)
+		if canCallback {
+			rules = append(rules, ArgRuleOptional("callback", TypeCallable, &callback, nil))
+		}
+		EnsureFuncParams(c, "iter", args, rules...)
+		_getTime(&begin, beginStr, beginInt, beginBy)
+		_getTime(&end, endStr, endInt, endBy)
+		if stepBy == 1 {
+			step = NewObjectAndInit(timeDurationClass, c, stepStr)
+		}
+		return
+	}
+	lib.SetMember("iter", NewNativeFunction("iter", func(c *Context, this Value, args []Value) Value {
+		begin, end, step, callback := _iter(c, args, true)
+		if callback != nil {
+			current := begin
+			for c.ValuesLess(current, end) {
+				c.Invoke(callback, nil, Args(current))
+				current = c.InvokeMethod(current, "__add__", Args(step)).(ValueObject)
+			}
+			return Undefined()
+		}
+		rv := NewObject()
+		rv.SetMember("__iter__", NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
+			next := begin
+			return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
+				cur := next
+				if !c.ValuesLess(cur, end) {
+					return NewArrayByValues(Undefined(), NewBool(false))
+				}
+				next = c.InvokeMethod(cur, "__add__", Args(step)).(ValueObject)
+				return NewArrayByValues(cur, NewBool(true))
+			})
+		}), c)
+		return rv
+	}), nil)
+	lib.SetMember("list", NewNativeFunction("list", func(c *Context, this Value, args []Value) Value {
+		begin, end, step, _ := _iter(c, args, false)
+		current := begin
+		rv := NewArray()
+		for c.ValuesLess(current, end) {
+			rv.PushBack(current)
+			current = c.InvokeMethod(current, "__add__", Args(step)).(ValueObject)
+		}
+		return rv
+	}), c)
 	lib.SetMember("timeit", NewNativeFunction("timeit", func(c *Context, this Value, args []Value) (rv Value) {
 		var callable ValueCallable
 		EnsureFuncParams(c, "timeit", args,
@@ -77,9 +170,9 @@ func libTime(*Context) ValueObject {
 	return lib
 }
 
-func initTimeClass() {
+func timeInittimeTimeClass() {
 	layoutP := regexp.MustCompile("%.")
-	timeClass = NewClassBuilder("Time").
+	timeTimeClass = NewClassBuilder("Time").
 		Constructor(func(c *Context, thisObj ValueObject, args []Value) {
 			// var ts int64
 			var _t time.Time
@@ -214,7 +307,7 @@ func initTimeClass() {
 			}
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
 			rt := t.Add(d)
-			rv := NewObjectAndInit(timeClass, c, NewGoValue(rt))
+			rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(rt))
 			rv.SetMember("__as", this.GetMember("__as", c), c)
 			return rv
 		}).
@@ -224,7 +317,7 @@ func initTimeClass() {
 				ArgRuleRequired("days", TypeInt, &days),
 			)
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
-			rv := NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, days.AsInt())))
+			rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, days.AsInt())))
 			rv.SetMember("__as", this.GetMember("__as", c), c)
 			return rv
 		}).
@@ -234,7 +327,7 @@ func initTimeClass() {
 				ArgRuleRequired("days", TypeInt, &hours),
 			)
 			t := this.GetMember("__t", c).ToGoValue().(time.Time)
-			rv := NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Duration(hours.AsInt())*time.Hour)))
+			rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Duration(hours.AsInt())*time.Hour)))
 			rv.SetMember("__as", this.GetMember("__as", c), c)
 			return rv
 		}).
@@ -250,13 +343,13 @@ func initTimeClass() {
 				t := this.GetMember("__t", c).ToGoValue().(time.Time)
 				switch as.Value() {
 				case "day":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, 1)))
+					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, 1)))
 				case "hour":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Hour)))
+					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Hour)))
 				case "minute":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Minute)))
+					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Minute)))
 				case "second":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Second)))
+					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Second)))
 				}
 				if r != nil {
 					r.(ValueObject).SetMember("__as", as, c)
@@ -305,53 +398,81 @@ func initTimeClass() {
 			return NewStr(t.Format(layoutStr))
 		}).
 		Method("__add__", func(c *Context, this ValueObject, args []Value) Value {
-			var diff ValueInt
-			EnsureFuncParams(c, "Time.__add__", args, ArgRuleRequired("add", TypeInt, &diff))
-			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
-				var r Value
-				t := this.GetMember("__t", c).ToGoValue().(time.Time)
-				d := diff.AsInt()
-				switch as.Value() {
-				case "day":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, d)))
-				case "hour":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
-				case "minute":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
-				case "second":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
+			if len(args) != 1 {
+				c.RaiseRuntimeError("__add__ requires one arugment!")
+			}
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			switch diff := args[0].(type) {
+			case ValueObject:
+				if diff.Type().TypeId != timeDurationClass.TypeId {
+					c.RaiseRuntimeError("invalid duration class")
 				}
-				if r != nil {
-					r.(ValueObject).SetMember("__as", as, c)
-					return r
+				r := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(diff.GetMember("__du", c).ToGoValue().(time.Duration))))
+				return r
+			case ValueInt:
+				if as, ok := this.GetMember("__as", c).(ValueStr); ok {
+					var r Value
+					d := diff.AsInt()
+					switch as.Value() {
+					case "day":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, d)))
+					case "hour":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
+					case "minute":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
+					case "second":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
+					}
+					if r != nil {
+						r.(ValueObject).SetMember("__as", as, c)
+						return r
+					}
+					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 				}
 			}
-			c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 			return nil
 		}).
 		Method("__sub__", func(c *Context, this ValueObject, args []Value) Value {
-			var diff ValueInt
-			EnsureFuncParams(c, "Time.__sub__", args, ArgRuleRequired("add", TypeInt, &diff))
-			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
-				var r Value
-				t := this.GetMember("__t", c).ToGoValue().(time.Time)
-				d := -diff.AsInt()
-				switch as.Value() {
-				case "day":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.AddDate(0, 0, d)))
-				case "hour":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
-				case "minute":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
-				case "second":
-					r = NewObjectAndInit(timeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
-				}
-				if r != nil {
-					r.(ValueObject).SetMember("__as", as, c)
-					return r
-				}
+			if len(args) != 1 {
+				c.RaiseRuntimeError("__sub__ requires one arugment!")
 			}
-			c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			switch diff := args[0].(type) {
+			case ValueObject:
+				switch diff.Type().TypeId {
+				case timeTimeClass.TypeId:
+					t2 := diff.GetMember("__t", c).ToGoValue().(time.Time)
+					r := NewObjectAndInit(timeDurationClass, c, NewGoValue(t.Sub(t2)))
+					return r
+				case timeDurationClass.TypeId:
+					du := diff.GetMember("__du", c).ToGoValue().(time.Duration)
+					r := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(-du)))
+					return r
+				default:
+					c.RaiseRuntimeError("invalid duration class")
+				}
+			case ValueInt:
+				if as, ok := this.GetMember("__as", c).(ValueStr); ok {
+					var r Value
+					t := this.GetMember("__t", c).ToGoValue().(time.Time)
+					d := -diff.AsInt()
+					switch as.Value() {
+					case "day":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, d)))
+					case "hour":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
+					case "minute":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
+					case "second":
+						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
+					}
+					if r != nil {
+						r.(ValueObject).SetMember("__as", as, c)
+						return r
+					}
+				}
+				c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+			}
 			return nil
 		}).
 		Method("timetuple", func(c *Context, this ValueObject, args []Value) Value {
@@ -418,6 +539,120 @@ func initTimeClass() {
 		Build()
 }
 
+func timeInitDurationClass() {
+	getOther := func(c *Context, args []Value) time.Duration {
+		if len(args) != 1 {
+			c.RaiseRuntimeError("duration compare requries 1 argument!")
+		}
+		var d2 time.Duration
+		if d2a := c.MustObject(args[0]); d2a.Type().TypeId != timeDurationClass.TypeId {
+			c.RaiseRuntimeError("invalid other duration type")
+		} else {
+			d2 = d2a.GetMember("__du", c).ToGoValue().(time.Duration)
+		}
+		return d2
+	}
+	compareDurations := func(c *Context, this ValueObject, args []Value) (gt bool, lt bool) {
+		d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+		d2 := getOther(c, args)
+		return d1 < d2, d1 > d2
+	}
+	timeDurationClass = NewClassBuilder("Duration").
+		Constructor(func(c *Context, this ValueObject, args []Value) {
+			switch len(args) {
+			case 1:
+				switch dv := args[0].(type) {
+				case ValueStr:
+					du, err := time.ParseDuration(dv.Value())
+					if err != nil {
+						c.RaiseRuntimeError("invalid duration string %s", dv.Value())
+					}
+					this.SetMember("__du", NewGoValue(du), c)
+					return
+				case GoValue:
+					if du, is := dv.ToGoValue().(time.Duration); is {
+						this.SetMember("__du", NewGoValue(du), c)
+						return
+					}
+				}
+			}
+			c.RaiseRuntimeError("Duration.__init__: invalid duration argumenet")
+		}).
+		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
+			du := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewStr(du.String())
+		}).
+		// To floats
+		Methods([]string{"nanoseconds", "ns"}, func(c *Context, this ValueObject, args []Value) Value {
+			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewFloat(float64(d.Nanoseconds()))
+		}).
+		Methods([]string{"milliseconds", "ms"}, func(c *Context, this ValueObject, args []Value) Value {
+			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewFloat(float64(d.Milliseconds()))
+		}).
+		Methods([]string{"seconds", "s"}, func(c *Context, this ValueObject, args []Value) Value {
+			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewFloat(d.Seconds())
+		}).
+		Methods([]string{"minutes", "m"}, func(c *Context, this ValueObject, args []Value) Value {
+			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewFloat(d.Minutes())
+		}).
+		Methods([]string{"hours", "h"}, func(c *Context, this ValueObject, args []Value) Value {
+			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewFloat(d.Hours())
+		}).
+		Methods([]string{"days", "d"}, func(c *Context, this ValueObject, args []Value) Value {
+			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewFloat(d.Hours() / 24)
+		}).
+		Methods([]string{"weeks", "w"}, func(c *Context, this ValueObject, args []Value) Value {
+			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			return NewFloat(d.Hours() / 24 / 7)
+		}).
+		// Comparation
+		Method("__lt__", func(c *Context, this ValueObject, args []Value) Value {
+			lt, _ := compareDurations(c, this, args)
+			return NewBool(lt)
+		}).
+		Method("__le__", func(c *Context, this ValueObject, args []Value) Value {
+			_, gt := compareDurations(c, this, args)
+			return NewBool(!gt)
+		}).
+		Method("__gt__", func(c *Context, this ValueObject, args []Value) Value {
+			_, gt := compareDurations(c, this, args)
+			return NewBool(gt)
+		}).
+		Method("__ge__", func(c *Context, this ValueObject, args []Value) Value {
+			lt, _ := compareDurations(c, this, args)
+			return NewBool(!lt)
+		}).
+		Method("__eq__", func(c *Context, this ValueObject, args []Value) Value {
+			lt, gt := compareDurations(c, this, args)
+			return NewBool(!(lt || gt))
+		}).
+		Method("__ne__", func(c *Context, this ValueObject, args []Value) Value {
+			lt, gt := compareDurations(c, this, args)
+			return NewBool(lt || gt)
+		}).
+		// Add & sub
+		Method("__add__", func(c *Context, this ValueObject, args []Value) Value {
+			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d2 := getOther(c, args)
+			du := time.Duration(int64(d1) + int64(d2))
+			return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
+		}).
+		Method("__sub__", func(c *Context, this ValueObject, args []Value) Value {
+			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d2 := getOther(c, args)
+			du := time.Duration(int64(d1) - int64(d2))
+			return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
+		}).
+		Build()
+}
+
 func init() {
-	initTimeClass()
+	timeInittimeTimeClass()
+	timeInitDurationClass()
 }

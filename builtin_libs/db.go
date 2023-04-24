@@ -200,7 +200,7 @@ func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, c
 			set = true
 		case *sql.NullTime:
 			if fv.Valid {
-				item.PushBack(NewObjectAndInit(timeClass, c, NewInt(fv.Time.UnixNano())))
+				item.PushBack(NewObjectAndInit(timeTimeClass, c, NewInt(fv.Time.UnixNano())))
 			} else {
 				item.PushBack(Nil())
 			}
@@ -288,7 +288,7 @@ func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, 
 			set = true
 		case *sql.NullTime:
 			if fv.Valid {
-				item.SetMember(colName, NewObjectAndInit(timeClass, c, NewInt(fv.Time.UnixNano())), c)
+				item.SetMember(colName, NewObjectAndInit(timeTimeClass, c, NewInt(fv.Time.UnixNano())), c)
 			} else {
 				item.SetMember(colName, Nil(), c)
 			}
