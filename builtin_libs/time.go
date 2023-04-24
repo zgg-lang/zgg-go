@@ -44,7 +44,7 @@ func (a *timeTimeArg) Get(c *Context) ValueObject {
 }
 
 func (a *timeTimeArg) GetTime(c *Context) time.Time {
-	return a.Get(c).ToGoValue().(time.Time)
+	return a.Get(c).GetMember("__t", c).ToGoValue().(time.Time)
 }
 
 type timeDurationArg struct {
