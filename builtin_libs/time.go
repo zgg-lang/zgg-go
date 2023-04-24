@@ -12,6 +12,74 @@ var (
 	timeDurationClass ValueType
 )
 
+type timeTimeArg struct {
+	o     ValueObject
+	s     ValueStr
+	i     ValueInt
+	which int
+}
+
+func (a *timeTimeArg) Rule(name string) ArgRule {
+	return ArgRuleOneOf(name,
+		[]ValueType{timeTimeClass, TypeStr, TypeInt},
+		[]any{&a.o, &a.s, &a.i},
+		&a.which,
+		nil, nil)
+}
+
+func (a *timeTimeArg) Get(c *Context) ValueObject {
+	switch a.which {
+	case 1:
+		a.o = NewObjectAndInit(timeTimeClass, c, a.s)
+	case 2:
+		if ts := a.i.Value(); ts < 10000000000 {
+			a.o = NewObjectAndInit(timeTimeClass, c, NewInt(ts*1000000000))
+		} else if ts := a.i.Value(); ts < 10000000000000 {
+			a.o = NewObjectAndInit(timeTimeClass, c, NewInt(ts*1000000))
+		} else {
+			a.o = NewObjectAndInit(timeTimeClass, c, a.i)
+		}
+	}
+	return a.o
+}
+
+func (a *timeTimeArg) GetTime(c *Context) time.Time {
+	return a.Get(c).ToGoValue().(time.Time)
+}
+
+type timeDurationArg struct {
+	o     ValueObject
+	s     ValueStr
+	which int
+}
+
+func (a *timeDurationArg) Rule(name string, dv ...ValueObject) ArgRule {
+	if len(dv) > 0 {
+		return ArgRuleOneOf(name,
+			[]ValueType{timeDurationClass, TypeStr},
+			[]any{&a.o, &a.s},
+			&a.which,
+			&a.o, dv[0])
+	}
+	return ArgRuleOneOf(name,
+		[]ValueType{timeDurationClass, TypeStr},
+		[]any{&a.o, &a.s},
+		&a.which,
+		nil, nil)
+}
+
+func (a *timeDurationArg) Get(c *Context) ValueObject {
+	switch a.which {
+	case 1:
+		a.o = NewObjectAndInit(timeDurationClass, c, a.s)
+	}
+	return a.o
+}
+
+func (a *timeDurationArg) GetDuration(c *Context) time.Duration {
+	return a.Get(c).ToGoValue().(time.Duration)
+}
+
 func libTime(c *Context) ValueObject {
 	lib := NewObject()
 	lib.SetMember("Time", timeTimeClass, nil)
@@ -68,58 +136,30 @@ func libTime(c *Context) ValueObject {
 		return Undefined()
 	}), nil)
 	lib.SetMember("since", NewNativeFunction("since", func(c *Context, this Value, args []Value) Value {
-		if len(args) != 1 {
-			c.RaiseRuntimeError("since: requires 1 argument")
-		}
-		t0 := c.MustObject(args[0])
-		if t0.Type().TypeId != timeTimeClass.TypeId {
-			c.RaiseRuntimeError("since: begin time must be a Time object")
-		}
-		from := t0.GetMember("__t", c).ToGoValue().(time.Time)
-		du := time.Since(from)
+		var from timeTimeArg
+		EnsureFuncParams(c, "since", args, from.Rule("from"))
+		du := time.Since(from.GetTime(c))
 		return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
 	}), nil)
 	oneDay := NewObjectAndInit(timeDurationClass, c, NewGoValue(24*time.Hour))
-	_getTime := func(o *ValueObject, s ValueStr, i ValueInt, by int) {
-		switch by {
-		case 1:
-			*o = NewObjectAndInit(timeTimeClass, c, s)
-		case 2:
-			if ts := i.Value(); ts < 10000000000 {
-				*o = NewObjectAndInit(timeTimeClass, c, NewInt(ts*1000000000))
-			} else if ts := i.Value(); ts < 10000000000000 {
-				*o = NewObjectAndInit(timeTimeClass, c, NewInt(ts*1000000))
-			} else {
-				*o = NewObjectAndInit(timeTimeClass, c, i)
-			}
-		}
-	}
 	_iter := func(c *Context, args []Value, canCallback bool) (begin, end, step ValueObject, callback ValueCallable) {
 		var (
-			beginStr  ValueStr
-			beginInt  ValueInt
-			beginBy   int
-			endStr    ValueStr
-			endInt    ValueInt
-			endBy     int
-			stepStr   ValueStr
-			stepBy    int
-			timeTypes = []ValueType{timeTimeClass, TypeStr, TypeInt}
-			rules     = []ArgRule{
-				ArgRuleOneOf("begin", timeTypes, []any{&begin, &beginStr, &beginInt}, &beginBy, nil, nil),
-				ArgRuleOneOf("end", timeTypes, []any{&end, &endStr, &endInt}, &endBy, nil, nil),
-				ArgRuleOneOf("step", []ValueType{timeDurationClass, TypeStr}, []any{&step, &stepStr}, &stepBy, &step, oneDay),
+			beginArg timeTimeArg
+			endArg   timeTimeArg
+			stepArg  timeDurationArg
+			rules    = []ArgRule{
+				beginArg.Rule("begin"),
+				endArg.Rule("end"),
+				stepArg.Rule("step", oneDay),
 			}
 		)
 		if canCallback {
 			rules = append(rules, ArgRuleOptional("callback", TypeCallable, &callback, nil))
 		}
 		EnsureFuncParams(c, "iter", args, rules...)
-		_getTime(&begin, beginStr, beginInt, beginBy)
-		_getTime(&end, endStr, endInt, endBy)
-		if stepBy == 1 {
-			step = NewObjectAndInit(timeDurationClass, c, stepStr)
-		}
+		begin = beginArg.Get(c)
+		end = endArg.Get(c)
+		step = stepArg.Get(c)
 		return
 	}
 	lib.SetMember("iter", NewNativeFunction("iter", func(c *Context, this Value, args []Value) Value {
