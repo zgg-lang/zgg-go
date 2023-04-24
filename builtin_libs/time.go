@@ -15,6 +15,7 @@ var (
 func libTime(c *Context) ValueObject {
 	lib := NewObject()
 	lib.SetMember("Time", timeTimeClass, nil)
+	lib.SetMember("__call__", timeTimeClass, nil)
 	lib.SetMember("Duration", timeDurationClass, nil)
 	lib.SetMember("time", NewNativeFunction("time", func(c *Context, this Value, args []Value) Value {
 		return NewInt(time.Now().Unix())
