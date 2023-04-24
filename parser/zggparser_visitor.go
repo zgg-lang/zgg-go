@@ -161,6 +161,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#exprLogicNot.
 	VisitExprLogicNot(ctx *ExprLogicNotContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#exprAt.
+	VisitExprAt(ctx *ExprAtContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#exprLogicAnd.
 	VisitExprLogicAnd(ctx *ExprLogicAndContext) interface{}
 
