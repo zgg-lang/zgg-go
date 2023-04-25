@@ -212,10 +212,6 @@ func (v *BaseZggParserVisitor) VisitExprLogicNot(ctx *ExprLogicNotContext) inter
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseZggParserVisitor) VisitExprAt(ctx *ExprAtContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BaseZggParserVisitor) VisitExprLogicAnd(ctx *ExprLogicAndContext) interface{} {
 	return v.VisitChildren(ctx)
 }

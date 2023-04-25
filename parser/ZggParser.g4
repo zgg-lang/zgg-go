@@ -140,7 +140,6 @@ expr
     | USE_AT codeBlock expr                                             # exprUseBlock
     | USE expr                                              	        # exprUseCloser
     | expr '!'                                              	        # exprAssertError
-    | expr '@' IDENTIFIER arguments?                                    # exprAt
     ;
     
 whenCondition
