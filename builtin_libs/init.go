@@ -16,7 +16,6 @@ var (
 	libs      = map[string]ValueObject{}
 	StdLibMap = map[string]LibInfo{
 		"base64":     LibInfo{name: "base64", getter: libBase64},
-		"chart":      LibInfo{name: "chart", getter: libChart},
 		"concurrent": LibInfo{name: "concurrent", getter: libConcurrent},
 		"cron":       LibInfo{name: "cron", getter: libCron},
 		"db":         LibInfo{name: "db", getter: libDb},
