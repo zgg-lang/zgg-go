@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	goruntime "runtime"
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
@@ -429,6 +430,15 @@ var (
 			return this
 		}).
 		Method("show", func(c *Context, this ValueObject, args []Value) Value {
+			var openCmd string
+			switch goruntime.GOOS {
+			case "windows":
+				openCmd = "start"
+			case "darwin":
+				openCmd = "open"
+			default:
+				c.RaiseRuntimeError("current os %s does not support show() method", goruntime.GOOS)
+			}
 			f, err := os.CreateTemp("", "*.png")
 			if err != nil {
 				c.RaiseRuntimeError("create temp file error %s", err)
@@ -438,7 +448,7 @@ var (
 			if err := f.Close(); err != nil {
 				c.RaiseRuntimeError("close temp file error %s", err)
 			}
-			if err := exec.Command("open", f.Name()).Run(); err != nil {
+			if err := exec.Command(openCmd, f.Name()).Run(); err != nil {
 				c.RaiseRuntimeError("run open commmand error %s", err)
 			}
 			return NewStr(f.Name())
