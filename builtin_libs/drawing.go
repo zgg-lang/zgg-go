@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	goruntime "runtime"
 	"strconv"
 	"strings"
-	goruntime "runtime"
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
@@ -430,12 +430,17 @@ var (
 			return this
 		}).
 		Method("show", func(c *Context, this ValueObject, args []Value) Value {
-			var openCmd string
+			var (
+				openCmd  string
+				openArgs []string
+			)
 			switch goruntime.GOOS {
 			case "windows":
-				openCmd = "start"
+				openCmd = "cmd"
+				openArgs = []string{"/C", "start"}
 			case "darwin":
 				openCmd = "open"
+				openArgs = []string{}
 			default:
 				c.RaiseRuntimeError("current os %s does not support show() method", goruntime.GOOS)
 			}
@@ -445,10 +450,11 @@ var (
 			}
 			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
 			dc.EncodePNG(f)
+			openArgs = append(openArgs, f.Name())
 			if err := f.Close(); err != nil {
 				c.RaiseRuntimeError("close temp file error %s", err)
 			}
-			if err := exec.Command(openCmd, f.Name()).Run(); err != nil {
+			if err := exec.Command(openCmd, openArgs...).Run(); err != nil {
 				c.RaiseRuntimeError("run open commmand error %s", err)
 			}
 			return NewStr(f.Name())
