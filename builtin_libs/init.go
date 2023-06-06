@@ -30,6 +30,7 @@ var (
 		"json":       LibInfo{name: "json", getter: libJson},
 		"kv":         LibInfo{name: "kv", getter: libKv},
 		"msgpack":    LibInfo{name: "msgpack", getter: libMsgpack},
+		"math":       LibInfo{name: "math", getter: libMath},
 		"nsq":        LibInfo{name: "nsq", getter: libNsq},
 		"ptable":     LibInfo{name: "ptable", getter: libPtable},
 		"random":     LibInfo{name: "random", getter: libRandom},
