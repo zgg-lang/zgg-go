@@ -1,0 +1,28 @@
+a := {
+	a: [
+		{score: 100, b: 1},
+		{score: 200, b: 2},
+		{score: 300, b: 3},
+		{score: 400, b: 4},
+	],
+}
+
+cases := [
+	[r'$.a.b',   				[1, 2, 3, 4]],
+	[r'$.a[2].b',   			3],
+	[r'$.a[1:].b', 				[2, 3, 4]],
+	[r'$.a[?(@score>200)].b',   [3, 4]],
+]
+
+res := @ptable('JsonPath', '是否通过')
+for testcase in cases {
+	[path, expected] := testcase
+	try {
+		got := a.$get(path)
+		res.add(path, got == expected ? '是': '否(${got})')
+	} catch(e) {
+		res.add(path, '否:${e.message}')
+	}
+}
+
+println(res)

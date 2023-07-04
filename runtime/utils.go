@@ -3,7 +3,6 @@ package runtime
 import (
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -240,67 +239,15 @@ var (
 )
 
 func GetValueByPath(c *Context, v Value, path string) Value {
-	for len(path) > 0 {
-		if m := pathIdField.FindStringSubmatch(path); len(m) == 2 {
-			v = v.GetMember(m[1], c)
-			path = path[len(m[0]):]
-			continue
-		}
-		if m := pathStrField.FindStringSubmatch(path); len(m) == 2 {
-			f := escapedChar.ReplaceAllStringFunc(m[1], func(src string) string {
-				switch len(src) {
-				case 6:
-					if strings.HasPrefix(src, "\\u") || strings.HasPrefix(src, "\\U") {
-						code, _ := strconv.ParseInt(src[2:], 16, 64)
-						return string(rune(code))
-					}
-				case 4:
-					if strings.HasPrefix(src, "\\x") || strings.HasPrefix(src, "\\X") {
-						code, _ := strconv.ParseInt(src[2:], 16, 64)
-						return string(rune(code))
-					}
-				case 2:
-					switch src {
-					case "\\n":
-						return "\n"
-					case "\\r":
-						return "\r"
-					case "\\t":
-						return "\t"
-					case "\\b":
-						return "\b"
-					case "\\\\":
-						return "\\"
-					case "\\'":
-						return "'"
-					default:
-						return src
-					}
-				}
-				return ""
-			})
-			v = v.GetMember(f, c)
-			path = path[len(m[0]):]
-			continue
-		}
-		if m := pathIndex.FindStringSubmatch(path); len(m) == 2 {
-			index, err := strconv.Atoi(m[1])
-			if err != nil {
-				c.RaiseRuntimeError("invalud index %s", m[1])
-			}
-			if index < 0 {
-				if clv, ok := v.(CanLen); ok {
-					index = clv.Len() + index
-				}
-			}
-			v = v.GetIndex(index, c)
-			path = path[len(m[0]):]
-			continue
-		}
-		v = v.GetMember(path, c)
-		break
+	res, err := jsonPathLookup(c, v, path)
+	if err != nil {
+		c.RaiseRuntimeError("find value by path %s error %+v", path, err)
 	}
-	return v
+	if rv, is := res.(Value); is {
+		return rv
+	} else {
+		return NewGoValue(res)
+	}
 }
 
 func getMemberByType(c *Context, v Value, name string) Value {
