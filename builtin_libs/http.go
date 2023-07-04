@@ -1067,6 +1067,16 @@ func initHttpRequestClass() ValueType {
 			var reqBody io.Reader
 			if bodyLen := body.Len(); bodyLen == 0 {
 				reqBody = nil
+			} else if bodyLen == 1 {
+				var bs []byte
+				v := body.GetIndex(0, c)
+				switch bodyVal := v.(type) {
+				case ValueBytes:
+					bs = bodyVal.Value()
+				default:
+					bs = []byte(bodyVal.ToString(c))
+				}
+				reqBody = bytes.NewReader(bs)
 			} else {
 				readers := make([]io.Reader, bodyLen)
 				for i := range readers {
