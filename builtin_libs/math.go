@@ -35,6 +35,12 @@ func libMath(*Context) ValueObject {
 			r.SetMember(name, mathPortFuncFF_F(name, fn), nil)
 		}
 	}
+	for name, v := range mathPortConsts {
+		switch vv := v.(type) {
+		case float64:
+			r.SetMember(name, NewFloat(vv), nil)
+		}
+	}
 	return r
 }
 
@@ -138,4 +144,9 @@ var mathPortFuncs = map[string]any{
 	"y0":              math.Y0,
 	"y1":              math.Y1,
 	"yn":              math.Yn,
+}
+
+var mathPortConsts = map[string]any{
+	"pi": math.Pi,
+	"e":  math.E,
 }
