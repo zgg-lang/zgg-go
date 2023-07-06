@@ -243,9 +243,20 @@ func GetValueByPath(c *Context, v Value, path string) Value {
 	if err != nil {
 		c.RaiseRuntimeError("find value by path %s error %+v", path, err)
 	}
-	if rv, is := res.(Value); is {
+	switch rv := res.(type) {
+	case Value:
 		return rv
-	} else {
+	case []any:
+		retArr := NewArray(len(rv))
+		for _, v := range rv {
+			if vv, is := v.(Value); is {
+				retArr.PushBack(vv)
+			} else {
+				retArr.PushBack(NewGoValue(v))
+			}
+		}
+		return retArr
+	default:
 		return NewGoValue(res)
 	}
 }

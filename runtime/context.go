@@ -657,7 +657,7 @@ func (c *Context) AutoImport() {
 }
 
 func (c *Context) valuesCompare(v1, v2 Value, fn string, expectedResults ...CompareResult) bool {
-	if compFn, ok := c.GetCallable(v1.GetMember(fn, c)); ok && c.IsCallable(compFn) {
+	if compFn, ok := c.GetCallable(v1.GetMember(fn, c)); ok {
 		c.Invoke(compFn, v1, Args(v2))
 		return c.RetVal.IsTrue()
 	}

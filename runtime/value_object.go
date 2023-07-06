@@ -104,7 +104,6 @@ func (v ValueObject) SetMember(name string, value Value, c *Context) {
 			(*v.size)++
 			v.m.Store(name, value)
 		}
-
 	}
 }
 

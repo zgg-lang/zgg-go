@@ -720,6 +720,17 @@ var builtinFunctions = map[string]ValueCallable{
 		}
 		return constUndefined
 	}, "prompt"),
+	"lookup": NewNativeFunction("lookup", func(c *Context, this Value, args []Value) Value {
+		var (
+			value Value
+			path  ValueStr
+		)
+		EnsureFuncParams(c, "lookup", args,
+			ArgRuleRequired("value", TypeAny, &value),
+			ArgRuleRequired("path", TypeStr, &path),
+		)
+		return GetValueByPath(c, value, path.Value())
+	}, "value", "path"),
 	"log": (func() ValueObject {
 		rv := NewObject()
 		const (

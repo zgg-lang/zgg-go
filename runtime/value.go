@@ -59,10 +59,6 @@ func getExtMember(owner Value, name string, c *Context) Value {
 	if ext, found := c.FindValue(extName); found {
 		return makeMember(owner, ext, c)
 	}
-	switch name {
-	case "$get":
-		return makeMember(owner, commonValueGet, c)
-	}
 	return constUndefined
 }
 
@@ -81,11 +77,3 @@ type CanSetIndex interface {
 type CanHash interface {
 	Hash() int64
 }
-
-var (
-	commonValueGet = NewNativeFunction("$get", func(c *Context, this Value, args []Value) Value {
-		var path ValueStr
-		EnsureFuncParams(c, "$get", args, ArgRuleRequired("path", TypeStr, &path))
-		return GetValueByPath(c, this, path.Value())
-	}, "path")
-)

@@ -215,7 +215,7 @@ func tokenize(query string) ([]string, error) {
 }
 
 /*
- op: "root", "key", "idx", "range", "filter", "scan"
+op: "root", "key", "idx", "range", "filter", "scan"
 */
 func parse_token(token string) (op string, key string, args interface{}, err error) {
 	if token == "$" {
@@ -426,7 +426,7 @@ func _get_range_params(length int, frm, to any) (_frm int, _to int) {
 		frm = 0
 	}
 	if to == nil {
-		to = length - 1
+		to = length
 	}
 	if fv, ok := frm.(int); ok == true {
 		if fv < 0 {
@@ -437,9 +437,9 @@ func _get_range_params(length int, frm, to any) (_frm int, _to int) {
 	}
 	if tv, ok := to.(int); ok == true {
 		if tv < 0 {
-			_to = length + tv + 1
+			_to = length + tv
 		} else {
-			_to = tv + 1
+			_to = tv
 		}
 	}
 	return
@@ -493,8 +493,70 @@ func regFilterCompile(rule string) (*regexp.Regexp, error) {
 	return regexp.Compile(string(runes))
 }
 
-func zgg_get_filtered(ctx *Context, obj Value, lp, op, rp string) ([]interface{}, error) {
-
+func zgg_get_filtered(ctx *Context, obj Value, root interface{}, lp, op, rp string) ([]interface{}, error) {
+	res := []interface{}{}
+	switch val := obj.(type) {
+	case ValueArray:
+		if op == "=~" {
+			// regexp
+			pat, err := regFilterCompile(rp)
+			if err != nil {
+				return nil, err
+			}
+			for i := 0; i < val.Len(); i++ {
+				tmp := val.GetIndex(i, ctx)
+				if ok, err := eval_reg_filter(ctx, tmp, root, lp, pat); err != nil {
+					return nil, err
+				} else if ok {
+					res = append(res, tmp)
+				}
+			}
+		} else {
+			for i := 0; i < val.Len(); i++ {
+				tmp := val.GetIndex(i, ctx)
+				if ok, err := eval_filter(ctx, tmp, root, lp, op, rp); err != nil {
+					return nil, err
+				} else if ok {
+					res = append(res, tmp)
+				}
+			}
+		}
+	case ValueObject:
+		if op == "=~" {
+			// regexp
+			pat, err := regFilterCompile(rp)
+			if err != nil {
+				return nil, err
+			}
+			val.Each(func(k string, v Value) bool {
+				var ok bool
+				if ok, err = eval_reg_filter(ctx, v, root, lp, pat); err != nil {
+					return false
+				} else if ok {
+					res = append(res, v)
+				}
+				return true
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			var err error
+			val.Each(func(k string, v Value) bool {
+				var ok bool
+				if ok, err = eval_filter(ctx, v, root, lp, op, rp); err != nil {
+					return false
+				} else if ok {
+					res = append(res, v)
+				}
+				return true
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return res, nil
 }
 
 func get_filtered(ctx *Context, obj, root interface{}, filter string) ([]interface{}, error) {
@@ -504,7 +566,7 @@ func get_filtered(ctx *Context, obj, root interface{}, filter string) ([]interfa
 	}
 
 	if val, is := obj.(Value); is {
-		return zgg_get_filtered(ctx, val, lp, op, rp)
+		return zgg_get_filtered(ctx, val, root, lp, op, rp)
 	}
 	res := []interface{}{}
 
@@ -691,6 +753,8 @@ func eval_reg_filter(ctx *Context, obj, root interface{}, lp string, pat *regexp
 	switch v := lp_v.(type) {
 	case string:
 		return pat.MatchString(v), nil
+	case Value:
+		return pat.MatchString(v.ToString(ctx)), nil
 	default:
 		return false, errors.New("only string can match with regular expression")
 	}
@@ -710,7 +774,9 @@ func get_lp_v(ctx *Context, obj, root interface{}, lp string) (interface{}, erro
 
 func eval_filter(ctx *Context, obj, root interface{}, lp, op, rp string) (res bool, err error) {
 	lp_v, err := get_lp_v(ctx, obj, root, lp)
-
+	if err != nil {
+		return
+	}
 	if op == "exists" {
 		return lp_v != nil, nil
 	} else if op == "=~" {
@@ -724,8 +790,7 @@ func eval_filter(ctx *Context, obj, root interface{}, lp, op, rp string) (res bo
 		} else {
 			rp_v = rp
 		}
-		//fmt.Printf("lp_v: %v, rp_v: %v\n", lp_v, rp_v)
-		return cmp_any(lp_v, rp_v, op)
+		return cmp_any(ctx, lp_v, rp_v, op)
 	}
 }
 
@@ -748,13 +813,47 @@ func isNumber(o interface{}) bool {
 	return false
 }
 
-func cmp_any(obj1, obj2 interface{}, op string) (bool, error) {
+func cmp_any(ctx *Context, obj1, obj2 interface{}, op string) (bool, error) {
 	switch op {
 	case "<", "<=", "==", ">=", ">":
 	default:
 		return false, fmt.Errorf("op should only be <, <=, ==, >= and >")
 	}
 
+	if v1, is := obj1.(Value); is {
+		v2, is := obj2.(Value)
+		if !is {
+			v2 = NewGoValue(obj2)
+		}
+		switch v1.(type) {
+		case ValueInt:
+			if n2, err := strconv.ParseFloat(v2.ToString(ctx), 64); err != nil {
+				return false, err
+			} else {
+				v2 = NewFloat(n2)
+			}
+		case ValueFloat:
+			if n2, err := strconv.ParseFloat(v2.ToString(ctx), 64); err != nil {
+				return false, err
+			} else {
+				v2 = NewFloat(n2)
+			}
+		}
+		switch op {
+		case "<":
+			return ctx.ValuesLess(v1, v2), nil
+		case "<=":
+			return ctx.ValuesLessEqual(v1, v2), nil
+		case "==":
+			return ctx.ValuesEqual(v1, v2), nil
+		case ">":
+			return ctx.ValuesGreater(v1, v2), nil
+		case ">=":
+			return ctx.ValuesGreaterEqual(v1, v2), nil
+		default:
+			return false, fmt.Errorf("op should only be <, <=, ==, >= and >")
+		}
+	}
 	var exp string
 	if isNumber(obj1) && isNumber(obj2) {
 		exp = fmt.Sprintf(`%v %s %v`, obj1, op, obj2)
