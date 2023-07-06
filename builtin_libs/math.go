@@ -147,6 +147,6 @@ var mathPortFuncs = map[string]any{
 }
 
 var mathPortConsts = map[string]any{
-	"pi": math.Pi,
-	"e":  math.E,
+	"PI": math.Pi,
+	"E":  math.E,
 }
