@@ -21,6 +21,13 @@ func jsonPathLookup(ctx *Context, obj interface{}, jpath string) (interface{}, e
 	return c.Lookup(ctx, obj)
 }
 
+func jpToStr(ctx *Context, obj any) string {
+	if v, is := obj.(Value); is {
+		return fmt.Sprintf("%s:%s", reflect.TypeOf(v).Name(), v.ToString(ctx))
+	}
+	return "go:" + fmt.Sprint(obj)
+}
+
 type compiled struct {
 	path  string
 	steps []step
@@ -124,9 +131,11 @@ func (c *compiled) Lookup(ctx *Context, obj interface{}) (interface{}, error) {
 				return nil, fmt.Errorf("range args length should be 2")
 			}
 		case "filter":
-			obj, err = get_key(ctx, obj, s.key)
-			if err != nil {
-				return nil, err
+			if s.key != "" {
+				obj, err = get_key(ctx, obj, s.key)
+				if err != nil {
+					return nil, err
+				}
 			}
 			obj, err = get_filtered(ctx, obj, obj, s.args.(string))
 			if err != nil {
@@ -766,6 +775,10 @@ func get_lp_v(ctx *Context, obj, root interface{}, lp string) (interface{}, erro
 		return filter_get_from_explicit_path(ctx, obj, lp)
 	} else if strings.HasPrefix(lp, "$.") {
 		return filter_get_from_explicit_path(ctx, root, lp)
+	} else if lp == "@" {
+		return obj, nil
+	} else if lp == "$" {
+		return root, nil
 	} else {
 		lp_v = lp
 	}

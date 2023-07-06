@@ -1,0 +1,145 @@
+
+json1 := @json.decode('''{
+ "store": {
+    "book": [
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+		"id": 1,
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+		"id": 2,
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+		"id": 3,
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+		"id": 4,
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+	  "id": 5,
+      "color": "red",
+      "price": 19.95,
+      "gears": [23, 50],
+      "extra": {"x": 0},
+      "escape" : "Esc\b\f\n\r\t\u002A",
+      "nullValue": null
+    }
+  }
+}''')
+
+json2 := @json.decode('''
+    [
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+		"id": 1,
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+		"id": 2,
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+		"id": 3,
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+		"id": 4,
+        "price": 22.99
+      }
+    ]
+''')
+
+cases := [
+	{obj: seq(1, 10), path: r'$[?(@ > 5)]', expected: [6,  7, 8, 9, 10]},
+
+	// get all items
+	{obj: json1, path: r'$.store.book[*].fooBar', expected: []},
+	{obj: json1, path: r'$.store.book[*].price', expected: [8.95, 12.99, 8.99, 22.99]},
+	{obj: json1, path: r'$.store..id', expected: [1, 2, 3, 4, 5]},
+	
+	{obj: json2, path: r'$[*].fooBar', expected: []},
+	{obj: json2, path: r'$[*].price', expected: [8.95, 12.99, 8.99, 22.99]},
+
+	// get index
+	{obj: json1, path: r'$.store.book[2].id', expected: 3},
+	{obj: json1, path: r'$.store.book[-1].id', expected: 4},
+	{obj: json1, path: r'$.store.book[0, -1].id', expected: [1, 4]},
+	
+	{obj: json2, path: r'$[2].id', expected: 3},
+	{obj: json2, path: r'$[-1].id', expected: 4},
+	{obj: json2, path: r'$[0, -1].id', expected: [1, 4]},
+
+	// get range
+	{obj: json1, path: r'$.store.book[:2].id', expected: [1, 2]},
+	{obj: json1, path: r'$.store.book[1:].id', expected: [2, 3, 4]},
+	{obj: json1, path: r'$.store.book[1:3].id', expected: [2, 3]},
+	{obj: json1, path: r'$.store.book[:-2].id', expected: [1, 2]},
+	{obj: json1, path: r'$.store.book[-3:].id', expected: [2, 3, 4]},
+	{obj: json1, path: r'$.store.book[-3:-1].id', expected: [2, 3]},
+
+	{obj: json2, path: r'$[:2].id', expected: [1, 2]},
+	{obj: json2, path: r'$[1:].id', expected: [2, 3, 4]},
+	{obj: json2, path: r'$[1:3].id', expected: [2, 3]},
+	{obj: json2, path: r'$[:-2].id', expected: [1, 2]},
+	{obj: json2, path: r'$[-3:].id', expected: [2, 3, 4]},
+	{obj: json2, path: r'$[-3:-1].id', expected: [2, 3]},
+
+	// cmp filter
+	{obj: json1, path: r'$.store.book[?(@.price > 10)].id', expected: [2, 4]},
+	{obj: json1, path: r'$.store.book[?(@.price < 10)].id', expected: [1, 3]},
+	{obj: json1, path: r'$.store.book[?(@.price == 8.99)].id', expected: [3]},
+
+	{obj: json2, path: r'$[?(@.price > 10)].id', expected: [2, 4]},
+	{obj: json2, path: r'$[?(@.price < 10)].id', expected: [1, 3]},
+	{obj: json2, path: r'$[?(@.price == 8.99)].id', expected: [3]},
+
+	// reg filter
+	{obj: json1, path: r'$.store.book[?(@.author =~ /Her/)].id', expected: [3]},
+
+	{obj: json2, path: r'$[?(@.author =~ /Her/)].id', expected: [3]},
+]
+
+//cases = cases.slice(0, 1)
+extend Str {
+	padRight: size => len(this) >= size ? this: this + ' ' * (size - len(this))
+}
+
+pathWidth := 40
+for tc in cases {
+	got := nil
+	try {
+		got = lookup(tc.obj, tc.path)
+	} catch (e) {
+		println('[*] %s [FAIL]' % tc.path.padRight(pathWidth), e.message)
+		continue
+	}
+
+	if got == tc.expected {
+		printf('[*] %s [PASS]\n', tc.path.padRight(pathWidth))
+	} else {
+		println('[*] %s [FAIL]' % tc.path.padRight(pathWidth), tc.expected, got)
+	}
+}
