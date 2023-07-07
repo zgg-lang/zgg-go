@@ -519,6 +519,27 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return rv
 	}),
+	"uniq": NewNativeFunction("array.uniq", func(c *Context, this Value, args []Value) Value {
+		thisArr := c.MustArray(this)
+		var (
+			valMapper arrayMapper
+		)
+		EnsureFuncParams(c, "array.uniq", args,
+			valMapper.ArgRule("valMapper", false),
+		)
+		valMapper.Build()
+		valMap := NewMap()
+		rv := NewArray()
+		for i, item := range *(thisArr.Values) {
+			v := valMapper.Map(item, i, c)
+			if _, found := valMap.get(c, v); found {
+				continue
+			}
+			valMap.set(c, v, constNil)
+			rv.PushBack(v)
+		}
+		return rv
+	}),
 	"chunk": NewNativeFunction("chunk", func(c *Context, this Value, args []Value) Value {
 		var (
 			chunkSize ValueInt
