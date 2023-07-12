@@ -452,7 +452,8 @@ func (s *StmtClassDefine) Eval(c *runtime.Context) {
 
 type StmtDefer struct {
 	Pos
-	Call *ExprCall
+	Call  *ExprCall
+	Block *Block
 }
 
 func (s *StmtDefer) Eval(c *runtime.Context) {

@@ -69,6 +69,7 @@ stmt
         ')'
         codeBlock                               # stmtExportFuncDefine
     | (DEFER|BLOCK_DEFER) expr '?.'? arguments  # stmtDefer
+    | (DEFER|BLOCK_DEFER) codeBlock             # stmtDeferBlock
     | TRY tryBlock=codeBlock (
         CATCH '(' excName=IDENTIFIER ')' catchBlock=codeBlock
         (FINALLY finallyBlock=codeBlock)?

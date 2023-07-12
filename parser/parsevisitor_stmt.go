@@ -304,6 +304,29 @@ func (v *ParseVisitor) VisitStmtDefer(ctx *StmtDeferContext) interface{} {
 	panic("should not reach here")
 }
 
+func (v *ParseVisitor) VisitStmtDeferBlock(ctx *StmtDeferBlockContext) interface{} {
+	f := &ast.ExprFunc{
+		Value: runtime.NewFunc("", []string{}, false, ctx.CodeBlock().Accept(v).(ast.Node)),
+	}
+	call := &ast.ExprCall{
+		Pos:       getPos(v, ctx),
+		Optional:  false,
+		Callee:    f,
+		Arguments: nil,
+	}
+	if ctx.DEFER() != nil {
+		return &ast.StmtDefer{
+			Call: call,
+		}
+	}
+	if ctx.BLOCK_DEFER() != nil {
+		return &ast.StmtBlockDefer{
+			Call: call,
+		}
+	}
+	panic("should not reach here")
+}
+
 func (v *ParseVisitor) VisitStmtTry(ctx *StmtTryContext) interface{} {
 	rv := &ast.StmtTry{
 		Pos: getPos(v, ctx),

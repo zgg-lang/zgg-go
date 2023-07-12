@@ -112,6 +112,10 @@ func (v *BaseZggParserVisitor) VisitStmtDefer(ctx *StmtDeferContext) interface{}
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitStmtDeferBlock(ctx *StmtDeferBlockContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitStmtTry(ctx *StmtTryContext) interface{} {
 	return v.VisitChildren(ctx)
 }

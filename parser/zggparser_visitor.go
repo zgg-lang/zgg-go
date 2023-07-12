@@ -86,6 +86,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#stmtDefer.
 	VisitStmtDefer(ctx *StmtDeferContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#stmtDeferBlock.
+	VisitStmtDeferBlock(ctx *StmtDeferBlockContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#stmtTry.
 	VisitStmtTry(ctx *StmtTryContext) interface{}
 
