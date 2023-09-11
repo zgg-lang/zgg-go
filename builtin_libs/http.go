@@ -116,12 +116,20 @@ func libHttp(*Context) ValueObject {
 		}
 		return nil
 	}), nil)
-	// 命令行功能
-	lib.SetMember("static", NewNativeFunction("static", func(c *Context, this Value, args []Value) Value {
-		addr := c.Args[0]
-		fs := http.FileServer(http.Dir("."))
-		http.Handle("/", fs)
-		http.ListenAndServe(addr, nil)
+	lib.SetMember("serveFS", NewNativeFunction("serveFS", func(c *Context, this Value, args []Value) Value {
+		var (
+			addr      ValueStr
+			dir       ValueStr
+			urlPrefix ValueStr
+		)
+		EnsureFuncParams(c, "http.serveFS", args,
+			ArgRuleRequired("listenAddr", TypeStr, &addr),
+			ArgRuleOptional("dir", TypeStr, &dir, NewStr(".")),
+			ArgRuleOptional("url", TypeStr, &urlPrefix, NewStr("/")),
+		)
+		fs := http.FileServer(http.Dir(dir.Value()))
+		http.Handle(urlPrefix.Value(), fs)
+		http.ListenAndServe(addr.Value(), nil)
 		return Undefined()
 	}), nil)
 	return lib
