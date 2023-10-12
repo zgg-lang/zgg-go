@@ -145,7 +145,7 @@ func (m ValueMap) ToGoValue() interface{} {
 	for _, v := range m.ma {
 		for p := v.Front(); p != nil; p = p.Next() {
 			e := p.Value.(mapElem)
-			vv[e.key.ToGoValue()] = e.key.ToGoValue()
+			vv[e.key.ToGoValue()] = e.value.ToGoValue()
 		}
 	}
 	return vv
