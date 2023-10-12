@@ -119,17 +119,32 @@ func libHttp(*Context) ValueObject {
 	lib.SetMember("serveFS", NewNativeFunction("serveFS", func(c *Context, this Value, args []Value) Value {
 		var (
 			addr      ValueStr
+			port      ValueInt
+			addrBy    int
 			dir       ValueStr
 			urlPrefix ValueStr
 		)
 		EnsureFuncParams(c, "http.serveFS", args,
-			ArgRuleRequired("listenAddr", TypeStr, &addr),
+			ArgRuleOneOf("listenAddr",
+				[]ValueType{TypeStr, TypeInt},
+				[]interface{}{&addr, &port},
+				&addrBy,
+				nil,
+				nil,
+			),
 			ArgRuleOptional("dir", TypeStr, &dir, NewStr(".")),
 			ArgRuleOptional("url", TypeStr, &urlPrefix, NewStr("/")),
 		)
 		fs := http.FileServer(http.Dir(dir.Value()))
 		http.Handle(urlPrefix.Value(), fs)
-		http.ListenAndServe(addr.Value(), nil)
+		var listen string
+		switch addrBy {
+		case 1:
+			listen = fmt.Sprintf(":%d", port.Value())
+		default:
+			listen = addr.Value()
+		}
+		http.ListenAndServe(listen, nil)
 		return Undefined()
 	}), nil)
 	return lib
