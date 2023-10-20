@@ -50,20 +50,21 @@ func (a *timeTimeArg) GetTime(c *Context) time.Time {
 type timeDurationArg struct {
 	o     ValueObject
 	s     ValueStr
+	f     ValueFloat
 	which int
 }
 
 func (a *timeDurationArg) Rule(name string, dv ...ValueObject) ArgRule {
 	if len(dv) > 0 {
 		return ArgRuleOneOf(name,
-			[]ValueType{timeDurationClass, TypeStr},
-			[]any{&a.o, &a.s},
+			[]ValueType{timeDurationClass, TypeStr, TypeFloat},
+			[]any{&a.o, &a.s, &a.f},
 			&a.which,
 			&a.o, dv[0])
 	}
 	return ArgRuleOneOf(name,
-		[]ValueType{timeDurationClass, TypeStr},
-		[]any{&a.o, &a.s},
+		[]ValueType{timeDurationClass, TypeStr, TypeFloat},
+		[]any{&a.o, &a.s, &a.f},
 		&a.which,
 		nil, nil)
 }
@@ -72,6 +73,9 @@ func (a *timeDurationArg) Get(c *Context) ValueObject {
 	switch a.which {
 	case 1:
 		a.o = NewObjectAndInit(timeDurationClass, c, a.s)
+	case 2:
+		dur := time.Duration(a.f.Value() * float64(time.Second))
+		a.o = NewObjectAndInit(timeDurationClass, c, NewGoValue(dur))
 	}
 	return a.o
 }
@@ -127,12 +131,9 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, gt)
 	}, "time"), nil)
 	lib.SetMember("sleep", NewNativeFunction("sleep", func(c *Context, this Value, args []Value) Value {
-		if len(args) != 1 {
-			c.RaiseRuntimeError("sleep: requires 1 argument")
-			return nil
-		}
-		sleepSeconds := c.MustFloat(args[0])
-		time.Sleep(time.Duration(sleepSeconds * float64(time.Second)))
+		var sleepDur timeDurationArg
+		EnsureFuncParams(c, "time.sleep", args, sleepDur.Rule("duration"))
+		time.Sleep(sleepDur.Get(c).GetMember("__du", c).ToGoValue().(time.Duration))
 		return Undefined()
 	}), nil)
 	lib.SetMember("since", NewNativeFunction("since", func(c *Context, this Value, args []Value) Value {
