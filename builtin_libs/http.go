@@ -144,9 +144,11 @@ func libHttp(*Context) ValueObject {
 		default:
 			listen = addr.Value()
 		}
-		http.ListenAndServe(listen, nil)
+		if err := http.ListenAndServe(listen, nil); err != nil {
+			c.RaiseRuntimeError("http serve on %s error %+v", listen, err)
+		}
 		return Undefined()
-	}), nil)
+	}, "dir", "url"), nil)
 	return lib
 }
 
