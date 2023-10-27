@@ -328,6 +328,24 @@ var builtinArrayMethods = map[string]ValueCallable{
 		}
 		return initVal
 	}),
+	"sum": NewNativeFunction("sum", func(c *Context, thisArg Value, args []Value) Value {
+		var (
+			mapper arrayMapper
+		)
+		EnsureFuncParams(c, "array.sum", args,
+			mapper.ArgRule("mapper", false),
+		)
+		thisArr := *thisArg.(ValueArray).Values
+		if l := len(thisArr); l > 0 {
+			rv := mapper.Map(thisArr[0], 0, c)
+			for i := 1; i < l; i++ {
+				cur := mapper.Map(thisArr[i], i, c)
+				rv = c.ValuesPlus(rv, cur)
+			}
+			return rv
+		}
+		return constUndefined
+	}),
 	"each": NewNativeFunction("each", func(c *Context, thisArg Value, args []Value) Value {
 		if len(args) != 1 {
 			c.RaiseRuntimeError("array.each: arguments length must be 1")

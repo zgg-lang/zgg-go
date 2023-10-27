@@ -1,11 +1,7 @@
 package ast
 
 import (
-	"fmt"
-	"math"
-	"math/big"
 	"reflect"
-	"strings"
 
 	"github.com/zgg-lang/zgg-go/runtime"
 )
@@ -37,87 +33,7 @@ type ExprPlus struct {
 
 func (n *ExprPlus) Eval(c *runtime.Context) {
 	left, right := n.GetValues(c)
-	if _, isStr := right.(runtime.ValueStr); isStr {
-		c.RetVal = runtime.NewStr(left.ToString(c) + right.ToString(c))
-		return
-	}
-	switch val1 := left.(type) {
-	case runtime.ValueInt:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			c.RetVal = runtime.NewInt(val1.Value() + val2.Value())
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(float64(val1.Value()) + val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(float64(val1.Value())).SetPrec(1024)
-			var bigR big.Float
-			bigR.Add(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueFloat:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			c.RetVal = runtime.NewFloat(val1.Value() + float64(val2.Value()))
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(val1.Value() + val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(val1.Value()).SetPrec(1024)
-			var bigR big.Float
-			bigR.Add(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueBigNum:
-		var big2, bigR big.Float
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			big2.SetInt64(val2.Value())
-			bigR.Add(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueFloat:
-			big2.SetFloat64(val2.Value())
-			bigR.Add(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueBigNum:
-			var bigR big.Float
-			bigR.Add(val1.Value(), val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueStr:
-		c.RetVal = runtime.NewStr(val1.Value() + right.ToString(c))
-		return
-	case runtime.ValueArray:
-		switch val2 := right.(type) {
-		case runtime.ValueArray:
-			{
-				rv := runtime.NewArray(val1.Len() + val2.Len())
-				for i := 0; i < val1.Len(); i++ {
-					rv.PushBack(val1.GetIndex(i, c))
-				}
-				for i := 0; i < val2.Len(); i++ {
-					rv.PushBack(val2.GetIndex(i, c))
-				}
-				c.RetVal = rv
-				return
-			}
-		}
-	default:
-		{
-			if opFn, ok := val1.GetMember("__add__", c).(runtime.ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []runtime.Value { return []runtime.Value{right} })
-				return
-			}
-		}
-	}
-	c.RaiseRuntimeError(fmt.Sprintf("Cannot plus between %s and %s", left.Type().Name, right.Type().Name))
+	c.ValuesPlus(left, right)
 }
 
 type ExprMinus struct {
@@ -126,65 +42,7 @@ type ExprMinus struct {
 
 func (n *ExprMinus) Eval(c *runtime.Context) {
 	left, right := n.GetValues(c)
-	switch val1 := left.(type) {
-	case runtime.ValueInt:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			c.RetVal = runtime.NewInt(val1.Value() - val2.Value())
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(float64(val1.Value()) - val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(float64(val1.Value())).SetPrec(1024)
-			var bigR big.Float
-			bigR.Sub(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueFloat:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			c.RetVal = runtime.NewFloat(val1.Value() - float64(val2.Value()))
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(val1.Value() - val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(val1.Value()).SetPrec(1024)
-			var bigR big.Float
-			bigR.Sub(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueBigNum:
-		var big2, bigR big.Float
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			big2.SetInt64(val2.Value())
-			bigR.Sub(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueFloat:
-			big2.SetFloat64(val2.Value())
-			bigR.Sub(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueBigNum:
-			var bigR big.Float
-			bigR.Sub(val1.Value(), val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	default:
-		{
-			if opFn, ok := val1.GetMember("__sub__", c).(runtime.ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []runtime.Value { return []runtime.Value{right} })
-				return
-			}
-		}
-	}
-	c.RaiseRuntimeError(fmt.Sprintf("Cannot minus between %s and %s", left.Type().Name, right.Type().Name))
+	c.ValuesMinus(left, right)
 }
 
 type ExprTimes struct {
@@ -193,92 +51,7 @@ type ExprTimes struct {
 
 func (n *ExprTimes) Eval(c *runtime.Context) {
 	left, right := n.GetValues(c)
-	switch val1 := left.(type) {
-	case runtime.ValueInt:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			c.RetVal = runtime.NewInt(val1.Value() * val2.Value())
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(float64(val1.Value()) * val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(float64(val1.Value())).SetPrec(1024)
-			var bigR big.Float
-			bigR.Mul(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueFloat:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			c.RetVal = runtime.NewFloat(val1.Value() * float64(val2.Value()))
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(val1.Value() * val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(val1.Value()).SetPrec(1024)
-			var bigR big.Float
-			bigR.Mul(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueBigNum:
-		var big2, bigR big.Float
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			big2.SetInt64(val2.Value())
-			bigR.Mul(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueFloat:
-			big2.SetFloat64(val2.Value())
-			bigR.Mul(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueBigNum:
-			var bigR big.Float
-			bigR.Mul(val1.Value(), val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueStr:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			{
-				var sb strings.Builder
-				item := val1.Value()
-				for times := int(val2.Value()); times > 0; times-- {
-					sb.WriteString(item)
-				}
-				c.RetVal = runtime.NewStr(sb.String())
-				return
-			}
-		}
-	case runtime.ValueArray:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			{
-				rv := runtime.NewArray(val1.Len() * val2.AsInt())
-				for times := val2.AsInt(); times > 0; times-- {
-					for i := 0; i < val1.Len(); i++ {
-						rv.PushBack(val1.GetIndex(i, c))
-					}
-				}
-				c.RetVal = rv
-				return
-			}
-		}
-	default:
-		{
-			if opFn, ok := val1.GetMember("__mul__", c).(runtime.ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []runtime.Value { return []runtime.Value{right} })
-				return
-			}
-		}
-	}
-	c.RaiseRuntimeError(fmt.Sprintf("Cannot times between %s and %s", left.Type().Name, right.Type().Name))
+	c.ValuesTimes(left, right)
 }
 
 type ExprDiv struct {
@@ -287,82 +60,7 @@ type ExprDiv struct {
 
 func (n *ExprDiv) Eval(c *runtime.Context) {
 	left, right := n.GetValues(c)
-	switch val1 := left.(type) {
-	case runtime.ValueInt:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			if val2.Value() == 0 {
-				c.RaiseRuntimeError("division by zero")
-				return
-			}
-			c.RetVal = runtime.NewInt(val1.Value() / val2.Value())
-			return
-		case runtime.ValueFloat:
-			if val2.Value() == 0 {
-				c.RaiseRuntimeError("Div by zero!")
-				return
-			}
-			c.RetVal = runtime.NewFloat(float64(val1.Value()) / val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(float64(val1.Value())).SetPrec(1024)
-			var bigR big.Float
-			bigR.Quo(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueFloat:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			if val2.Value() == 0 {
-				c.RaiseRuntimeError("Div by zero!")
-				return
-			}
-			c.RetVal = runtime.NewFloat(val1.Value() / float64(val2.Value()))
-			return
-		case runtime.ValueFloat:
-			if val2.Value() == 0 {
-				c.RaiseRuntimeError("Div by zero!")
-				return
-			}
-			c.RetVal = runtime.NewFloat(val1.Value() / val2.Value())
-			return
-		case runtime.ValueBigNum:
-			big1 := big.NewFloat(val1.Value()).SetPrec(1024)
-			var bigR big.Float
-			bigR.Quo(big1, val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	case runtime.ValueBigNum:
-		var big2, bigR big.Float
-		big2.SetPrec(1024)
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			big2.SetInt64(val2.Value())
-			bigR.Quo(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueFloat:
-			big2.SetFloat64(val2.Value())
-			bigR.Quo(val1.Value(), &big2)
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		case runtime.ValueBigNum:
-			var bigR big.Float
-			bigR.Quo(val1.Value(), val2.Value())
-			c.RetVal = runtime.NewBigNum(&bigR)
-			return
-		}
-	default:
-		{
-			if opFn, ok := val1.GetMember("__div__", c).(runtime.ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []runtime.Value { return []runtime.Value{right} })
-				return
-			}
-		}
-	}
-	c.RaiseRuntimeError(fmt.Sprintf("Cannot div between %s and %s", left.Type().Name, right.Type().Name))
+	c.ValuesDiv(left, right)
 }
 
 type ExprMod struct {
@@ -371,38 +69,7 @@ type ExprMod struct {
 
 func (n *ExprMod) Eval(c *runtime.Context) {
 	left, right := n.GetValues(c)
-	switch val1 := left.(type) {
-	case runtime.ValueInt:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			if val2.Value() == 0 {
-				c.RaiseRuntimeError("Div by zero!")
-				return
-			}
-			c.RetVal = runtime.NewInt(val1.Value() % val2.Value())
-			return
-		}
-	case runtime.ValueStr:
-		switch val2 := right.(type) {
-		case runtime.ValueArray:
-			fargs := make([]interface{}, val2.Len())
-			for i := range fargs {
-				fargs[i] = val2.GetIndex(i, c).ToGoValue()
-			}
-			c.RetVal = runtime.NewStr(fmt.Sprintf(val1.Value(), fargs...))
-		default:
-			c.RetVal = runtime.NewStr(fmt.Sprintf(val1.Value(), val2.ToGoValue()))
-		}
-		return
-	default:
-		{
-			if opFn, ok := val1.GetMember("__mod__", c).(runtime.ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []runtime.Value { return []runtime.Value{right} })
-				return
-			}
-		}
-	}
-	c.RaiseRuntimeError(fmt.Sprintf("Cannot mod between %s and %s", left.Type().Name, right.Type().Name))
+	c.ValuesMod(left, right)
 }
 
 type ExprPow struct {
@@ -411,38 +78,7 @@ type ExprPow struct {
 
 func (n *ExprPow) Eval(c *runtime.Context) {
 	left, right := n.GetValues(c)
-	switch val1 := left.(type) {
-	case runtime.ValueInt:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			if val2.Value() >= 0 {
-				c.RetVal = runtime.NewInt(int64(math.Pow(float64(val1.Value()), float64(val2.Value()))))
-			} else {
-				c.RetVal = runtime.NewFloat(math.Pow(float64(val1.Value()), float64(val2.Value())))
-			}
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(math.Pow(float64(val1.Value()), val2.Value()))
-			return
-		}
-	case runtime.ValueFloat:
-		switch val2 := right.(type) {
-		case runtime.ValueInt:
-			c.RetVal = runtime.NewFloat(math.Pow(val1.Value(), float64(val2.Value())))
-			return
-		case runtime.ValueFloat:
-			c.RetVal = runtime.NewFloat(float64(val1.Value()) - val2.Value())
-			return
-		}
-	default:
-		{
-			if opFn, ok := val1.GetMember("__pow__", c).(runtime.ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []runtime.Value { return []runtime.Value{right} })
-				return
-			}
-		}
-	}
-	c.RaiseRuntimeError(fmt.Sprintf("Cannot pow between %s and %s", left.Type().Name, right.Type().Name))
+	c.ValuesPow(left, right)
 }
 
 type IsAssign interface {
