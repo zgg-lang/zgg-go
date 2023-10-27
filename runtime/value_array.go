@@ -329,12 +329,9 @@ var builtinArrayMethods = map[string]ValueCallable{
 		return initVal
 	}),
 	"sum": NewNativeFunction("sum", func(c *Context, thisArg Value, args []Value) Value {
-		var (
-			mapper arrayMapper
-		)
-		EnsureFuncParams(c, "array.sum", args,
-			mapper.ArgRule("mapper", false),
-		)
+		var mapper arrayMapper
+		EnsureFuncParams(c, "array.sum", args, mapper.ArgRule("mapper", false))
+		mapper.Build()
 		thisArr := *thisArg.(ValueArray).Values
 		if l := len(thisArr); l > 0 {
 			rv := mapper.Map(thisArr[0], 0, c)
