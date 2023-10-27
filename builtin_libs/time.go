@@ -604,6 +604,14 @@ func timeInitDurationClass() {
 			switch len(args) {
 			case 1:
 				switch dv := args[0].(type) {
+				case ValueInt:
+					du := time.Duration(dv.Value()) * time.Second
+					this.SetMember("__du", NewGoValue(du), c)
+					return
+				case ValueFloat:
+					du := time.Duration(dv.Value() * float64(time.Second))
+					this.SetMember("__du", NewGoValue(du), c)
+					return
 				case ValueStr:
 					du, err := time.ParseDuration(dv.Value())
 					if err != nil {
