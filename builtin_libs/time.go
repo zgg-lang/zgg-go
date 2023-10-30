@@ -594,10 +594,10 @@ func timeInitDurationClass() {
 		}
 		return d2
 	}
-	compareDurations := func(c *Context, this ValueObject, args []Value) (gt bool, lt bool) {
+	compareDurations := func(c *Context, this ValueObject, args []Value) time.Duration {
 		d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
 		d2 := getOther(c, args)
-		return d1 < d2, d1 > d2
+		return d1 - d2
 	}
 	timeDurationClass = NewClassBuilder("Duration").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
@@ -663,28 +663,22 @@ func timeInitDurationClass() {
 		}).
 		// Comparation
 		Method("__lt__", func(c *Context, this ValueObject, args []Value) Value {
-			lt, _ := compareDurations(c, this, args)
-			return NewBool(lt)
+			return NewBool(compareDurations(c, this, args) < 0)
 		}).
 		Method("__le__", func(c *Context, this ValueObject, args []Value) Value {
-			_, gt := compareDurations(c, this, args)
-			return NewBool(!gt)
+			return NewBool(compareDurations(c, this, args) <= 0)
 		}).
 		Method("__gt__", func(c *Context, this ValueObject, args []Value) Value {
-			_, gt := compareDurations(c, this, args)
-			return NewBool(gt)
+			return NewBool(compareDurations(c, this, args) > 0)
 		}).
 		Method("__ge__", func(c *Context, this ValueObject, args []Value) Value {
-			lt, _ := compareDurations(c, this, args)
-			return NewBool(!lt)
+			return NewBool(compareDurations(c, this, args) >= 0)
 		}).
 		Method("__eq__", func(c *Context, this ValueObject, args []Value) Value {
-			lt, gt := compareDurations(c, this, args)
-			return NewBool(!(lt || gt))
+			return NewBool(compareDurations(c, this, args) == 0)
 		}).
 		Method("__ne__", func(c *Context, this ValueObject, args []Value) Value {
-			lt, gt := compareDurations(c, this, args)
-			return NewBool(lt || gt)
+			return NewBool(compareDurations(c, this, args) != 0)
 		}).
 		// Add & sub
 		Method("__add__", func(c *Context, this ValueObject, args []Value) Value {
@@ -698,6 +692,25 @@ func timeInitDurationClass() {
 			d2 := getOther(c, args)
 			du := time.Duration(int64(d1) - int64(d2))
 			return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
+		}).
+		Method("__mul__", func(c *Context, this ValueObject, args []Value) Value {
+			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			var times ValueFloat
+			EnsureFuncParams(c, "Duration.__mul__", args, ArgRuleRequired("times", TypeFloat, &times))
+			du := time.Duration(float64(d1) * times.Value())
+			return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
+		}).
+		Method("__div__", func(c *Context, this ValueObject, args []Value) Value {
+			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			var times ValueFloat
+			EnsureFuncParams(c, "Duration.__div__", args, ArgRuleRequired("times", TypeFloat, &times))
+			if t := times.Value(); t == 0 {
+				c.RaiseRuntimeError("division by zero")
+				return nil
+			} else {
+				du := time.Duration(float64(d1) / t)
+				return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
+			}
 		}).
 		Build()
 }
