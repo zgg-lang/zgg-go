@@ -1,6 +1,7 @@
 package builtin_libs
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
@@ -437,6 +438,37 @@ func timeInittimeTimeClass() {
 			this.Reserved = info
 			return this
 		}).
+		Method("loc", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				locOffset ValueInt
+				locName   ValueStr
+				locWhich  int
+				loc       *time.Location
+			)
+			EnsureFuncParams(c, "Time.loc", args,
+				ArgRuleOneOf("loc",
+					[]ValueType{TypeInt, TypeStr},
+					[]any{&locOffset, &locName},
+					&locWhich, nil, nil),
+			)
+			switch locWhich {
+			case 0:
+				offset := locOffset.AsInt()
+				loc = time.FixedZone(fmt.Sprintf("UTC%+d", offset), offset*3600)
+			case 1:
+				var err error
+				loc, err = time.LoadLocation(locName.Value())
+				if err != nil {
+					c.RaiseRuntimeError("load location %s error %+v", locName.Value(), err)
+				}
+			default:
+				c.RaiseRuntimeError("invalid loc type")
+			}
+			info := this.Reserved.(timeTimeInfo)
+			info.t = info.t.In(loc)
+			this.Reserved = info
+			return this
+		}).
 		Method("__next__", func(c *Context, this ValueObject, args []Value) Value {
 			var (
 				info = this.Reserved.(timeTimeInfo)
@@ -462,7 +494,7 @@ func timeInittimeTimeClass() {
 				timezone ValueStr
 			)
 			EnsureFuncParams(c, "Time.format", args,
-				ArgRuleRequired("layout", TypeStr, &layout),
+				ArgRuleOptional("layout", TypeStr, &layout, NewStr("2006-01-02 15:04:05")),
 				ArgRuleOptional("timezone", TypeStr, &timezone, NewStr("")),
 			)
 			t := this.Reserved.(timeTimeInfo).t
@@ -596,7 +628,7 @@ func timeInittimeTimeClass() {
 			case "second":
 				return NewStr(t.Format("2006-01-02 15:04:05"))
 			}
-			return NewStr(t.Format("Time(2006-01-02 15:04:05)"))
+			return NewStr(t.Format("Time(2006-01-02 15:04:05.000-0700)"))
 		}).
 		Method("__lt__", func(c *Context, this ValueObject, args []Value) Value {
 			t1 := this.Reserved.(timeTimeInfo).t
