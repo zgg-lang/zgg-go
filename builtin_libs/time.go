@@ -44,7 +44,7 @@ func (a *timeTimeArg) Get(c *Context) ValueObject {
 }
 
 func (a *timeTimeArg) GetTime(c *Context) time.Time {
-	return a.Get(c).GetMember("__t", c).ToGoValue().(time.Time)
+	return a.Get(c).Reserved.(timeTimeInfo).t
 }
 
 type timeDurationArg struct {
@@ -133,7 +133,7 @@ func libTime(c *Context) ValueObject {
 	lib.SetMember("sleep", NewNativeFunction("sleep", func(c *Context, this Value, args []Value) Value {
 		var sleepDur timeDurationArg
 		EnsureFuncParams(c, "time.sleep", args, sleepDur.Rule("duration"))
-		time.Sleep(sleepDur.Get(c).GetMember("__du", c).ToGoValue().(time.Duration))
+		time.Sleep(sleepDur.Get(c).Reserved.(time.Duration))
 		return Undefined()
 	}), nil)
 	lib.SetMember("since", NewNativeFunction("since", func(c *Context, this Value, args []Value) Value {
@@ -212,11 +212,20 @@ func libTime(c *Context) ValueObject {
 	return lib
 }
 
+type timeTimeInfo struct {
+	t  time.Time
+	as string
+}
+
 func timeInittimeTimeClass() {
 	layoutP := regexp.MustCompile("%.")
+	mustTime := func(c *Context, name string, args []Value) ValueObject {
+		var t ValueObject
+		EnsureFuncParams(c, name, args, ArgRuleRequired("other", timeTimeClass, &t))
+		return t
+	}
 	timeTimeClass = NewClassBuilder("Time").
 		Constructor(func(c *Context, thisObj ValueObject, args []Value) {
-			// var ts int64
 			var _t time.Time
 			var as string
 			switch len(args) {
@@ -231,6 +240,9 @@ func timeInittimeTimeClass() {
 					switch gv := v.ToGoValue().(type) {
 					case time.Time:
 						_t = gv
+					case timeTimeInfo:
+						_t = gv.t
+						as = gv.as
 					default:
 						c.RaiseRuntimeError("Time.__init__: invalid arg %v", gv)
 					}
@@ -309,15 +321,29 @@ func timeInittimeTimeClass() {
 			default:
 				c.RaiseRuntimeError("Time.__init__: invalid args")
 			}
-			thisObj.SetMember("__t", NewGoValue(_t), c)
 			if as != "" {
-				thisObj.SetMember("__as", NewStr(as), c)
+				switch as {
+				case "day":
+					_t = time.Date(_t.Year(), _t.Month(), _t.Day(), 0, 0, 0, 0, _t.Location())
+				case "hour":
+					_t = time.Date(_t.Year(), _t.Month(), _t.Day(), _t.Hour(), 0, 0, 0, _t.Location())
+				case "minute":
+					_t = time.Date(_t.Year(), _t.Month(), _t.Day(), _t.Hour(), _t.Minute(), 0, 0, _t.Location())
+				case "second":
+					_t = time.Date(_t.Year(), _t.Month(), _t.Day(), _t.Hour(), _t.Minute(), _t.Second(), 0, _t.Location())
+				default:
+					c.RaiseRuntimeError("Invalid specialized time type %s", as)
+				}
+			}
+			thisObj.Reserved = timeTimeInfo{
+				t:  _t,
+				as: as,
 			}
 		}).
 		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
 			var field ValueStr
 			EnsureFuncParams(c, "Time.__getAttr__", args, ArgRuleRequired("field", TypeStr, &field))
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t := this.Reserved.(timeTimeInfo).t
 			switch field.Value() {
 			case "unix":
 				return NewInt(t.Unix())
@@ -347,59 +373,70 @@ func timeInittimeTimeClass() {
 			if err != nil {
 				c.RaiseRuntimeError("Invalid duration %s", duration.Value())
 			}
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
-			rt := t.Add(d)
-			rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(rt))
-			rv.SetMember("__as", this.GetMember("__as", c), c)
-			return rv
+			info := this.Reserved.(timeTimeInfo)
+			info.t = info.t.Add(d)
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
 		Method("addDays", func(c *Context, this ValueObject, args []Value) Value {
 			var days ValueInt
 			EnsureFuncParams(c, "Time.addDays", args,
 				ArgRuleRequired("days", TypeInt, &days),
 			)
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
-			rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, days.AsInt())))
-			rv.SetMember("__as", this.GetMember("__as", c), c)
-			return rv
+			info := this.Reserved.(timeTimeInfo)
+			info.t = info.t.AddDate(0, 0, days.AsInt())
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
 		Method("addHours", func(c *Context, this ValueObject, args []Value) Value {
 			var hours ValueInt
 			EnsureFuncParams(c, "Time.addHours", args,
 				ArgRuleRequired("days", TypeInt, &hours),
 			)
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
-			rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Duration(hours.AsInt())*time.Hour)))
-			rv.SetMember("__as", this.GetMember("__as", c), c)
-			return rv
+			info := this.Reserved.(timeTimeInfo)
+			info.t = info.t.Add(time.Duration(hours.AsInt()) * time.Hour)
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
 		Method("as", func(c *Context, this ValueObject, args []Value) Value {
 			var asType ValueStr
 			EnsureFuncParams(c, "Time.as", args, ArgRuleRequired("asType", TypeStr, &asType))
-			this.SetMember("__as", asType, c)
+			info := this.Reserved.(timeTimeInfo)
+			info.as = asType.Value()
+			if info.as != "" {
+				t := info.t
+				switch info.as {
+				case "day":
+					t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+				case "hour":
+					t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, t.Location())
+				case "minute":
+					t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), 0, 0, t.Location())
+				case "second":
+					t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, t.Location())
+				default:
+					c.RaiseRuntimeError("Invalid specialized time type %s", info.as)
+				}
+				info.t = t
+			}
+			this.Reserved = info
 			return this
 		}).
 		Method("__next__", func(c *Context, this ValueObject, args []Value) Value {
-			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
-				var r Value
-				t := this.GetMember("__t", c).ToGoValue().(time.Time)
-				switch as.Value() {
-				case "day":
-					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, 1)))
-				case "hour":
-					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Hour)))
-				case "minute":
-					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Minute)))
-				case "second":
-					r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Second)))
-				}
-				if r != nil {
-					r.(ValueObject).SetMember("__as", as, c)
-					return r
-				}
+			var (
+				info = this.Reserved.(timeTimeInfo)
+				t    = info.t
+			)
+			switch info.as {
+			case "day":
+				info.t = t.AddDate(0, 0, 1)
+			case "hour":
+				info.t = t.Add(time.Hour)
+			case "minute":
+				info.t = t.Add(time.Minute)
+			case "second":
+				info.t = t.Add(time.Second)
+			default:
+				c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 			}
-			c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
-			return nil
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
 		Method("format", func(c *Context, this ValueObject, args []Value) Value {
 			var (
@@ -410,7 +447,7 @@ func timeInittimeTimeClass() {
 				ArgRuleRequired("layout", TypeStr, &layout),
 				ArgRuleOptional("timezone", TypeStr, &timezone, NewStr("")),
 			)
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t := this.Reserved.(timeTimeInfo).t
 			layoutStr := layoutP.ReplaceAllStringFunc(layout.Value(), func(s string) string {
 				switch s {
 				case "%Y":
@@ -443,34 +480,31 @@ func timeInittimeTimeClass() {
 			if len(args) != 1 {
 				c.RaiseRuntimeError("__add__ requires one arugment!")
 			}
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			info := this.Reserved.(timeTimeInfo)
+			newInfo := info
+			t := info.t
 			switch diff := args[0].(type) {
 			case ValueObject:
 				if diff.Type().TypeId != timeDurationClass.TypeId {
 					c.RaiseRuntimeError("invalid duration class")
 				}
-				r := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(diff.GetMember("__du", c).ToGoValue().(time.Duration))))
-				return r
+				newInfo.t = t.Add(diff.Reserved.(time.Duration))
+				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			case ValueInt:
-				if as, ok := this.GetMember("__as", c).(ValueStr); ok {
-					var r Value
-					d := diff.AsInt()
-					switch as.Value() {
-					case "day":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, d)))
-					case "hour":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
-					case "minute":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
-					case "second":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
-					}
-					if r != nil {
-						r.(ValueObject).SetMember("__as", as, c)
-						return r
-					}
+				d := diff.AsInt()
+				switch info.as {
+				case "day":
+					newInfo.t = t.AddDate(0, 0, d)
+				case "hour":
+					newInfo.t = t.Add(time.Hour * time.Duration(d))
+				case "minute":
+					newInfo.t = t.Add(time.Minute * time.Duration(d))
+				case "second":
+					newInfo.t = t.Add(time.Second * time.Duration(d))
+				default:
 					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 				}
+				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			}
 			return nil
 		}).
@@ -478,16 +512,16 @@ func timeInittimeTimeClass() {
 			if len(args) != 1 {
 				c.RaiseRuntimeError("__sub__ requires one arugment!")
 			}
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t := this.Reserved.(timeTimeInfo).t
 			switch diff := args[0].(type) {
 			case ValueObject:
 				switch diff.Type().TypeId {
 				case timeTimeClass.TypeId:
-					t2 := diff.GetMember("__t", c).ToGoValue().(time.Time)
+					t2 := diff.Reserved.(timeTimeInfo).t
 					r := NewObjectAndInit(timeDurationClass, c, NewGoValue(t.Sub(t2)))
 					return r
 				case timeDurationClass.TypeId:
-					du := diff.GetMember("__du", c).ToGoValue().(time.Duration)
+					du := diff.Reserved.(time.Duration)
 					r := NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(-du)))
 					return r
 				default:
@@ -496,7 +530,7 @@ func timeInittimeTimeClass() {
 			case ValueInt:
 				if as, ok := this.GetMember("__as", c).(ValueStr); ok {
 					var r Value
-					t := this.GetMember("__t", c).ToGoValue().(time.Time)
+					t := this.Reserved.(timeTimeInfo).t
 					d := -diff.AsInt()
 					switch as.Value() {
 					case "day":
@@ -518,7 +552,7 @@ func timeInittimeTimeClass() {
 			return nil
 		}).
 		Method("timetuple", func(c *Context, this ValueObject, args []Value) Value {
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
+			t := this.Reserved.(timeTimeInfo).t
 			return NewArrayByValues(
 				NewInt(int64(t.Year())),
 				NewInt(int64(t.Month())),
@@ -530,53 +564,54 @@ func timeInittimeTimeClass() {
 			)
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
-			t := this.GetMember("__t", c).ToGoValue().(time.Time)
-			if as, ok := this.GetMember("__as", c).(ValueStr); ok {
-				switch as.Value() {
-				case "day":
-					return NewStr(t.Format("2006-01-02"))
-				case "hour":
-					return NewStr(t.Format("2006-01-02 15"))
-				case "minute":
-					return NewStr(t.Format("2006-01-02 15:04"))
-				case "second":
-					return NewStr(t.Format("2006-01-02 15:04:05"))
-				}
+			var (
+				info = this.Reserved.(timeTimeInfo)
+				t    = this.Reserved.(timeTimeInfo).t
+			)
+			switch info.as {
+			case "day":
+				return NewStr(t.Format("2006-01-02"))
+			case "hour":
+				return NewStr(t.Format("2006-01-02 15"))
+			case "minute":
+				return NewStr(t.Format("2006-01-02 15:04"))
+			case "second":
+				return NewStr(t.Format("2006-01-02 15:04:05"))
 			}
 			return NewStr(t.Format("Time(2006-01-02 15:04:05)"))
 		}).
 		Method("__lt__", func(c *Context, this ValueObject, args []Value) Value {
-			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
-			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			t1 := this.Reserved.(timeTimeInfo).t
+			t2 := mustTime(c, "__lt__", args).Reserved.(timeTimeInfo).t
 			return NewBool(t1.Before(t2))
 		}).
 		Method("__le__", func(c *Context, this ValueObject, args []Value) Value {
-			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
-			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			t1 := this.Reserved.(timeTimeInfo).t
+			t2 := mustTime(c, "__le__", args).Reserved.(timeTimeInfo).t
 			return NewBool(!t1.After(t2))
 		}).
 		Method("__gt__", func(c *Context, this ValueObject, args []Value) Value {
-			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
-			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			t1 := this.Reserved.(timeTimeInfo).t
+			t2 := mustTime(c, "__gt__", args).Reserved.(timeTimeInfo).t
 			return NewBool(t1.After(t2))
 		}).
 		Method("__ge__", func(c *Context, this ValueObject, args []Value) Value {
-			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
-			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			t1 := this.Reserved.(timeTimeInfo).t
+			t2 := mustTime(c, "__ge__", args).Reserved.(timeTimeInfo).t
 			return NewBool(!t1.Before(t2))
 		}).
 		Method("__eq__", func(c *Context, this ValueObject, args []Value) Value {
-			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
-			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			t1 := this.Reserved.(timeTimeInfo).t
+			t2 := mustTime(c, "__eq__", args).Reserved.(timeTimeInfo).t
 			return NewBool(!t1.Before(t2) && !t1.After(t2))
 		}).
 		Method("__ne__", func(c *Context, this ValueObject, args []Value) Value {
-			t1 := this.GetMember("__t", c).ToGoValue().(time.Time)
-			t2 := args[0].GetMember("__t", c).ToGoValue().(time.Time)
+			t1 := this.Reserved.(timeTimeInfo).t
+			t2 := mustTime(c, "__ne__", args).Reserved.(timeTimeInfo).t
 			return NewBool(t1.Before(t2) || t1.After(t2))
 		}).
 		Method("toGoTime", func(c *Context, this ValueObject, args []Value) Value {
-			return this.GetMember("__t", c)
+			return NewGoValue(this.Reserved.(timeTimeInfo).t)
 		}).
 		Build()
 }
@@ -590,12 +625,12 @@ func timeInitDurationClass() {
 		if d2a := c.MustObject(args[0]); d2a.Type().TypeId != timeDurationClass.TypeId {
 			c.RaiseRuntimeError("invalid other duration type")
 		} else {
-			d2 = d2a.GetMember("__du", c).ToGoValue().(time.Duration)
+			d2 = d2a.Reserved.(time.Duration)
 		}
 		return d2
 	}
 	compareDurations := func(c *Context, this ValueObject, args []Value) time.Duration {
-		d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+		d1 := this.Reserved.(time.Duration)
 		d2 := getOther(c, args)
 		return d1 - d2
 	}
@@ -606,22 +641,22 @@ func timeInitDurationClass() {
 				switch dv := args[0].(type) {
 				case ValueInt:
 					du := time.Duration(dv.Value()) * time.Second
-					this.SetMember("__du", NewGoValue(du), c)
+					this.Reserved = du
 					return
 				case ValueFloat:
 					du := time.Duration(dv.Value() * float64(time.Second))
-					this.SetMember("__du", NewGoValue(du), c)
+					this.Reserved = du
 					return
 				case ValueStr:
 					du, err := time.ParseDuration(dv.Value())
 					if err != nil {
 						c.RaiseRuntimeError("invalid duration string %s", dv.Value())
 					}
-					this.SetMember("__du", NewGoValue(du), c)
+					this.Reserved = du
 					return
 				case GoValue:
 					if du, is := dv.ToGoValue().(time.Duration); is {
-						this.SetMember("__du", NewGoValue(du), c)
+						this.Reserved = du
 						return
 					}
 				}
@@ -629,36 +664,36 @@ func timeInitDurationClass() {
 			c.RaiseRuntimeError("Duration.__init__: invalid duration argumenet")
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
-			du := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			du := this.Reserved.(time.Duration)
 			return NewStr(du.String())
 		}).
 		// To floats
 		Methods([]string{"nanoseconds", "ns"}, func(c *Context, this ValueObject, args []Value) Value {
-			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d := this.Reserved.(time.Duration)
 			return NewFloat(float64(d.Nanoseconds()))
 		}).
 		Methods([]string{"milliseconds", "ms"}, func(c *Context, this ValueObject, args []Value) Value {
-			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d := this.Reserved.(time.Duration)
 			return NewFloat(float64(d.Milliseconds()))
 		}).
 		Methods([]string{"seconds", "s"}, func(c *Context, this ValueObject, args []Value) Value {
-			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d := this.Reserved.(time.Duration)
 			return NewFloat(d.Seconds())
 		}).
 		Methods([]string{"minutes", "m"}, func(c *Context, this ValueObject, args []Value) Value {
-			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d := this.Reserved.(time.Duration)
 			return NewFloat(d.Minutes())
 		}).
 		Methods([]string{"hours", "h"}, func(c *Context, this ValueObject, args []Value) Value {
-			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d := this.Reserved.(time.Duration)
 			return NewFloat(d.Hours())
 		}).
 		Methods([]string{"days", "d"}, func(c *Context, this ValueObject, args []Value) Value {
-			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d := this.Reserved.(time.Duration)
 			return NewFloat(d.Hours() / 24)
 		}).
 		Methods([]string{"weeks", "w"}, func(c *Context, this ValueObject, args []Value) Value {
-			d := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d := this.Reserved.(time.Duration)
 			return NewFloat(d.Hours() / 24 / 7)
 		}).
 		// Comparation
@@ -682,26 +717,26 @@ func timeInitDurationClass() {
 		}).
 		// Add & sub
 		Method("__add__", func(c *Context, this ValueObject, args []Value) Value {
-			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d1 := this.Reserved.(time.Duration)
 			d2 := getOther(c, args)
 			du := time.Duration(int64(d1) + int64(d2))
 			return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
 		}).
 		Method("__sub__", func(c *Context, this ValueObject, args []Value) Value {
-			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d1 := this.Reserved.(time.Duration)
 			d2 := getOther(c, args)
 			du := time.Duration(int64(d1) - int64(d2))
 			return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
 		}).
 		Method("__mul__", func(c *Context, this ValueObject, args []Value) Value {
-			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d1 := this.Reserved.(time.Duration)
 			var times ValueFloat
 			EnsureFuncParams(c, "Duration.__mul__", args, ArgRuleRequired("times", TypeFloat, &times))
 			du := time.Duration(float64(d1) * times.Value())
 			return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
 		}).
 		Method("__div__", func(c *Context, this ValueObject, args []Value) Value {
-			d1 := this.GetMember("__du", c).ToGoValue().(time.Duration)
+			d1 := this.Reserved.(time.Duration)
 			var times ValueFloat
 			EnsureFuncParams(c, "Duration.__div__", args, ArgRuleRequired("times", TypeFloat, &times))
 			if t := times.Value(); t == 0 {
