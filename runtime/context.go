@@ -476,7 +476,7 @@ func (c *Context) MustObject(v Value, name ...string) ValueObject {
 		return ov
 	}
 	c.throwValueTypeError(v, "object", name)
-	return ValueObject{}
+	return &valueObject{}
 }
 
 func (c *Context) MustCallable(v Value, name ...string) ValueCallable {

@@ -142,6 +142,11 @@ func (compressFlate) Decompress(data []byte, c *Context, opt ValueObject) ([]byt
 	return io.ReadAll(r)
 }
 
+type compressAlgoInfo struct {
+	Name ValueStr
+	Algo any
+}
+
 func compressBuildAlgorithmClass() ValueType {
 	emptyOpt := NewObject()
 	return NewClassBuilder("Algorithm").
@@ -160,8 +165,22 @@ func compressBuildAlgorithmClass() ValueType {
 			if !canCompress && !canDecompress {
 				c.RaiseRuntimeError("algo is neither a Compressor nor a Decompressor")
 			}
-			this.SetMember("__name", name, c)
-			this.SetMember("__algo", algo, c)
+			this.Reserved = compressAlgoInfo{
+				Name: name,
+				Algo: a,
+			}
+		}).
+		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
+			var field ValueStr
+			EnsureFuncParams(c, "Time.__getAttr__", args, ArgRuleRequired("field", TypeStr, &field))
+			switch field.Value() {
+			case "name":
+				return this.Reserved.(compressAlgoInfo).Name
+			}
+			return Undefined()
+		}).
+		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
+			return this.Reserved.(compressAlgoInfo).Name
 		}).
 		Method("__call__", func(c *Context, this ValueObject, args []Value) Value {
 			return c.InvokeMethod(this, "compress", Args(args...))
@@ -199,7 +218,7 @@ func compressBuildAlgorithmClass() ValueType {
 				opt = NewObject()
 				opt.SetMember("level", optLevel, c)
 			}
-			algo := this.GetMember("__algo", c).ToGoValue()
+			algo := this.Reserved.(compressAlgoInfo).Algo
 			result, err := compressCompress(c, opt, algo, data)
 			if err != nil {
 				c.RaiseRuntimeError("compress error: %+v", err)
@@ -215,7 +234,7 @@ func compressBuildAlgorithmClass() ValueType {
 				ArgRuleRequired("data", TypeBytes, &data),
 				ArgRuleOptional("opt", TypeObject, &opt, emptyOpt),
 			)
-			algo := this.GetMember("__algo", c).ToGoValue()
+			algo := this.Reserved.(compressAlgoInfo).Algo
 			result, err := compressDecompress(c, opt, algo, data.Value())
 			if err != nil {
 				c.RaiseRuntimeError("decompress error: %+v", err)

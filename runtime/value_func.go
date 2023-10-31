@@ -124,7 +124,7 @@ func (v *ValueFunc) Invoke(c *Context, thisArg Value, args []Value) {
 			super := thisObj.Super(v.BelongType)
 			c.ForceSetLocalValue("super", super)
 			if thisObj.this != nil {
-				thisArg = *(thisObj.this)
+				thisArg = thisObj.this
 			}
 		}
 	}

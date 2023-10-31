@@ -1,34 +1,32 @@
 package runtime
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
 )
 
-type ValueObject struct {
+type valueObject struct {
 	*ValueBase
+	Reserved any
 	t        *valueType
-	this     *ValueObject
-	m        *sync.Map
-	size     *int
-	sizeLock *sync.Mutex
+	this     *valueObject
+	m        sync.Map
+	size     int
+	sizeLock sync.Mutex
 }
 
+type ValueObject = *valueObject
+
 func NewObject(objType ...ValueType) ValueObject {
-	fields := new(sync.Map)
 	t := TypeObject
 	if len(objType) > 0 {
 		t = objType[0]
 	}
-	size := new(int64)
-	*size = 0
-	return ValueObject{
+	return &valueObject{
 		ValueBase: &ValueBase{},
 		t:         t,
-		m:         fields,
-		size:      new(int),
-		sizeLock:  &sync.Mutex{},
 	}
 }
 
@@ -41,18 +39,18 @@ func NewObjectAndInit(objType ValueType, c *Context, initArgs ...Value) ValueObj
 	return rv
 }
 
-func (v *ValueObject) Init(c *Context, args []Value) {
+func (v *valueObject) Init(c *Context, args []Value) {
 	if initFn := v.t.getInitFunc(c); initFn != nil {
-		c.Invoke(initFn, *v, func() []Value { return args })
+		c.Invoke(initFn, v, func() []Value { return args })
 	}
 }
 
-func (v *ValueObject) Super(fromType ValueType) ValueObject {
+func (v *valueObject) Super(fromType ValueType) ValueObject {
 	this := v
 	if v.this != nil {
 		this = v.this
 	}
-	return ValueObject{
+	return &valueObject{
 		ValueBase: &ValueBase{},
 		t:         fromType.Super(),
 		this:      this,
@@ -60,18 +58,18 @@ func (v *ValueObject) Super(fromType ValueType) ValueObject {
 	}
 }
 
-func (v ValueObject) Each(f func(string, Value) bool) {
+func (v *valueObject) Each(f func(string, Value) bool) {
 	v.m.Range(func(k interface{}, v interface{}) bool {
 		return f(k.(string), v.(Value))
 	})
 }
 
-func (v ValueObject) GoType() reflect.Type {
+func (v *valueObject) GoType() reflect.Type {
 	var vv map[string]interface{}
 	return reflect.TypeOf(vv)
 }
 
-func (v ValueObject) ToGoValue() interface{} {
+func (v *valueObject) ToGoValue() interface{} {
 	rv := map[string]interface{}{}
 	v.Iterate(func(key string, value Value) {
 		rv[key] = value.ToGoValue()
@@ -79,7 +77,7 @@ func (v ValueObject) ToGoValue() interface{} {
 	return rv
 }
 
-func (v ValueObject) GetIndex(index int, c *Context) Value {
+func (v *valueObject) GetIndex(index int, c *Context) Value {
 	getItem := v.GetMember("__getItem__", c)
 	if getItemFunc, callable := c.GetCallable(getItem); callable {
 		getItemFunc.Invoke(c, v, []Value{NewInt(int64(index))})
@@ -88,53 +86,45 @@ func (v ValueObject) GetIndex(index int, c *Context) Value {
 	return constUndefined
 }
 
-func (v ValueObject) SetMember(name string, value Value, c *Context) {
+func (v *valueObject) SetMember(name string, value Value, c *Context) {
 	_, isUndefined := value.(ValueUndefined)
 	v.sizeLock.Lock()
 	defer v.sizeLock.Unlock()
 	if _, found := v.m.Load(name); found {
 		if isUndefined {
-			(*v.size)--
+			v.size--
 			v.m.Delete(name)
 		} else {
 			v.m.Store(name, value)
 		}
 	} else {
 		if !isUndefined {
-			(*v.size)++
+			v.size++
 			v.m.Store(name, value)
 		}
 	}
 }
 
-func (v ValueObject) GetMember(name string, c *Context) Value {
+func (v *valueObject) GetMember(name string, c *Context) Value {
 	if val, found := v.m.Load(name); found {
 		return makeMember(v, val.(Value), c)
 	}
 	return getMemberByType(c, v, name)
 }
 
-func (v ValueObject) Len() int {
-	return *v.size
+func (v *valueObject) Len() int {
+	return v.size
 }
 
-func (v ValueObject) IsTrue() (isTrue bool) {
-	return *v.size != 0
+func (v *valueObject) IsTrue() (isTrue bool) {
+	return v.size != 0
 }
 
-func (v ValueObject) Type() ValueType {
-	// if name, isStr := v["__name__"].(ValueStr); isStr {
-	// 	return fmt.Sprintf("<class %s>", name.Value())
-	// }
-	// if proto, isObj := v["__proto__"].(ValueObject); isObj {
-	// 	if name, isStr := proto["__name__"].(ValueStr); isStr {
-	// 		return fmt.Sprintf("<object %s>", name.Value())
-	// 	}
-	// }
+func (v *valueObject) Type() ValueType {
 	return v.t
 }
 
-func (v ValueObject) CompareTo(other Value, c *Context) CompareResult {
+func (v *valueObject) CompareTo(other Value, c *Context) CompareResult {
 	v2, isObj := other.(ValueObject)
 	if !isObj {
 		return CompareResultNotEqual
@@ -158,7 +148,7 @@ func (v ValueObject) CompareTo(other Value, c *Context) CompareResult {
 	return rv
 }
 
-func (v ValueObject) ToString(c *Context) string {
+func (v *valueObject) ToString(c *Context) string {
 	if strFn, ok := c.GetCallable(v.t.findMember("__str__")); ok {
 		c.Invoke(strFn, v, func() []Value { return []Value{} })
 		return c.RetVal.ToString(c)
@@ -179,14 +169,14 @@ func (v ValueObject) ToString(c *Context) string {
 	return sb.String()
 }
 
-func (v ValueObject) Iterate(f func(key string, value Value)) {
+func (v *valueObject) Iterate(f func(key string, value Value)) {
 	v.Each(func(k string, v Value) bool {
 		f(k, v)
 		return true
 	})
 }
 
-func (v ValueObject) GetName() string {
+func (v *valueObject) GetName() string {
 	return ""
 }
 
@@ -198,7 +188,7 @@ func (ValueObject) GetRefs() []string {
 	return []string{}
 }
 
-func (v ValueObject) Invoke(c *Context, this Value, args []Value) {
+func (v *valueObject) Invoke(c *Context, this Value, args []Value) {
 	callMethod, ok := c.GetCallable(v.GetMember("__call__", c))
 	if !ok {
 		c.RaiseRuntimeError("invoked object is not callable")
@@ -250,6 +240,11 @@ var builtinObjMethods = map[string]ValueCallable{
 			})
 			return true
 		})
+		return constUndefined
+	}),
+	"printReserved": NewNativeFunction("object.printReserved", func(c *Context, this Value, args []Value) Value {
+		o := c.MustObject(this)
+		fmt.Printf("%#v\n", o.Reserved)
 		return constUndefined
 	}),
 }
