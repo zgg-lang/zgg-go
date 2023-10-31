@@ -210,11 +210,20 @@ func libTime(c *Context) ValueObject {
 		return
 	}), nil)
 	lib.SetMember("as", NewNativeFunction("as", func(c *Context, this Value, args []Value) (rv Value) {
-		var as ValueStr
-		EnsureFuncParams(c, "as", args, ArgRuleRequired("as", TypeStr, &as))
+		var (
+			as     ValueStr
+			offset ValueInt
+		)
+		EnsureFuncParams(c, "as", args,
+			ArgRuleRequired("as", TypeStr, &as),
+			ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)),
+		)
 		info := timeTimeInfo{
 			t:  time.Now(),
 			as: as.Value(),
+		}
+		if o := offset.AsInt(); o != 0 {
+			info.t = info.t.AddDate(0, 0, o)
 		}
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
