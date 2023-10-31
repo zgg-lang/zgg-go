@@ -209,6 +209,15 @@ func libTime(c *Context) ValueObject {
 		c.Invoke(callable, nil, NoArgs)
 		return
 	}), nil)
+	lib.SetMember("as", NewNativeFunction("as", func(c *Context, this Value, args []Value) (rv Value) {
+		var as ValueStr
+		EnsureFuncParams(c, "as", args, ArgRuleRequired("as", TypeStr, &as))
+		info := timeTimeInfo{
+			t:  time.Now(),
+			as: as.Value(),
+		}
+		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+	}), nil)
 	return lib
 }
 
