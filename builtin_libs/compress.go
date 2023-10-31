@@ -163,6 +163,9 @@ func compressBuildAlgorithmClass() ValueType {
 			this.SetMember("__name", name, c)
 			this.SetMember("__algo", algo, c)
 		}).
+		Method("__call__", func(c *Context, this ValueObject, args []Value) Value {
+			return c.InvokeMethod(this, "compress", Args(args...))
+		}).
 		Method("compress", func(c *Context, this ValueObject, args []Value) Value {
 			var (
 				dataBytes ValueBytes
@@ -170,13 +173,18 @@ func compressBuildAlgorithmClass() ValueType {
 				dataWhich int
 				data      []byte
 				opt       ValueObject
+				optLevel  ValueInt
+				optWhich  int
 			)
 			EnsureFuncParams(c, "compress", args,
 				ArgRuleOneOf("data",
 					[]ValueType{TypeBytes, TypeStr},
 					[]any{&dataBytes, &dataStr},
 					&dataWhich, nil, nil),
-				ArgRuleOptional("opt", TypeObject, &opt, emptyOpt),
+				ArgRuleOneOf("opt",
+					[]ValueType{TypeObject, TypeInt},
+					[]any{&opt, &optLevel},
+					&optWhich, &opt, emptyOpt),
 			)
 			switch dataWhich {
 			case 0:
@@ -185,6 +193,11 @@ func compressBuildAlgorithmClass() ValueType {
 				data = []byte(dataStr.Value())
 			default:
 				c.RaiseRuntimeError("unexpected data type")
+			}
+			switch optWhich {
+			case 1:
+				opt = NewObject()
+				opt.SetMember("level", optLevel, c)
 			}
 			algo := this.GetMember("__algo", c).ToGoValue()
 			result, err := compressCompress(c, opt, algo, data)
