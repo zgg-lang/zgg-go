@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -645,7 +646,14 @@ var builtinFunctions = map[string]ValueCallable{
 				evalCtx.Stdout = c.Stdout
 				evalCtx.Stderr = c.Stderr
 				sandbox.Iterate(func(k string, v Value) {
-					evalCtx.ForceSetLocalValue(k, v)
+					switch k {
+					case "stdout":
+						evalCtx.Stdout = newBridgeWriter(evalCtx, v)
+					case "stderr":
+						evalCtx.Stderr = newBridgeWriter(evalCtx, v)
+					default:
+						evalCtx.ForceSetLocalValue(k, v)
+					}
 				})
 			} else {
 				c.RaiseRuntimeError("eval(code, [sandbox]): sandbox must be an object")
@@ -818,6 +826,25 @@ var builtinFunctions = map[string]ValueCallable{
 		rv.SetMember("assert", bindLevel(ASSERT), nil)
 		return rv
 	})(),
+}
+
+type bridgeWriter struct {
+	c *Context
+	f ValueCallable
+}
+
+func (w *bridgeWriter) Write(data []byte) (n int, err error) {
+	w.c.Invoke(w.f, nil, Args(NewBytes(data)))
+	r, is := w.c.RetVal.(ValueInt)
+	if !is {
+		return -1, errors.New("writer returns wrong type")
+	}
+	return r.AsInt(), nil
+}
+
+func newBridgeWriter(c *Context, v Value) io.Writer {
+	f := c.MustCallable(v)
+	return &bridgeWriter{c: c, f: f}
 }
 
 func init() {
