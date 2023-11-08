@@ -9,8 +9,14 @@ import (
 )
 
 var (
-	timeTimeClass     ValueType
-	timeDurationClass ValueType
+	timeTimeClass          ValueType
+	timeDurationClass      ValueType
+	timeAsTypeUnitDuration = map[string]time.Duration{
+		"day":    24 * time.Hour,
+		"hour":   time.Hour,
+		"minute": time.Minute,
+		"second": time.Second,
+	}
 )
 
 type timeTimeArg struct {
@@ -96,26 +102,25 @@ func libTime(c *Context) ValueObject {
 	lib.SetMember("now", NewNativeFunction("now", func(c *Context, this Value, args []Value) Value {
 		var timeType ValueStr
 		EnsureFuncParams(c, "now", args, ArgRuleOptional("timeType", TypeStr, &timeType, NewStr("")))
-		nowTs := time.Now().UnixNano()
 		asType := timeType.Value()
-		mod := int64(1)
+		t := time.Now()
 		switch asType {
 		case "day":
-			mod = 86400 * 1e9
+			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		case "hour":
-			mod = 3600 * 1e9
+			t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, t.Location())
 		case "minute":
-			mod = 60 * 1e9
+			t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), 0, 0, t.Location())
 		case "second":
-			mod = 1e9
-		case "":
+			t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, t.Location())
 		default:
 			c.RaiseRuntimeError("Invalid time type %s", asType)
 		}
-		now := NewObjectAndInit(timeTimeClass, c, NewInt(nowTs-nowTs%mod))
-		if asType != "" {
-			now.SetMember("__as", timeType, c)
+		info := timeTimeInfo{
+			t:  t,
+			as: asType,
 		}
+		now := NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		return now
 	}), nil)
 	lib.SetMember("fromUnix", NewNativeFunction("fromUnix", func(c *Context, this Value, args []Value) Value {
@@ -224,7 +229,12 @@ func libTime(c *Context) ValueObject {
 			as: as.Value(),
 		}
 		if o := offset.AsInt(); o != 0 {
-			info.t = info.t.AddDate(0, 0, o)
+			du := timeAsTypeUnitDuration[info.as]
+			if du != 0 {
+				info.t = info.t.Add(du * time.Duration(o))
+			} else {
+				c.RaiseRuntimeError("Invalid time type %s", info.as)
+			}
 		}
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
@@ -474,17 +484,10 @@ func timeInittimeTimeClass() {
 				info = this.Reserved.(timeTimeInfo)
 				t    = info.t
 			)
-			switch info.as {
-			case "day":
-				info.t = t.AddDate(0, 0, 1)
-			case "hour":
-				info.t = t.Add(time.Hour)
-			case "minute":
-				info.t = t.Add(time.Minute)
-			case "second":
-				info.t = t.Add(time.Second)
-			default:
+			if du := timeAsTypeUnitDuration[info.as]; du == 0 {
 				c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+			} else {
+				info.t = t.Add(du)
 			}
 			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
@@ -542,17 +545,10 @@ func timeInittimeTimeClass() {
 				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			case ValueInt:
 				d := diff.AsInt()
-				switch info.as {
-				case "day":
-					newInfo.t = t.AddDate(0, 0, d)
-				case "hour":
-					newInfo.t = t.Add(time.Hour * time.Duration(d))
-				case "minute":
-					newInfo.t = t.Add(time.Minute * time.Duration(d))
-				case "second":
-					newInfo.t = t.Add(time.Second * time.Duration(d))
-				default:
+				if du := timeAsTypeUnitDuration[info.as]; du == 0 {
 					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+				} else {
+					newInfo.t = t.Add(du * time.Duration(d))
 				}
 				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			}
@@ -562,7 +558,9 @@ func timeInittimeTimeClass() {
 			if len(args) != 1 {
 				c.RaiseRuntimeError("__sub__ requires one arugment!")
 			}
-			t := this.Reserved.(timeTimeInfo).t
+			info := this.Reserved.(timeTimeInfo)
+			newInfo := info
+			t := info.t
 			switch diff := args[0].(type) {
 			case ValueObject:
 				switch diff.Type().TypeId {
@@ -578,26 +576,13 @@ func timeInittimeTimeClass() {
 					c.RaiseRuntimeError("invalid duration class")
 				}
 			case ValueInt:
-				if as, ok := this.GetMember("__as", c).(ValueStr); ok {
-					var r Value
-					t := this.Reserved.(timeTimeInfo).t
-					d := -diff.AsInt()
-					switch as.Value() {
-					case "day":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.AddDate(0, 0, d)))
-					case "hour":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Hour*time.Duration(d))))
-					case "minute":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Minute*time.Duration(d))))
-					case "second":
-						r = NewObjectAndInit(timeTimeClass, c, NewGoValue(t.Add(time.Second*time.Duration(d))))
-					}
-					if r != nil {
-						r.(ValueObject).SetMember("__as", as, c)
-						return r
-					}
+				d := -diff.AsInt()
+				if du := timeAsTypeUnitDuration[info.as]; du == 0 {
+					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+				} else {
+					newInfo.t = t.Add(du * time.Duration(d))
 				}
-				c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			}
 			return nil
 		}).
