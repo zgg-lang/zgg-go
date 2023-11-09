@@ -113,6 +113,7 @@ func libTime(c *Context) ValueObject {
 			t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), 0, 0, t.Location())
 		case "second":
 			t = time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, t.Location())
+		case "":
 		default:
 			c.RaiseRuntimeError("Invalid time type %s", asType)
 		}
