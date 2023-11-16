@@ -135,7 +135,7 @@ func libFile(*Context) ValueObject {
 			total += len(bs)
 		}
 		return NewInt(int64(total))
-	}), nil)
+	}, "filename"), nil)
 	// check file stat
 	lib.SetMember("exists", NewNativeFunction("file.exists", func(c *Context, _ Value, args []Value) Value {
 		var (
@@ -144,9 +144,9 @@ func libFile(*Context) ValueObject {
 		)
 		EnsureFuncParams(c, "file.exists", args,
 			ArgRuleRequired("filename", TypeStr, &filename),
-			ArgRuleOptional("followLink", TypeBool, &followLink, NewBool(false)),
+			ArgRuleOptional("followLink", TypeBool, &followLink, NewBool(true)),
 		)
-		_, e := lo.If(followLink.Value(), os.Lstat).Else(os.Stat)(filename.Value())
+		_, e := lo.Ternary(followLink.Value(), os.Stat, os.Lstat)(filename.Value())
 		if e == nil {
 			return NewBool(true)
 		} else if os.IsNotExist(e) {
@@ -154,7 +154,7 @@ func libFile(*Context) ValueObject {
 		}
 		c.RaiseRuntimeError("check file exists occurred error %+v", e)
 		return nil
-	}, "fliename"), nil)
+	}, "fliename", "followLink"), nil)
 	lib.SetMember("isDir", NewNativeFunction("file.isDir", func(c *Context, _ Value, args []Value) Value {
 		var (
 			filename   ValueStr
@@ -162,9 +162,9 @@ func libFile(*Context) ValueObject {
 		)
 		EnsureFuncParams(c, "file.isDir", args,
 			ArgRuleRequired("filename", TypeStr, &filename),
-			ArgRuleOptional("followLink", TypeBool, &followLink, NewBool(false)),
+			ArgRuleOptional("followLink", TypeBool, &followLink, NewBool(true)),
 		)
-		s, e := lo.If(followLink.Value(), os.Lstat).Else(os.Stat)(filename.Value())
+		s, e := lo.Ternary(followLink.Value(), os.Stat, os.Lstat)(filename.Value())
 		if e == nil {
 			return NewBool(s.Mode().IsDir())
 		} else if os.IsNotExist(e) {
@@ -172,7 +172,7 @@ func libFile(*Context) ValueObject {
 		}
 		c.RaiseRuntimeError("check file isDir occurred error %+v", e)
 		return nil
-	}, "fliename"), nil)
+	}, "fliename", "followLink"), nil)
 	lib.SetMember("isFile", NewNativeFunction("file.isdir", func(c *Context, _ Value, args []Value) Value {
 		var (
 			filename   ValueStr
@@ -180,9 +180,9 @@ func libFile(*Context) ValueObject {
 		)
 		EnsureFuncParams(c, "file.isFile", args,
 			ArgRuleRequired("filename", TypeStr, &filename),
-			ArgRuleOptional("followLink", TypeBool, &followLink, NewBool(false)),
+			ArgRuleOptional("followLink", TypeBool, &followLink, NewBool(true)),
 		)
-		s, e := lo.If(followLink.Value(), os.Lstat).Else(os.Stat)(filename.Value())
+		s, e := lo.Ternary(followLink.Value(), os.Stat, os.Lstat)(filename.Value())
 		if e == nil {
 			return NewBool(s.Mode().IsRegular())
 		} else if os.IsNotExist(e) {
@@ -190,7 +190,7 @@ func libFile(*Context) ValueObject {
 		}
 		c.RaiseRuntimeError("check file isdir occurred error %+v", e)
 		return nil
-	}, "fliename"), nil)
+	}, "fliename", "followLink"), nil)
 	return lib
 }
 
