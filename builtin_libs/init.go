@@ -35,6 +35,7 @@ var (
 		"msgpack":    LibInfo{name: "msgpack", getter: libMsgpack},
 		"math":       LibInfo{name: "math", getter: libMath},
 		"nsq":        LibInfo{name: "nsq", getter: libNsq},
+		"path":       LibInfo{name: "path", getter: libPath},
 		"psutil":     LibInfo{name: "psutil", getter: libPsutil},
 		"ptable":     LibInfo{name: "ptable", getter: libPtable},
 		"random":     LibInfo{name: "random", getter: libRandom},
