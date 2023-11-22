@@ -188,6 +188,12 @@ func (ValueObject) GetRefs() []string {
 	return []string{}
 }
 
+func (o ValueObject) Contains(c *Context, v Value) bool {
+	k := v.ToString(c)
+	_, found := o.m.Load(k)
+	return found
+}
+
 func (v *valueObject) Invoke(c *Context, this Value, args []Value) {
 	callMethod, ok := c.GetCallable(v.GetMember("__call__", c))
 	if !ok {

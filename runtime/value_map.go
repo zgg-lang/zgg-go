@@ -162,6 +162,11 @@ func (m ValueMap) IsTrue() bool {
 // Implements CanLen
 func (m ValueMap) Len() int { return len(m.ma) }
 
+func (m ValueMap) Contains(c *Context, v Value) bool {
+	_, found := m.get(c, v)
+	return found
+}
+
 var builtinMapMethods = map[string]ValueCallable{
 	"get": NewNativeFunction("get", func(c *Context, this Value, args []Value) Value {
 		var key Value
