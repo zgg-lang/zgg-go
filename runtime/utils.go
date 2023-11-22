@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 func Nullish(v Value) bool {
@@ -273,4 +274,58 @@ func getMemberByType(c *Context, v Value, name string) Value {
 		}
 	}
 	return getExtMember(v, name, c)
+}
+
+type iteratorInfo struct {
+	nextFn  func() Value
+	closeFn func()
+	closed  bool
+}
+
+var (
+	iteratorType ValueType
+	iteratorInit sync.Once
+)
+
+func MakeIterator(c *Context, nextFn func() Value, closeFn func()) ValueObject {
+	iteratorInit.Do(func() {
+		endRet := NewArrayByValues(constUndefined, NewBool(false))
+		iteratorType = NewClassBuilder("iterator").
+			Constructor(func(c *Context, this ValueObject, args []Value) {
+				this.Reserved = &iteratorInfo{
+					nextFn:  args[0].ToGoValue().(func() Value),
+					closeFn: args[1].ToGoValue().(func()),
+				}
+			}).
+			Method("__call__", func(c *Context, this ValueObject, args []Value) Value {
+				info := this.Reserved.(*iteratorInfo)
+				if info.closed {
+					return endRet
+				}
+				v := info.nextFn()
+				if v != nil {
+					return NewArrayByValues(v, NewBool(true))
+				} else {
+					if info.closeFn != nil && !info.closed {
+						info.closeFn()
+					}
+					info.closed = true
+					return endRet
+				}
+			}).
+			Method("close", func(c *Context, this ValueObject, args []Value) Value {
+				info := this.Reserved.(*iteratorInfo)
+				if info.closeFn != nil && !info.closed {
+					info.closeFn()
+				}
+				info.closed = true
+				return constUndefined
+			}).
+			Build()
+	})
+	rv := NewObject()
+	rv.SetMember("__iter__", NewNativeFunction("__iter__", func(c *Context, _ Value, _ []Value) Value {
+		return NewObjectAndInit(iteratorType, c, NewGoValue(nextFn), NewGoValue(closeFn))
+	}), nil)
+	return rv
 }
