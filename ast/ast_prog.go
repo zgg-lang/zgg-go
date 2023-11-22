@@ -119,6 +119,10 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 		if !c.IsCallable(iter) {
 			c.RaiseRuntimeError("__iter__ should return a callable value")
 		}
+		closer, hasCloser := c.GetCallable(iter.GetMember("close", c))
+		if hasCloser {
+			defer c.Invoke(closer, nil, runtime.NoArgs)
+		}
 		iterFn := iter.(runtime.ValueCallable)
 		for i := 0; ; i++ {
 			c.Invoke(iterFn, nil, runtime.NoArgs)

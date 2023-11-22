@@ -46,6 +46,10 @@ func (e *basicComprehension) evalWithCustomIterable(c *runtime.Context, getIter 
 		c.RaiseRuntimeError("__iter__ should return a callable value")
 	}
 	iterFn := iter.(runtime.ValueCallable)
+	closer, hasCloser := c.GetCallable(iter.GetMember("close", c))
+	if hasCloser {
+		defer c.Invoke(closer, nil, runtime.NoArgs)
+	}
 	for i := 0; ; i++ {
 		c.Invoke(iterFn, nil, runtime.NoArgs)
 		var value runtime.Value
