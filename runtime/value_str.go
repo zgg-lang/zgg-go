@@ -73,6 +73,13 @@ func (v ValueStr) IsTrue() bool {
 	return len(v.v) > 0
 }
 
+func (v ValueStr) Contains(_ *Context, vv Value) bool {
+	if vvs, is := vv.(ValueStr); is {
+		return strings.Contains(v.s, vvs.s)
+	}
+	return false
+}
+
 func (v ValueStr) CompareTo(other Value, c *Context) CompareResult {
 	if v2, ok := other.(ValueStr); ok {
 		if v.Value() == v2.Value() {

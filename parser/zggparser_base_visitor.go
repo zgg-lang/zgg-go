@@ -160,7 +160,15 @@ func (v *BaseZggParserVisitor) VisitExprUseCloser(ctx *ExprUseCloserContext) int
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitExprInRange(ctx *ExprInRangeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitExprAssign(ctx *ExprAssignContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseZggParserVisitor) VisitExprInContainer(ctx *ExprInContainerContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

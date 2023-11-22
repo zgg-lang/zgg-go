@@ -76,6 +76,22 @@ func (v *ParseVisitor) VisitExprIsType(ctx *ExprIsTypeContext) interface{} {
 	}}
 }
 
+func (v *ParseVisitor) VisitExprInContainer(ctx *ExprInContainerContext) interface{} {
+	return &ast.ExprInContainer{BinOp: ast.BinOp{
+		Left:  ctx.Expr(0).Accept(v).(ast.Expr),
+		Right: ctx.Expr(1).Accept(v).(ast.Expr),
+	}}
+}
+
+func (v *ParseVisitor) VisitExprInRange(ctx *ExprInRangeContext) interface{} {
+	return &ast.ExprInRange{
+		Val:        ctx.Expr(0).Accept(v).(ast.Expr),
+		Begin:      ctx.Expr(1).Accept(v).(ast.Expr),
+		End:        ctx.Expr(2).Accept(v).(ast.Expr),
+		IncludeEnd: ctx.RANGE_WITH_END() != nil,
+	}
+}
+
 func (v *ParseVisitor) VisitExprAssign(ctx *ExprAssignContext) interface{} {
 	return ctx.AssignExpr().Accept(v)
 }

@@ -493,3 +493,59 @@ func (expr *ExprIsType) Eval(c *runtime.Context) {
 		c.RetVal = runtime.NewBool(left.Type().IsSubOf(rightType))
 	}
 }
+
+type ExprInContainer struct {
+	BinOp
+}
+
+func (expr *ExprInContainer) Eval(c *runtime.Context) {
+	left, right := expr.GetValues(c)
+	if contains, is := c.GetCallable(right.GetMember("__contains__", c)); is {
+		c.Invoke(contains, right, runtime.Args(left))
+		return
+	}
+	if container, is := right.(runtime.Container); is {
+		c.RetVal = runtime.NewBool(container.Contains(c, left))
+		return
+	}
+	c.RaiseRuntimeError("right type %s is not a container", right.Type().Name)
+}
+
+type ExprInRange struct {
+	Val        Expr
+	Begin      Expr
+	End        Expr
+	IncludeEnd bool
+}
+
+func (expr *ExprInRange) Eval(c *runtime.Context) {
+	expr.Val.Eval(c)
+	val, is := c.RetVal.(runtime.ValueInt)
+	if !is {
+		c.RetVal = runtime.NewBool(false)
+		return
+	}
+	expr.Begin.Eval(c)
+	begin, is := c.RetVal.(runtime.ValueInt)
+	if !is {
+		c.RaiseRuntimeError("range must begin with an integer")
+	}
+	expr.End.Eval(c)
+	end, is := c.RetVal.(runtime.ValueInt)
+	if !is {
+		c.RaiseRuntimeError("range must end with an integer")
+	}
+	if val.Value() < begin.Value() {
+		c.RetVal = runtime.NewBool(false)
+		return
+	}
+	if val.Value() > end.Value() {
+		c.RetVal = runtime.NewBool(false)
+		return
+	}
+	if !expr.IncludeEnd && val.Value() >= end.Value() {
+		c.RetVal = runtime.NewBool(false)
+		return
+	}
+	c.RetVal = runtime.NewBool(true)
+}

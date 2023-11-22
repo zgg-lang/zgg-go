@@ -110,6 +110,16 @@ func (v ValueArray) CompareTo(other Value, c *Context) CompareResult {
 	return CompareResultEqual
 }
 
+func (v ValueArray) Contains(c *Context, vv Value) bool {
+	s := *v.Values
+	for _, item := range s {
+		if c.ValuesEqual(item, vv) {
+			return true
+		}
+	}
+	return false
+}
+
 func (v ValueArray) PushBack(el Value) {
 	*v.Values = append(*v.Values, el)
 }

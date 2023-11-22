@@ -123,6 +123,8 @@ expr
     | expr '^' expr                                         	        # exprBitXor
     | expr comparator expr                                              # exprCompare
     | expr 'is' expr                                                    # exprIsType
+    | expr 'in' expr                                                    # exprInContainer
+    | expr 'in' expr ('..'|'..<') expr                                  # exprInRange
     | expr '&&' expr                                        	        # exprLogicAnd
     | expr '||' expr                                        	        # exprLogicOr
     | 'when' L_CURLY

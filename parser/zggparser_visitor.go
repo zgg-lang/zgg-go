@@ -122,8 +122,14 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#exprUseCloser.
 	VisitExprUseCloser(ctx *ExprUseCloserContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#exprInRange.
+	VisitExprInRange(ctx *ExprInRangeContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#exprAssign.
 	VisitExprAssign(ctx *ExprAssignContext) interface{}
+
+	// Visit a parse tree produced by ZggParser#exprInContainer.
+	VisitExprInContainer(ctx *ExprInContainerContext) interface{}
 
 	// Visit a parse tree produced by ZggParser#exprUseMethod.
 	VisitExprUseMethod(ctx *ExprUseMethodContext) interface{}

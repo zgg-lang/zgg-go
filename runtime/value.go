@@ -77,3 +77,7 @@ type CanSetIndex interface {
 type CanHash interface {
 	Hash() int64
 }
+
+type Container interface {
+	Contains(c *Context, v Value) bool
+}
