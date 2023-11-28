@@ -104,6 +104,9 @@ func (ConsoleReplContext) write(msg string) {
 }
 
 func (c ConsoleReplContext) WriteResult(result interface{}) {
+	if result == nil {
+		return
+	}
 	switch v := result.(type) {
 	case runtime.Value:
 		c.write(v.ToString(c.Context()))
@@ -112,6 +115,10 @@ func (c ConsoleReplContext) WriteResult(result interface{}) {
 	default:
 		c.write(fmt.Sprint(v))
 	}
+}
+
+func (c ConsoleReplContext) WriteException(e runtime.Exception) {
+	c.write(e.MessageWithStack())
 }
 
 func (c ConsoleReplContext) OnEnter() {

@@ -15,6 +15,7 @@ import (
 	"github.com/zgg-lang/zgg-go"
 	"github.com/zgg-lang/zgg-go/repl"
 	"github.com/zgg-lang/zgg-go/repl/ws_repl"
+	"github.com/zgg-lang/zgg-go/runtime"
 )
 
 type logLevel string
@@ -57,11 +58,34 @@ func checkAuthByScript(authScript string, w http.ResponseWriter, r *http.Request
 //go:embed wsindex.html
 var wsIndex string
 
+type CommonWSReplContext struct {
+	*ws_repl.WebsocketReplContext
+	initScript string
+}
+
+func (c *CommonWSReplContext) OnEnter() {
+	if c.initScript != "" {
+		cc := c.Context()
+		modVal, _, ok := cc.ImportFunc(cc, c.initScript, "", runtime.ImportTypeScript, true)
+		if !ok {
+			panic(fmt.Sprintf("import %s failed", c.initScript))
+		} else if mod, is := modVal.(runtime.ValueObject); !is {
+			panic(fmt.Sprintf("%s exported not an object", c.initScript))
+		} else {
+			mod.Iterate(func(k string, v runtime.Value) {
+				cc.ForceSetLocalValue(k, v)
+			})
+		}
+	}
+	c.WebsocketReplContext.OnEnter()
+}
+
 func runWebsocket(isDebug bool, args []string) {
-	var listen, path, authScript, indexPath string
+	var listen, path, authScript, indexPath, initPath string
 	fs := flag.NewFlagSet("zgg ws", flag.ExitOnError)
 	fs.StringVar(&authScript, "auth", "", "指定鉴权处理脚本路径，留空为不鉴权")
 	fs.StringVar(&indexPath, "index", "", "指定首页HTML文件路径，留空为内置首页")
+	fs.StringVar(&initPath, "init", "", "初始化会话脚本")
 	fs.Parse(args)
 	addr := fs.Arg(0)
 	if p := strings.Index(addr, "/"); p >= 0 {
@@ -97,9 +121,18 @@ func runWebsocket(isDebug bool, args []string) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		defer conn.Close()
+		defer func() {
+			conn.Close()
+			if e := recover(); e != nil {
+				log(ERROR, "connection panic: %v", e)
+			}
+		}()
 		log(INFO, "new connection from %s", clientAddr)
-		repl.ReplLoop(ws_repl.New(true, isDebug, true, conn), !isDebug)
+		replContext := &CommonWSReplContext{
+			WebsocketReplContext: ws_repl.New(true, isDebug, true, conn),
+			initScript:           initPath,
+		}
+		repl.ReplLoop(replContext, !isDebug)
 	})
 	log(INFO, "starting serving websocket console at %s%s...", listen, path)
 	http.ListenAndServe(listen, nil)

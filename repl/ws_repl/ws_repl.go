@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/samber/lo"
 	"github.com/zgg-lang/zgg-go/parser"
 	"github.com/zgg-lang/zgg-go/repl"
 	"github.com/zgg-lang/zgg-go/runtime"
@@ -94,6 +95,13 @@ func (c *WebsocketReplContext) writePtable(content string, obj runtime.Value) bo
 }
 
 func (c *WebsocketReplContext) WriteResult(result interface{}) {
+	if result == nil {
+		c.write(payload{
+			Type:    writeReturnNothing,
+			Content: "",
+		})
+		return
+	}
 	var content string
 	switch rv := result.(type) {
 	case runtime.Value:
@@ -114,10 +122,23 @@ func (c *WebsocketReplContext) WriteResult(result interface{}) {
 	})
 }
 
+func (c *WebsocketReplContext) WriteException(e runtime.Exception) {
+	c.write(payload{
+		Type:    writeException,
+		Content: e.MessageWithStack(),
+		Data: M{
+			"error": e.GetMessage(),
+			"stack": lo.Map(e.GetStack(), func(stack runtime.Stack, _ int) M {
+				return M{"filename": stack.FileName, "line": stack.Line, "function": stack.Function}
+			}),
+		},
+	})
+}
+
 func (c *WebsocketReplContext) OnEnter() {
 	c.write(payload{
 		Type:    writeStdout,
-		Content: "Welcome to ZGG Repl",
+		Content: "Welcome to ZGG Web Repl",
 	})
 }
 

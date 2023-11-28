@@ -29,6 +29,7 @@ type (
 		Context() *runtime.Context
 		ReadAction(bool) ReplAction
 		WriteResult(interface{})
+		WriteException(runtime.Exception)
 		OnEnter()
 		OnExit()
 	}
@@ -93,7 +94,7 @@ func (rrc ReplRunCode) Handle(context ReplContext, shouldRecover bool) (shouldCo
 		if shouldRecover {
 			if err := recover(); err != nil {
 				if exc, ok := err.(runtime.Exception); ok {
-					context.WriteResult(exc.MessageWithStack())
+					context.WriteException(exc)
 				} else {
 					context.WriteResult(fmt.Sprintf("ERR! %s", err))
 				}
@@ -104,6 +105,8 @@ func (rrc ReplRunCode) Handle(context ReplContext, shouldRecover bool) (shouldCo
 	retVal := c.RetVal
 	if shouldWriteResult(context, codeAst) {
 		context.WriteResult(retVal)
+	} else {
+		context.WriteResult(nil)
 	}
 	c.ForceSetLocalValue("__last__", retVal)
 	return

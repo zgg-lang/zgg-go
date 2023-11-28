@@ -6,13 +6,16 @@ type (
 		Content string      `json:"content"`
 		Data    interface{} `json:"data,omitempty"`
 	}
+	M = map[string]any
 )
 
 const (
-	readCode    = "INPUT"
-	readHint    = "HINT"
-	writeReturn = "RETURN"
-	writeTable  = "TABLE"
-	writeStdout = "STDOUT"
-	writeStderr = "STDERR"
+	readCode           = "INPUT"
+	readHint           = "HINT"
+	writeException     = "EXCEPTION"
+	writeReturn        = "RETURN"
+	writeReturnNothing = "RETURN_NOTHING"
+	writeTable         = "TABLE"
+	writeStdout        = "STDOUT"
+	writeStderr        = "STDERR"
 )
