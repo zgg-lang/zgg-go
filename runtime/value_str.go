@@ -330,19 +330,40 @@ var builtinStrMethods = map[string]ValueCallable{
 		return NewStr(strings.TrimSpace(str))
 	}),
 	"startsWith": NewNativeFunction("str.startsWith", func(c *Context, thisArg Value, args []Value) Value {
+		if len(args) == 0 {
+			return boolTrue
+		}
 		str := c.MustStr(thisArg)
-		prefix := mustGetArgStr(c, "str.startsWith", args, 0)
-		return NewBool(strings.HasPrefix(str, prefix))
+		for _, a := range args {
+			if strings.HasPrefix(str, a.ToString(c)) {
+				return boolTrue
+			}
+		}
+		return boolFalse
 	}, "prefix"),
 	"endsWith": NewNativeFunction("str.endsWith", func(c *Context, thisArg Value, args []Value) Value {
+		if len(args) == 0 {
+			return boolTrue
+		}
 		str := c.MustStr(thisArg)
-		prefix := mustGetArgStr(c, "str.endsWith", args, 0)
-		return NewBool(strings.HasSuffix(str, prefix))
+		for _, a := range args {
+			if strings.HasSuffix(str, a.ToString(c)) {
+				return boolTrue
+			}
+		}
+		return boolFalse
 	}, "suffix"),
 	"contains": NewNativeFunction("str.contains", func(c *Context, thisArg Value, args []Value) Value {
+		if len(args) == 0 {
+			return boolTrue
+		}
 		str := c.MustStr(thisArg)
-		sub := mustGetArgStr(c, "str.contains", args, 0)
-		return NewBool(strings.Contains(str, sub))
+		for _, a := range args {
+			if strings.Contains(str, a.ToString(c)) {
+				return boolTrue
+			}
+		}
+		return boolFalse
 	}, "sub"),
 	"__next__": NewNativeFunction("__next__", func(c *Context, this Value, args []Value) Value {
 		s := this.(ValueStr)
