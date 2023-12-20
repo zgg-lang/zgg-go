@@ -30,6 +30,7 @@ var (
 		"go":         LibInfo{name: "go", getter: libGo},
 		"graph":      LibInfo{name: "graph", getter: libGraph},
 		"http":       LibInfo{name: "http", getter: libHttp},
+		"ip2region":  LibInfo{name: "ip2region", getter: libIp2region},
 		"json":       LibInfo{name: "json", getter: libJson},
 		"kv":         LibInfo{name: "kv", getter: libKv},
 		"msgpack":    LibInfo{name: "msgpack", getter: libMsgpack},
