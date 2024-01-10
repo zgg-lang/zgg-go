@@ -45,6 +45,7 @@ var (
 		"regex2":     LibInfo{name: "regex2", getter: libRegex2},
 		"sh":         LibInfo{name: "sh", getter: libSh},
 		"sys":        LibInfo{name: "sys", getter: libSys},
+		"tcp":        LibInfo{name: "tcp", getter: libTcp},
 		"template":   LibInfo{name: "template", getter: libTemplate},
 		"time":       LibInfo{name: "time", getter: libTime},
 		"url":        LibInfo{name: "url", getter: libUrl},
