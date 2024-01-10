@@ -138,21 +138,21 @@ func (m ValueMap) GoType() reflect.Type {
 	return reflect.TypeOf(vv)
 }
 
-func (m ValueMap) ToGoValue() interface{} {
+func (m ValueMap) ToGoValue(c *Context) interface{} {
 	vv := make(map[interface{}]interface{}, len(m.ma))
 	m.rw.RLock()
 	defer m.rw.RUnlock()
 	for _, v := range m.ma {
 		for p := v.Front(); p != nil; p = p.Next() {
 			e := p.Value.(mapElem)
-			vv[e.key.ToGoValue()] = e.value.ToGoValue()
+			vv[e.key.ToGoValue(c)] = e.value.ToGoValue(c)
 		}
 	}
 	return vv
 }
 
 func (m ValueMap) ToString(c *Context) string {
-	return fmt.Sprint(m.ToGoValue())
+	return fmt.Sprint(m.ToGoValue(c))
 }
 
 func (m ValueMap) IsTrue() bool {

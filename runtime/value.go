@@ -20,7 +20,7 @@ type Value interface {
 	Type() ValueType
 	CompareTo(Value, *Context) CompareResult
 	ToString(*Context) string
-	ToGoValue() interface{}
+	ToGoValue(*Context) interface{}
 	GoType() reflect.Type
 	IsTrue() bool
 	GetIndex(int, *Context) Value

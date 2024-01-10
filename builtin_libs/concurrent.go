@@ -50,12 +50,12 @@ func libConcurrent(*Context) ValueObject {
 			}).
 			Method("lock", func(c *Context, this ValueObject, args []Value) Value {
 				lockVal := this.GetMember("__lock", c)
-				lockVal.ToGoValue().(*sync.Mutex).Lock()
+				lockVal.ToGoValue(c).(*sync.Mutex).Lock()
 				return Undefined()
 			}).
 			Method("unlock", func(c *Context, this ValueObject, args []Value) Value {
 				lockVal := this.GetMember("__lock", c)
-				lockVal.ToGoValue().(*sync.Mutex).Unlock()
+				lockVal.ToGoValue(c).(*sync.Mutex).Unlock()
 				return Undefined()
 			}).
 			Method("run", func(c *Context, this ValueObject, args []Value) Value {
@@ -69,7 +69,7 @@ func libConcurrent(*Context) ValueObject {
 					c.RaiseRuntimeError("run: requires 1 argument(s)")
 					return nil
 				}
-				lockVal := this.GetMember("__lock", c).ToGoValue().(*sync.Mutex)
+				lockVal := this.GetMember("__lock", c).ToGoValue(c).(*sync.Mutex)
 				lockVal.Lock()
 				defer lockVal.Unlock()
 				c.Invoke(args[0], nil, NoArgs)
@@ -90,7 +90,7 @@ func libConcurrent(*Context) ValueObject {
 				this.SetMember("__ch", NewGoValue(&ch), c)
 			}).
 			Method("send", func(c *Context, this ValueObject, args []Value) Value {
-				ch := this.GetMember("__ch", c).ToGoValue().(*chan Value)
+				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan Value)
 				(*ch) <- args[0]
 				return Undefined()
 			}).
@@ -99,7 +99,7 @@ func libConcurrent(*Context) ValueObject {
 				EnsureFuncParams(c, "Chan.recv", args,
 					ArgRuleOptional("timeout", TypeFloat, &n, NewFloat(-1)),
 				)
-				ch := this.GetMember("__ch", c).ToGoValue().(*chan Value)
+				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan Value)
 				timeout := n.Value()
 				if timeout < 0 {
 					return <-*ch
@@ -141,7 +141,7 @@ func libConcurrent(*Context) ValueObject {
 					c.RaiseRuntimeError("run: requires 1 argument(s)")
 					return nil
 				}
-				ch := this.GetMember("__ch", c).ToGoValue().(*chan bool)
+				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan bool)
 				*ch <- true
 				joinFunc := c.StartThread(args[0], nil, []Value{})
 				rv := c.RetVal
@@ -152,7 +152,7 @@ func libConcurrent(*Context) ValueObject {
 				return rv
 			}).
 			Method("wait", func(c *Context, this ValueObject, args []Value) Value {
-				ch := this.GetMember("__ch", c).ToGoValue().(*chan bool)
+				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan bool)
 				for len(*ch) > 0 {
 					time.Sleep(10 * time.Millisecond)
 				}

@@ -20,7 +20,7 @@ func (v ValueBytes) GoType() reflect.Type {
 	return reflect.TypeOf(v.v)
 }
 
-func (v ValueBytes) ToGoValue() interface{} {
+func (v ValueBytes) ToGoValue(*Context) interface{} {
 	return v.Value()
 }
 

@@ -293,8 +293,8 @@ func MakeIterator(c *Context, nextFn func() Value, closeFn func()) ValueObject {
 		iteratorType = NewClassBuilder("iterator").
 			Constructor(func(c *Context, this ValueObject, args []Value) {
 				this.Reserved = &iteratorInfo{
-					nextFn:  args[0].ToGoValue().(func() Value),
-					closeFn: args[1].ToGoValue().(func()),
+					nextFn:  args[0].ToGoValue(c).(func() Value),
+					closeFn: args[1].ToGoValue(c).(func()),
 				}
 			}).
 			Method("__call__", func(c *Context, this ValueObject, args []Value) Value {

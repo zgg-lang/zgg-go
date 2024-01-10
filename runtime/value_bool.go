@@ -21,7 +21,7 @@ func (v ValueBool) IsTrue() bool {
 	return v.v
 }
 
-func (v ValueBool) ToGoValue() interface{} {
+func (v ValueBool) ToGoValue(*Context) interface{} {
 	return v.Value()
 }
 

@@ -26,7 +26,7 @@ func (ValueNil) Type() ValueType {
 	return TypeNil
 }
 
-func (ValueNil) ToGoValue() interface{} {
+func (ValueNil) ToGoValue(*Context) interface{} {
 	return nil
 }
 

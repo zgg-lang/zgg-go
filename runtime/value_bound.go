@@ -37,8 +37,8 @@ func (v ValueBoundMethod) GoType() reflect.Type {
 	return v.Value.GoType()
 }
 
-func (v ValueBoundMethod) ToGoValue() interface{} {
-	return v.Value.ToGoValue()
+func (v ValueBoundMethod) ToGoValue(c *Context) interface{} {
+	return v.Value.ToGoValue(c)
 }
 
 func (v ValueBoundMethod) ToString(c *Context) string {

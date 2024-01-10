@@ -100,7 +100,7 @@ func (e *ExprAssertError) Eval(c *runtime.Context) {
 		n := rs.Len()
 		if n > 0 {
 			last := rs.GetIndex(n-1, c)
-			if err, isErr := last.ToGoValue().(error); isErr {
+			if err, isErr := last.ToGoValue(c).(error); isErr {
 				c.RaiseRuntimeError("assert error fail! %s", err)
 			} else {
 				n--
@@ -118,7 +118,7 @@ func (e *ExprAssertError) Eval(c *runtime.Context) {
 				c.RetVal = newRet
 			}
 		}
-	} else if err, isErr := r.ToGoValue().(error); isErr {
+	} else if err, isErr := r.ToGoValue(c).(error); isErr {
 		if err != nil {
 			c.RaiseRuntimeError("assert error fail! %s", err)
 		} else {

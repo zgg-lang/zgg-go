@@ -117,7 +117,7 @@ func initPTableClass() {
 			c.Invoke(formatFn, nil, Args(item, NewInt(int64(i)), NewInt(int64(j))))
 			return c.RetVal.ToString(c)
 		} else if j < len(meta.colFormats) && meta.colFormats[j] != "" {
-			return fmt.Sprintf(meta.colFormats[j], item.ToGoValue())
+			return fmt.Sprintf(meta.colFormats[j], item.ToGoValue(c))
 		} else {
 			return item.ToString(c)
 		}
@@ -153,8 +153,8 @@ func initPTableClass() {
 		return fmt.Sprintf("\x1b[%s;1m%s\x1b[0m", color, text)
 	}
 	renderAscii := func(c *Context, this ValueObject, formatFn, filterFn ValueCallable, alignConf, colorConf Value, isMarkdown bool, tchars *ptableTextChars) Value {
-		_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
-		_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+		_meta := this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
+		_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 		rowsText := make([][]ptableAsciiCellInfo, 0, len(_rows))
 		colMaxWidths := make([]int, len(_meta.headers))
 		// init max widths
@@ -363,8 +363,8 @@ func initPTableClass() {
 	}
 	addTableToDB := func(c *Context, tmpDB *sql.DB, table ValueObject, tableName string) {
 		var (
-			meta              = table.GetMember("_meta", c).ToGoValue().(*ptableMeta)
-			rows              = table.GetMember("_rows", c).ToGoValue().([][]Value)
+			meta              = table.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
+			rows              = table.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			createStmtBuilder strings.Builder
 			insertStmtBuilder strings.Builder
 		)
@@ -417,7 +417,7 @@ func initPTableClass() {
 		)
 		for rowIndex, row := range rows {
 			for i := range insertValues {
-				insertValues[i] = row[i].ToGoValue()
+				insertValues[i] = row[i].ToGoValue(c)
 			}
 			if _, err := tmpDB.Exec(insertSQL, insertValues...); err != nil {
 				c.RaiseRuntimeError("PTable.query: insert values in row %d error %+v",
@@ -477,13 +477,13 @@ func initPTableClass() {
 			this.SetMember("_rows", NewGoValue(_rows), c)
 		}).
 		Method("add", func(c *Context, this ValueObject, args []Value) Value {
-			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			_rows = append(_rows, args)
 			this.SetMember("_rows", NewGoValue(_rows), c)
 			return this
 		}).
 		Method("addArray", func(c *Context, this ValueObject, args []Value) Value {
-			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			var arr ValueArray
 			EnsureFuncParams(c, "addArray", args, ArgRuleRequired("array", TypeArray, &arr))
 			for i := 0; i < arr.Len(); i++ {
@@ -502,10 +502,10 @@ func initPTableClass() {
 				return this
 			}
 			o := args[0]
-			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			var row []Value
 			if len(args) == 1 {
-				_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+				_meta := this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
 				row = make([]Value, len(_meta.headers))
 				for i, h := range _meta.headers {
 					row[i] = o.GetMember(h, c)
@@ -522,7 +522,7 @@ func initPTableClass() {
 		}).
 		Method("addObjects", func(c *Context, this ValueObject, args []Value) Value {
 			arr := c.MustArray(args[0])
-			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			for i := 0; i < arr.Len(); i++ {
 				o := arr.GetIndex(i, c)
 				row := make([]Value, len(args)-1)
@@ -543,7 +543,7 @@ func initPTableClass() {
 				ArgRuleRequired("col", TypeInt, &col),
 				ArgRuleRequired("foramt", TypeStr, &format),
 			)
-			_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+			_meta := this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
 			for i := len(_meta.colFormats); i < col.AsInt()+1; i++ {
 				_meta.colFormats = append(_meta.colFormats, "")
 			}
@@ -621,8 +621,8 @@ func initPTableClass() {
 		}).
 		Method("html", func(c *Context, this ValueObject, args []Value) Value {
 			var b strings.Builder
-			_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
-			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			_meta := this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
+			_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			var (
 				formatFn ValueCallable
 				filterFn ValueCallable
@@ -682,8 +682,8 @@ func initPTableClass() {
 			return NewStr(b.String())
 		}).
 		Method("csv", func(c *Context, this ValueObject, args []Value) Value {
-			_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
-			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			_meta := this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
+			_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			var (
 				formatFn ValueCallable
 				filterFn ValueCallable
@@ -732,8 +732,8 @@ func initPTableClass() {
 				ArgRuleOptional("includHeaders", TypeBool, &includHeaders, NewBool(false)),
 			)
 			incH := includHeaders.Value()
-			_meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
-			_rows := this.GetMember("_rows", c).ToGoValue().([][]Value)
+			_meta := this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
+			_rows := this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			rowNum := len(_rows)
 			if incH {
 				rowNum++
@@ -758,7 +758,7 @@ func initPTableClass() {
 			var (
 				querySQL  = args[0].ToString(c)
 				queryArgs = lo.Map(args[1:], func(v Value, _ int) any {
-					return v.ToGoValue()
+					return v.ToGoValue(c)
 				})
 			)
 			c.PushStack()
@@ -773,14 +773,14 @@ func initPTableClass() {
 			var (
 				querySQL  = args[0].ToString(c)
 				queryArgs = lo.Map(args[1:], func(v Value, _ int) any {
-					return v.ToGoValue()
+					return v.ToGoValue(c)
 				})
 			)
 			return query(c, querySQL, queryArgs)
 		}).
 		Method("slice", func(c *Context, this ValueObject, args []Value) Value {
 			var (
-				rows     = this.GetMember("_rows", c).ToGoValue().([][]Value)
+				rows     = this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 				n        = len(rows)
 				beginArg ValueInt
 				endArg   ValueInt
@@ -790,7 +790,7 @@ func initPTableClass() {
 				ArgRuleOptional("end", TypeInt, &endArg, NewInt(int64(n))),
 			)
 			var (
-				meta  = this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+				meta  = this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
 				begin = beginArg.AsInt()
 				end   = endArg.AsInt()
 				rv    = NewObjectAndInit(ptablePTableClass, c, lo.Map(meta.headers, func(n string, _ int) Value {
@@ -807,7 +807,7 @@ func initPTableClass() {
 			return rv
 		}).
 		Method("columns", func(c *Context, this ValueObject, args []Value) Value {
-			meta := this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
+			meta := this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
 			return NewArrayByValues(lo.Map(meta.headers, func(n string, _ int) Value {
 				return NewStr(n)
 			})...)
@@ -822,8 +822,8 @@ func initPTableClass() {
 				ArgRuleOptional("fillValue", TypeCallable, &fillValue, ptableFillBlank),
 			)
 			var (
-				meta = this.GetMember("_meta", c).ToGoValue().(*ptableMeta)
-				rows = this.GetMember("_rows", c).ToGoValue().([][]Value)
+				meta = this.GetMember("_meta", c).ToGoValue(c).(*ptableMeta)
+				rows = this.GetMember("_rows", c).ToGoValue(c).([][]Value)
 			)
 			meta.headers = append(meta.headers, colName.Value())
 			for i, row := range rows {

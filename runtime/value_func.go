@@ -84,7 +84,7 @@ func (v *ValueFunc) GoType() reflect.Type {
 	return reflect.TypeOf(nil)
 }
 
-func (v *ValueFunc) ToGoValue() interface{} {
+func (v *ValueFunc) ToGoValue(*Context) interface{} {
 	return nil
 }
 

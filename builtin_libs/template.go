@@ -31,17 +31,17 @@ func libTemplate(c *Context) ValueObject {
 			c.RaiseRuntimeError("renderHtml: parse template error %s", err)
 		}
 		if writer != nil {
-			if w, ok := writer.ToGoValue().(io.Writer); ok {
-				if err := t.Execute(w, params.ToGoValue()); err != nil {
+			if w, ok := writer.ToGoValue(c).(io.Writer); ok {
+				if err := t.Execute(w, params.ToGoValue(c)); err != nil {
 					c.RaiseRuntimeError("renderHtml: execute template error %s", err)
 				}
 			} else {
-				c.RaiseRuntimeError("invalid writer %+v", writer.ToGoValue())
+				c.RaiseRuntimeError("invalid writer %+v", writer.ToGoValue(c))
 			}
 			return Undefined()
 		} else {
 			var b strings.Builder
-			if err := t.Execute(&b, params.ToGoValue()); err != nil {
+			if err := t.Execute(&b, params.ToGoValue(c)); err != nil {
 				c.RaiseRuntimeError("renderHtml: execute template error %s", err)
 			}
 			return NewStr(b.String())
@@ -63,17 +63,17 @@ func libTemplate(c *Context) ValueObject {
 			c.RaiseRuntimeError("renderThml: parse template error %s", err)
 		}
 		if writer != nil {
-			if w, ok := writer.ToGoValue().(io.Writer); ok {
-				if err := t.Execute(w, params.ToGoValue()); err != nil {
+			if w, ok := writer.ToGoValue(c).(io.Writer); ok {
+				if err := t.Execute(w, params.ToGoValue(c)); err != nil {
 					c.RaiseRuntimeError("renderText: execute template error %s", err)
 				}
 			} else {
-				c.RaiseRuntimeError("invalid writer %+v", writer.ToGoValue())
+				c.RaiseRuntimeError("invalid writer %+v", writer.ToGoValue(c))
 			}
 			return Undefined()
 		} else {
 			var b strings.Builder
-			if err := t.Execute(&b, params.ToGoValue()); err != nil {
+			if err := t.Execute(&b, params.ToGoValue(c)); err != nil {
 				c.RaiseRuntimeError("renderText: execute template error %s", err)
 			}
 			return NewStr(b.String())

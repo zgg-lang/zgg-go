@@ -32,7 +32,7 @@ func cronGetAppClass() ValueType {
 					ArgRuleRequired("spec", TypeStr, &spec),
 					ArgRuleRequired("callback", TypeCallable, &callback),
 				)
-				app := this.GetMember("__app", c).ToGoValue().(*cron.Cron)
+				app := this.GetMember("__app", c).ToGoValue(c).(*cron.Cron)
 				newContext := c.Clone()
 				id, err := app.AddFunc(spec.Value(), func() {
 					defer newContext.Recover()
@@ -46,17 +46,17 @@ func cronGetAppClass() ValueType {
 			Method("remove", func(c *Context, this ValueObject, args []Value) Value {
 				var jobId ValueInt
 				EnsureFuncParams(c, "App.remove", args, ArgRuleRequired("jobId", TypeInt, &jobId))
-				app := this.GetMember("__app", c).ToGoValue().(*cron.Cron)
+				app := this.GetMember("__app", c).ToGoValue(c).(*cron.Cron)
 				app.Remove(cron.EntryID(jobId.AsInt()))
 				return this
 			}).
 			Method("start", func(c *Context, this ValueObject, args []Value) Value {
-				app := this.GetMember("__app", c).ToGoValue().(*cron.Cron)
+				app := this.GetMember("__app", c).ToGoValue(c).(*cron.Cron)
 				app.Start()
 				return this
 			}).
 			Method("stop", func(c *Context, this ValueObject, args []Value) Value {
-				app := this.GetMember("__app", c).ToGoValue().(*cron.Cron)
+				app := this.GetMember("__app", c).ToGoValue(c).(*cron.Cron)
 				app.Stop()
 				return this
 			}).

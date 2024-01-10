@@ -18,7 +18,7 @@ func (v ValueBigNum) GoType() reflect.Type {
 	return reflect.TypeOf(v.v)
 }
 
-func (v ValueBigNum) ToGoValue() interface{} {
+func (v ValueBigNum) ToGoValue(*Context) interface{} {
 	return v.Value()
 }
 

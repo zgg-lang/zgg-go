@@ -44,7 +44,7 @@ func libJson(*Context) ValueObject {
 		var err error
 		switch len(args) {
 		case 1:
-			bs, err = jsonMarshal(args[0].ToGoValue())
+			bs, err = jsonMarshal(args[0].ToGoValue(c))
 		case 2:
 			var indent string
 			switch iv := args[1].(type) {
@@ -56,9 +56,9 @@ func libJson(*Context) ValueObject {
 				c.RaiseRuntimeError("json.encode(value, indent): indent must be a string or an integer, not %s", args[1].Type().Name)
 				return nil
 			}
-			bs, err = jsonMarshalIndent(args[0].ToGoValue(), "", indent)
+			bs, err = jsonMarshalIndent(args[0].ToGoValue(c), "", indent)
 		case 3:
-			bs, err = jsonMarshalIndent(args[0].ToGoValue(), args[1].ToString(c), args[2].ToString(c))
+			bs, err = jsonMarshalIndent(args[0].ToGoValue(c), args[1].ToString(c), args[2].ToString(c))
 		default:
 			c.RaiseRuntimeError("json.encode: requires 1 to 3 argument(s)")
 			return nil
@@ -162,7 +162,7 @@ func libJson(*Context) ValueObject {
 		case ValueBytes:
 			err = json.Unmarshal(v.Value(), &data)
 		default:
-			data = v.ToGoValue()
+			data = v.ToGoValue(c)
 		}
 		if err != nil {
 			c.RaiseRuntimeError("json.find: parse value error %s", err)
@@ -246,7 +246,7 @@ func libYaml(c *Context) ValueObject {
 	lib.SetMember("encode", NewNativeFunction("yaml.encode", func(c *Context, this Value, args []Value) Value {
 		var val Value
 		EnsureFuncParams(c, "yaml.encode", args, ArgRuleRequired("value", TypeAny, &val))
-		bs, err := yaml.Marshal(val.ToGoValue())
+		bs, err := yaml.Marshal(val.ToGoValue(c))
 		if err != nil {
 			c.RaiseRuntimeError("yaml.encode error %v", err)
 		}

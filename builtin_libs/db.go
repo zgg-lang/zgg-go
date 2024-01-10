@@ -328,7 +328,7 @@ func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, 
 func initQueryResultClass() ValueType {
 	dbQueryResultClass = NewClassBuilder("QueryResult").
 		Constructor(func(c *Context, thisObj ValueObject, args []Value) {
-			rows := args[0].ToGoValue().(*sql.Rows)
+			rows := args[0].ToGoValue(c).(*sql.Rows)
 			colTypes, err := rows.ColumnTypes()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.__init__ get column types error %s", err)
@@ -341,8 +341,8 @@ func initQueryResultClass() ValueType {
 		Method("each", func(c *Context, this ValueObject, args []Value) Value {
 			c.AssertArgNum(len(args), 1, 1, "QueryResult.each")
 			callback := c.MustCallable(args[0])
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
@@ -358,8 +358,8 @@ func initQueryResultClass() ValueType {
 			return Undefined()
 		}).
 		Method("__iter__", func(c *Context, this ValueObject, args []Value) Value {
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
@@ -374,8 +374,8 @@ func initQueryResultClass() ValueType {
 			})
 		}).
 		Method("all", func(c *Context, this ValueObject, args []Value) Value {
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
@@ -389,8 +389,8 @@ func initQueryResultClass() ValueType {
 			return rv
 		}).
 		Method("allArray", func(c *Context, this ValueObject, args []Value) Value {
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.allArray get columns error %s", err)
@@ -404,8 +404,8 @@ func initQueryResultClass() ValueType {
 			return rv
 		}).
 		Method("allOne", func(c *Context, this ValueObject, args []Value) Value {
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.allOne get columns error %s", err)
@@ -419,11 +419,11 @@ func initQueryResultClass() ValueType {
 			return rv
 		}).
 		Method("next", func(c *Context, this ValueObject, args []Value) Value {
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			if !rows.Next() {
 				return Nil()
 			}
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
@@ -432,11 +432,11 @@ func initQueryResultClass() ValueType {
 			return dbScanRowsToObject(c, rows, cts, cols)
 		}).
 		Method("nextArray", func(c *Context, this ValueObject, args []Value) Value {
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			if !rows.Next() {
 				return Nil()
 			}
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.nextArray get columns error %s", err)
@@ -445,11 +445,11 @@ func initQueryResultClass() ValueType {
 			return dbScanRowsToArray(c, rows, cts, cols)
 		}).
 		Method("nextOne", func(c *Context, this ValueObject, args []Value) Value {
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			if !rows.Next() {
 				return Nil()
 			}
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.nextArray get columns error %s", err)
@@ -458,8 +458,8 @@ func initQueryResultClass() ValueType {
 			return dbScanRowsToArray(c, rows, cts, cols).GetIndex(0, c)
 		}).
 		Method("toTable", func(c *Context, this ValueObject, args []Value) Value {
-			cts := this.GetMember("_colTypes", c).ToGoValue().([]*sql.ColumnType)
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			cts := this.GetMember("_colTypes", c).ToGoValue(c).([]*sql.ColumnType)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			cols, err := rows.Columns()
 			if err != nil {
 				c.RaiseRuntimeError("QueryResult.next get columns error %s", err)
@@ -483,7 +483,7 @@ func initQueryResultClass() ValueType {
 			return table
 		}).
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
-			rows := this.GetMember("_rows", c).ToGoValue().(*sql.Rows)
+			rows := this.GetMember("_rows", c).ToGoValue(c).(*sql.Rows)
 			if err := rows.Close(); err != nil {
 				c.RaiseRuntimeError("QeuryResult.close error %s", err)
 				return nil
@@ -525,9 +525,9 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			db := this.GetMember("_db", c)
 			queryArgs := make([]interface{}, len(args)-1)
 			for i := range queryArgs {
-				queryArgs[i] = args[i+1].ToGoValue()
+				queryArgs[i] = args[i+1].ToGoValue(c)
 			}
-			rows, err := db.ToGoValue().(*sql.DB).Query(querySql.Value(), queryArgs...)
+			rows, err := db.ToGoValue(c).(*sql.DB).Query(querySql.Value(), queryArgs...)
 			if err != nil {
 				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
@@ -536,8 +536,8 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 		}).
 		Method("tables", func(c *Context, this ValueObject, args []Value) Value {
 			db := this.GetMember("_db", c)
-			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
-			rows, err := db.ToGoValue().(*sql.DB).Query(dialect.ShowTablesSQL())
+			dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
+			rows, err := db.ToGoValue(c).(*sql.DB).Query(dialect.ShowTablesSQL())
 			if err != nil {
 				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
@@ -555,9 +555,9 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			db := this.GetMember("_db", c)
 			execArgs := make([]interface{}, len(args)-1)
 			for i := range execArgs {
-				execArgs[i] = args[i+1].ToGoValue()
+				execArgs[i] = args[i+1].ToGoValue(c)
 			}
-			res, err := db.ToGoValue().(*sql.DB).Exec(execSql.Value(), execArgs...)
+			res, err := db.ToGoValue(c).(*sql.DB).Exec(execSql.Value(), execArgs...)
 			if err != nil {
 				c.RaiseRuntimeError("Database.execute execute fail %s", err)
 				return nil
@@ -578,7 +578,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			return rv
 		}).
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
-			db := this.GetMember("_db", c).ToGoValue().(*sql.DB)
+			db := this.GetMember("_db", c).ToGoValue(c).(*sql.DB)
 			if err := db.Close(); err != nil {
 				c.RaiseRuntimeError("Database.close error %s", err)
 				return nil
@@ -613,7 +613,7 @@ func initDatabaseSessionClass() ValueType {
 	globalSpId := int64(0)
 	return NewClassBuilder("Session").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
-			parent := args[0].ToGoValue()
+			parent := args[0].ToGoValue(c)
 			var tx *sql.Tx
 			var err error
 			switch session := parent.(type) {
@@ -662,10 +662,10 @@ func initDatabaseSessionClass() ValueType {
 			EnsureFuncParams(c, "Session.query", args,
 				ArgRuleRequired("querySql", TypeStr, &querySql),
 			)
-			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
+			tx := this.GetMember("_tx", c).ToGoValue(c).(*sql.Tx)
 			queryArgs := make([]interface{}, len(args)-1)
 			for i := range queryArgs {
-				queryArgs[i] = args[i+1].ToGoValue()
+				queryArgs[i] = args[i+1].ToGoValue(c)
 			}
 			rows, err := tx.Query(querySql.Value(), queryArgs...)
 			if err != nil {
@@ -681,10 +681,10 @@ func initDatabaseSessionClass() ValueType {
 			EnsureFuncParams(c, "Session.execute", args,
 				ArgRuleRequired("querySql", TypeStr, &execSql),
 			)
-			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
+			tx := this.GetMember("_tx", c).ToGoValue(c).(*sql.Tx)
 			execArgs := make([]interface{}, len(args)-1)
 			for i := range execArgs {
-				execArgs[i] = args[i+1].ToGoValue()
+				execArgs[i] = args[i+1].ToGoValue(c)
 			}
 			res, err := tx.Exec(execSql.Value(), execArgs...)
 			if err != nil {
@@ -707,7 +707,7 @@ func initDatabaseSessionClass() ValueType {
 			return rv
 		}).
 		Method("commit", func(c *Context, this ValueObject, args []Value) Value {
-			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
+			tx := this.GetMember("_tx", c).ToGoValue(c).(*sql.Tx)
 			if spId, ok := this.GetMember("__spId", c).(ValueStr); ok {
 				if _, err := tx.Exec(fmt.Sprintf("RELEASE SAVEPOINT %s", spId.Value())); err != nil {
 					c.RaiseRuntimeError("Session.commit: %s", err)
@@ -722,7 +722,7 @@ func initDatabaseSessionClass() ValueType {
 			return Undefined()
 		}).
 		Method("rollback", func(c *Context, this ValueObject, args []Value) Value {
-			tx := this.GetMember("_tx", c).ToGoValue().(*sql.Tx)
+			tx := this.GetMember("_tx", c).ToGoValue(c).(*sql.Tx)
 			if spId, ok := this.GetMember("__spId", c).(ValueStr); ok {
 				if _, err := tx.Exec(fmt.Sprintf("ROLLBACK TO %s", spId.Value())); err != nil {
 					c.RaiseRuntimeError("Session.rollback: %s", err)
@@ -843,7 +843,7 @@ func initDatabaseActiveRecordClass() ValueType {
 	doQuery := func(c *Context, this ValueObject, args []Value) ValueObject {
 		conn := c.MustObject(this.GetMember("conn", c))
 		table := c.MustStr(this.GetMember("table", c))
-		dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
+		dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
 		filters := c.MustArray(this.GetMember("filters", c))
 		sqlArgs := c.MustArray(this.GetMember("sqlArgs", c))
 		var sqlBuilder strings.Builder
@@ -869,7 +869,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		_buildOffsetLimit(c, &sqlBuilder, this, sqlArgs)
 		sql := sqlBuilder.String()
 		if this.GetMember("_showSql", c).IsTrue() {
-			fmt.Fprintln(c.Stdout, sql, sqlArgs.ToGoValue())
+			fmt.Fprintln(c.Stdout, sql, sqlArgs.ToGoValue(c))
 		}
 		c.InvokeMethod(conn, "query", func() []Value {
 			rv := make([]Value, sqlArgs.Len()+1)
@@ -909,7 +909,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		}).
 		Method("and", func(c *Context, this ValueObject, args []Value) Value {
 			if n := len(args); n > 0 {
-				dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
+				dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
 				filters := c.MustArray(this.GetMember("filters", c))
 				sqlArgs := c.MustArray(this.GetMember("sqlArgs", c))
 				if filterObj, ok := args[0].(ValueObject); ok && n == 1 {
@@ -927,7 +927,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		}).
 		Method("asc", func(c *Context, this ValueObject, args []Value) Value {
 			orderBys := c.MustArray(this.GetMember("orderBys", c))
-			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
+			dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
 			for _, arg := range args {
 				field := arg.ToString(c)
 				if !strings.ContainsAny(field, "`( ") {
@@ -939,7 +939,7 @@ func initDatabaseActiveRecordClass() ValueType {
 		}).
 		Method("desc", func(c *Context, this ValueObject, args []Value) Value {
 			orderBys := c.MustArray(this.GetMember("orderBys", c))
-			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
+			dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
 			for _, arg := range args {
 				field := arg.ToString(c)
 				if !strings.ContainsAny(field, "`( ") {
@@ -1007,7 +1007,7 @@ func initDatabaseActiveRecordClass() ValueType {
 			var updates ValueObject
 			EnsureFuncParams(c, "ActiveRecord.update", args, ArgRuleRequired("updates", TypeObject, &updates))
 			conn := c.MustObject(this.GetMember("conn", c))
-			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
+			dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
 			table := c.MustStr(this.GetMember("table", c))
 			filters := c.MustArray(this.GetMember("filters", c))
 			sqlArgs := c.MustArray(this.GetMember("sqlArgs", c))
@@ -1034,7 +1034,7 @@ func initDatabaseActiveRecordClass() ValueType {
 			realArgs[0] = NewStr(sql)
 			realArgs = append(realArgs, *sqlArgs.Values...)
 			if this.GetMember("_showSql", c).IsTrue() {
-				fmt.Fprintln(c.Stdout, sql, NewArrayByValues(realArgs[1:]...).ToGoValue())
+				fmt.Fprintln(c.Stdout, sql, NewArrayByValues(realArgs[1:]...).ToGoValue(c))
 			}
 			c.InvokeMethod(conn, "execute", Args(realArgs...))
 			res := c.MustObject(c.RetVal)
@@ -1045,7 +1045,7 @@ func initDatabaseActiveRecordClass() ValueType {
 				c.RaiseRuntimeError("requires at least 1 argument(s)")
 			}
 			table := c.MustStr(this.GetMember("table", c))
-			dialect := this.GetMember("_dialect", c).ToGoValue().(dbDialect)
+			dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
 			var sqlBuilder strings.Builder
 			sqlBuilder.WriteString("INSERT INTO ")
 			sqlBuilder.WriteString(dialect.Quote(table))
@@ -1088,7 +1088,7 @@ func initDatabaseActiveRecordClass() ValueType {
 			sql := sqlBuilder.String()
 			execArgs[0] = NewStr(sql)
 			if this.GetMember("_showSql", c).IsTrue() {
-				fmt.Fprintln(c.Stdout, sql, NewArrayByValues(execArgs[1:]...).ToGoValue())
+				fmt.Fprintln(c.Stdout, sql, NewArrayByValues(execArgs[1:]...).ToGoValue(c))
 			}
 			conn := c.MustObject(this.GetMember("conn", c))
 			return c.InvokeMethod(conn, "execute", Args(execArgs...))
@@ -1125,7 +1125,7 @@ func libDbOp(*Context) ValueObject {
 			ArgRuleRequired("filters", TypeArray, &filters),
 			ArgRuleRequired("sqlArgs", TypeArray, &sqlArgs),
 		)
-		return dialect.ToGoValue().(dbDialect), field, filters, sqlArgs
+		return dialect.ToGoValue(c).(dbDialect), field, filters, sqlArgs
 	}
 	for _, dd := range defs {
 		d := dd

@@ -257,7 +257,7 @@ func httpGetMultipartForm(c *Context, form ValueObject) ([]byte, string) {
 	var buf bytes.Buffer
 	formWriter := multipart.NewWriter(&buf)
 	form.Iterate(func(key string, val Value) {
-		if rd, ok := val.ToGoValue().(io.Reader); ok {
+		if rd, ok := val.ToGoValue(c).(io.Reader); ok {
 			filename := ""
 			if file, ok := rd.(*os.File); ok {
 				filename = filepath.Base(file.Name())
@@ -340,7 +340,7 @@ var httpPostJson = NewNativeFunction("postJson", func(c *Context, this Value, ar
 	c.AssertArgNum(len(args), 2, 3, "http.postJson")
 	postUrl := c.MustStr(args[0], "http.postJson::url")
 	content := args[1]
-	contentBytes, err := json.Marshal(content.ToGoValue())
+	contentBytes, err := json.Marshal(content.ToGoValue(c))
 	if err != nil {
 		c.RaiseRuntimeError("http.postJson::content encode to json error %s", err)
 		return nil
@@ -502,8 +502,8 @@ func initHttpRequestContextClass() ValueType {
 	className := "http.RequestContext"
 	return NewClassBuilder("RequestContext").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
-			// w := args[0].ToGoValue().(http.ResponseWriter)
-			r := args[1].ToGoValue().(*http.Request)
+			// w := args[0].ToGoValue(c).(http.ResponseWriter)
+			r := args[1].ToGoValue(c).(*http.Request)
 			this.SetMember("_w", args[0], c)
 			this.SetMember("_r", args[1], c)
 			this.SetMember("method", NewStr(r.Method), c)
@@ -511,7 +511,7 @@ func initHttpRequestContextClass() ValueType {
 			this.SetMember("querystr", NewStr(r.URL.RawQuery), c)
 		}).
 		Method("getBody", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				c.RaiseRuntimeError("%s.getData error %s", className, err)
@@ -520,7 +520,7 @@ func initHttpRequestContextClass() ValueType {
 			return NewBytes(body)
 		}).
 		Method("query", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".query", args,
 				ArgRuleRequired("name", TypeStr, &argName),
@@ -531,7 +531,7 @@ func initHttpRequestContextClass() ValueType {
 			return Nil()
 		}).
 		Method("getHeader", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".getHeader", args,
 				ArgRuleRequired("name", TypeStr, &argName),
@@ -539,7 +539,7 @@ func initHttpRequestContextClass() ValueType {
 			return NewStr(r.Header.Get(argName.Value()))
 		}).
 		Method("getHeaders", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".getHeaders", args,
 				ArgRuleRequired("name", TypeStr, &argName),
@@ -552,7 +552,7 @@ func initHttpRequestContextClass() ValueType {
 			return rv
 		}).
 		Method("queryAll", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".queryAll", args,
 				ArgRuleRequired("name", TypeStr, &argName),
@@ -567,7 +567,7 @@ func initHttpRequestContextClass() ValueType {
 			return NewArray()
 		}).
 		Method("parseMultipartForm", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var maxSize ValueInt
 			EnsureFuncParams(c, className+".parseMultipartForm", args,
 				ArgRuleOptional("maxSize", TypeInt, &maxSize, NewInt(10*1024*1024)),
@@ -576,7 +576,7 @@ func initHttpRequestContextClass() ValueType {
 			return Nil()
 		}).
 		Method("file", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var (
 				name  ValueStr
 				index ValueInt
@@ -596,7 +596,7 @@ func initHttpRequestContextClass() ValueType {
 			return rv
 		}).
 		Method("files", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var (
 				name  ValueStr
 				index ValueInt
@@ -617,7 +617,7 @@ func initHttpRequestContextClass() ValueType {
 			return rv
 		}).
 		Method("form", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			r.ParseForm()
 			var argName ValueStr
 			EnsureFuncParams(c, className+".form", args,
@@ -629,7 +629,7 @@ func initHttpRequestContextClass() ValueType {
 			return Nil()
 		}).
 		Method("formAll", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			var argName ValueStr
 			EnsureFuncParams(c, className+".formAll", args,
 				ArgRuleRequired("name", TypeStr, &argName),
@@ -644,7 +644,7 @@ func initHttpRequestContextClass() ValueType {
 			return NewArray()
 		}).
 		Method("getBodyStr", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				c.RaiseRuntimeError("%s.getData error %s", className, err)
@@ -659,7 +659,7 @@ func initHttpRequestContextClass() ValueType {
 			EnsureFuncParams(c, className+".setCookie", args,
 				ArgRuleRequired("name", TypeStr, &name),
 			)
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			cookie, err := r.Cookie(name.Value())
 			if err == http.ErrNoCookie {
 				return Nil()
@@ -669,7 +669,7 @@ func initHttpRequestContextClass() ValueType {
 			return NewStr(cookie.Value)
 		}).
 		Method("cookies", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			cookies := r.Cookies()
 			rv := NewObject()
 			for _, cookie := range cookies {
@@ -686,7 +686,7 @@ func initHttpRequestContextClass() ValueType {
 				ArgRuleRequired("key", TypeStr, &key),
 				ArgRuleRequired("val", TypeStr, &val),
 			)
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			w.Header().Add(key.Value(), val.Value())
 			return Undefined()
 		}).
@@ -699,7 +699,7 @@ func initHttpRequestContextClass() ValueType {
 				ArgRuleRequired("key", TypeStr, &key),
 				ArgRuleRequired("val", TypeStr, &val),
 			)
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			w.Header().Set(key.Value(), val.Value())
 			return Undefined()
 		}).
@@ -714,7 +714,7 @@ func initHttpRequestContextClass() ValueType {
 				ArgRuleRequired("value", TypeStr, &value),
 				ArgRuleOptional("options", TypeObject, &options, NewObject()),
 			)
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			var cookie http.Cookie
 			cookie.Name = name.Value()
 			cookie.Value = value.Value()
@@ -743,7 +743,7 @@ func initHttpRequestContextClass() ValueType {
 			EnsureFuncParams(c, className+".setCookie", args,
 				ArgRuleRequired("name", TypeStr, &name),
 			)
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			http.SetCookie(w, &http.Cookie{Name: name.Value(), MaxAge: -1})
 			return Undefined()
 		}).
@@ -753,11 +753,11 @@ func initHttpRequestContextClass() ValueType {
 				return nil
 			}
 			statusCode := c.MustInt(args[0])
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			w.WriteHeader(int(statusCode))
 			for i := 1; i < len(args); i++ {
 				arg := args[i]
-				if reader, ok := arg.ToGoValue().(io.Reader); ok {
+				if reader, ok := arg.ToGoValue(c).(io.Reader); ok {
 					io.Copy(w, reader)
 					continue
 				}
@@ -781,7 +781,7 @@ func initHttpRequestContextClass() ValueType {
 			return Undefined()
 		}).
 		Method("writeJson", func(c *Context, this ValueObject, args []Value) Value {
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			statusCode := 200
 			contentAt := 0
 			switch len(args) {
@@ -792,7 +792,7 @@ func initHttpRequestContextClass() ValueType {
 			case 1:
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(statusCode)
-				if err := json.NewEncoder(w).Encode(args[contentAt].ToGoValue()); err != nil {
+				if err := json.NewEncoder(w).Encode(args[contentAt].ToGoValue(c)); err != nil {
 					c.RaiseRuntimeError("writeJson: encode to json error %s", err)
 				}
 			default:
@@ -807,8 +807,8 @@ func initHttpRequestContextClass() ValueType {
 			EnsureFuncParams(c, "http.RequestContext.sendFile", args,
 				ArgRuleRequired("filename", TypeStr, &filename),
 			)
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			http.ServeFile(w, r, filename.Value())
 			return Undefined()
 		}).
@@ -821,8 +821,8 @@ func initHttpRequestContextClass() ValueType {
 				ArgRuleRequired("url", TypeStr, &url),
 				ArgRuleOptional("code", TypeInt, &code, NewInt(200)),
 			)
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			http.Redirect(w, r, url.Value(), code.AsInt())
 			return Undefined()
 		}).
@@ -835,8 +835,8 @@ func initHttpRequestContextClass() ValueType {
 				ArgRuleRequired("target", TypeStr, &target),
 				ArgRuleOptional("options", TypeObject, &options, NewObject()),
 			)
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
-			w := this.GetMember("_w", c).ToGoValue().(http.ResponseWriter)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
+			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)
 			var (
 				targetUrl = target.Value()
 				host      = targetUrl
@@ -897,7 +897,7 @@ func initHttpRequestContextClass() ValueType {
 			return Undefined()
 		}).
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
-			r := this.GetMember("_r", c).ToGoValue().(*http.Request)
+			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			r.Body.Close()
 			return Undefined()
 		}).
@@ -913,7 +913,7 @@ func initWebsocketContextClass() ValueType {
 			this.SetMember("r", args[2], c)
 		}).
 		Method("read", func(c *Context, this ValueObject, args []Value) Value {
-			conn := this.GetMember("_conn", c).ToGoValue().(*websocket.Conn)
+			conn := this.GetMember("_conn", c).ToGoValue(c).(*websocket.Conn)
 			mt, pkg, err := conn.ReadMessage()
 			if err != nil {
 				c.RaiseRuntimeError("websocket read message error %s", err)
@@ -927,7 +927,7 @@ func initWebsocketContextClass() ValueType {
 			return nil
 		}).
 		Method("readJson", func(c *Context, this ValueObject, args []Value) Value {
-			conn := this.GetMember("_conn", c).ToGoValue().(*websocket.Conn)
+			conn := this.GetMember("_conn", c).ToGoValue(c).(*websocket.Conn)
 			_, pkg, err := conn.ReadMessage()
 			if err != nil {
 				c.RaiseRuntimeError("websocket read message error %s", err)
@@ -941,14 +941,14 @@ func initWebsocketContextClass() ValueType {
 			return rv
 		}).
 		Method("write", func(c *Context, this ValueObject, args []Value) Value {
-			conn := this.GetMember("_conn", c).ToGoValue().(*websocket.Conn)
+			conn := this.GetMember("_conn", c).ToGoValue(c).(*websocket.Conn)
 			var err error
 			for _, arg := range args {
 				switch pkg := arg.(type) {
 				case ValueBytes:
 					err = conn.WriteMessage(websocket.BinaryMessage, pkg.Value())
 				case ValueObject:
-					err = conn.WriteJSON(pkg.ToGoValue())
+					err = conn.WriteJSON(pkg.ToGoValue(c))
 				default:
 					err = conn.WriteMessage(websocket.TextMessage, []byte(pkg.ToString(c)))
 				}
@@ -1081,7 +1081,7 @@ func initHttpRequestClass() ValueType {
 			var client GoValue
 			EnsureFuncParams(c, "Request.useClient", args,
 				ArgRuleRequired("goHttpClient", TypeGoValue, &client))
-			if _, ok := client.ToGoValue().(*http.Client); !ok {
+			if _, ok := client.ToGoValue(c).(*http.Client); !ok {
 				c.RaiseRuntimeError("Request.useClient: argument must be a *http.Client")
 			}
 			this.SetMember("__goHttpClient", client, c)
@@ -1129,7 +1129,7 @@ func initHttpRequestClass() ValueType {
 				req.Header.Add(key.ToString(c), val.ToString(c))
 			}
 			var httpClient *http.Client = nil
-			if hc, ok := this.GetMember("__goHttpClient", c).ToGoValue().(*http.Client); ok {
+			if hc, ok := this.GetMember("__goHttpClient", c).ToGoValue(c).(*http.Client); ok {
 				httpClient = hc
 			} else {
 				if certs, ok := this.GetMember("__certs", c).(ValueArray); ok && certs.Len() == 3 {
@@ -1172,7 +1172,7 @@ func initHttpRequestClass() ValueType {
 					if httpClient == nil {
 						httpClient = &http.Client{}
 					}
-					hostsMap := hosts.ToGoValue().(map[string]interface{})
+					hostsMap := hosts.ToGoValue(c).(map[string]interface{})
 					var dialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 						if mapped, exists := hostsMap[addr]; exists {
 							addr = fmt.Sprint(mapped)
@@ -1209,7 +1209,7 @@ func initHttpRequestClass() ValueType {
 					if transport.TLSClientConfig == nil {
 						transport.TLSClientConfig = &tls.Config{}
 					}
-					if jsonBs, err := json.Marshal(tlsConfig.ToGoValue()); err != nil {
+					if jsonBs, err := json.Marshal(tlsConfig.ToGoValue(c)); err != nil {
 						c.RaiseRuntimeError("set tls config error: %+v", err)
 					} else if err := json.Unmarshal(jsonBs, transport.TLSClientConfig); err != nil {
 						c.RaiseRuntimeError("set tls config error: %+v", err)
@@ -1241,7 +1241,7 @@ func initHttpRequestClass() ValueType {
 func initHttpResponseClass() ValueType {
 	return NewClassBuilder("Response").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
-			resp := args[0].ToGoValue().(*http.Response)
+			resp := args[0].ToGoValue(c).(*http.Response)
 			this.SetMember("__resp", args[0], c)
 			this.SetMember("statusCode", NewInt(int64(resp.StatusCode)), c)
 			headers := NewObject()
@@ -1251,18 +1251,18 @@ func initHttpResponseClass() ValueType {
 			this.SetMember("headers", headers, c)
 		}).
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
-			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
 			resp.Body.Close()
 			return this
 		}).
 		Method("header", func(c *Context, this ValueObject, args []Value) Value {
-			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
 			var h ValueStr
 			EnsureFuncParams(c, "http.Response.header", args, ArgRuleRequired("header", TypeStr, &h))
 			return NewStr(resp.Header.Get(h.Value()))
 		}).
 		Method("bytes", func(c *Context, this ValueObject, args []Value) Value {
-			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
 			bytes, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				c.RaiseRuntimeError("http.Response.bytes: read body error %s", err)
@@ -1272,7 +1272,7 @@ func initHttpResponseClass() ValueType {
 		Method("chunk", func(c *Context, this ValueObject, args []Value) Value {
 			var chunkSize ValueInt
 			EnsureFuncParams(c, "http.Response.chunk", args, ArgRuleOptional("chunkSize", TypeInt, &chunkSize, NewInt(512*1024)))
-			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
 			var stackBuf [512 * 1024]byte
 			var buf []byte
 			if s := chunkSize.AsInt(); s <= len(stackBuf) {
@@ -1294,7 +1294,7 @@ func initHttpResponseClass() ValueType {
 		Method("iterChunk", func(c *Context, this ValueObject, args []Value) Value {
 			var chunkSize ValueInt
 			EnsureFuncParams(c, "http.Response.iterChunk", args, ArgRuleOptional("chunkSize", TypeInt, &chunkSize, NewInt(512*1024)))
-			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
 			var stackBuf [512 * 1024]byte
 			var buf []byte
 			if s := chunkSize.AsInt(); s <= len(stackBuf) {
@@ -1318,7 +1318,7 @@ func initHttpResponseClass() ValueType {
 			return rv
 		}, "chunkSize").
 		Method("text", func(c *Context, this ValueObject, args []Value) Value {
-			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
 			bytes, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				c.RaiseRuntimeError("http.Response.text: read body error %s", err)
@@ -1326,7 +1326,7 @@ func initHttpResponseClass() ValueType {
 			return NewStr(string(bytes))
 		}).
 		Method("json", func(c *Context, this ValueObject, args []Value) Value {
-			resp := this.GetMember("__resp", c).ToGoValue().(*http.Response)
+			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
 			var o interface{}
 			dec := json.NewDecoder(resp.Body)
 			if err := dec.Decode(&o); err != nil {
@@ -1340,7 +1340,7 @@ func initHttpResponseClass() ValueType {
 func initHttpFormFileClass() ValueType {
 	return NewClassBuilder("FormFile").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
-			fh := args[0].ToGoValue().(*multipart.FileHeader)
+			fh := args[0].ToGoValue(c).(*multipart.FileHeader)
 			this.SetMember("_fh", args[0], c)
 			this.SetMember("name", NewStr(fh.Filename), c)
 			this.SetMember("size", NewInt(fh.Size), c)
@@ -1350,7 +1350,7 @@ func initHttpFormFileClass() ValueType {
 			if bs, ok := _bs.(ValueBytes); ok {
 				return bs
 			}
-			fh := this.GetMember("_fh", c).ToGoValue().(*multipart.FileHeader)
+			fh := this.GetMember("_fh", c).ToGoValue(c).(*multipart.FileHeader)
 			file, err := fh.Open()
 			if err != nil {
 				c.RaiseRuntimeError("FormFile.bytes: open file error %s", err)
@@ -1381,7 +1381,7 @@ func initHttpWebsocketClientClass() ValueType {
 		Method("connect", func(c *Context, this ValueObject, args []Value) Value {
 			var argHeaders ValueObject
 			EnsureFuncParams(c, "http.WebSocketClient.connect", args, ArgRuleOptional("headers", TypeObject, &argHeaders, NewObject()))
-			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			conn, ok := this.GetMember("__conn", c).ToGoValue(c).(*websocket.Conn)
 			if ok && conn != nil {
 				conn.Close()
 			}
@@ -1407,7 +1407,7 @@ func initHttpWebsocketClientClass() ValueType {
 			return this
 		}).
 		Method("read", func(c *Context, this ValueObject, args []Value) Value {
-			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			conn, ok := this.GetMember("__conn", c).ToGoValue(c).(*websocket.Conn)
 			if !ok || conn == nil {
 				c.RaiseRuntimeError("websocket read error: no connection")
 			}
@@ -1422,7 +1422,7 @@ func initHttpWebsocketClientClass() ValueType {
 			}
 		}).
 		Method("readJson", func(c *Context, this ValueObject, args []Value) Value {
-			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			conn, ok := this.GetMember("__conn", c).ToGoValue(c).(*websocket.Conn)
 			if !ok || conn == nil {
 				c.RaiseRuntimeError("websocket readJson error: no connection")
 			}
@@ -1437,7 +1437,7 @@ func initHttpWebsocketClientClass() ValueType {
 			return jsonToValue(j, c)
 		}).
 		Method("write", func(c *Context, this ValueObject, args []Value) Value {
-			conn, ok := this.GetMember("__conn", c).ToGoValue().(*websocket.Conn)
+			conn, ok := this.GetMember("__conn", c).ToGoValue(c).(*websocket.Conn)
 			if !ok || conn == nil {
 				c.RaiseRuntimeError("websocket write error: no connection")
 			}
@@ -1457,7 +1457,7 @@ func initHttpWebsocketClientClass() ValueType {
 		Method("writeJson", func(c *Context, this ValueObject, args []Value) Value {
 			var val Value
 			EnsureFuncParams(c, "writeJson", args, ArgRuleRequired("value", TypeAny, &val))
-			bs, err := jsonMarshal(val.ToGoValue())
+			bs, err := jsonMarshal(val.ToGoValue(c))
 			if err != nil {
 				c.RaiseRuntimeError("websocket writeJson error: %s", err)
 			}

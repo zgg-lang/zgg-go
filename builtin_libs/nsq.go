@@ -41,7 +41,7 @@ func libNsq(c *Context) ValueObject {
 			payload = []byte(v.Value())
 		default:
 			var err error
-			payload, err = jsonMarshal(data.ToGoValue())
+			payload, err = jsonMarshal(data.ToGoValue(c))
 			if err != nil {
 				c.RaiseRuntimeError("nsq.Producer.publish marshal data error %+v", err)
 			}
@@ -118,7 +118,7 @@ var (
 		Method("closeAll", func(c *Context, this ValueObject, args []Value) Value {
 			consumers := c.MustArray(this.GetMember("_consumers", c))
 			for i := 0; i < consumers.Len(); i++ {
-				c := consumers.GetIndex(i, c).ToGoValue().(*nsq.Consumer)
+				c := consumers.GetIndex(i, c).ToGoValue(c).(*nsq.Consumer)
 				c.Stop()
 			}
 			return Undefined()
@@ -150,7 +150,7 @@ var (
 				ArgRuleRequired("topic", TypeStr, &topic),
 				ArgRuleRequired("data", TypeAny, &data),
 			)
-			p := this.GetMember("_producer", c).ToGoValue().(*nsq.Producer)
+			p := this.GetMember("_producer", c).ToGoValue(c).(*nsq.Producer)
 			var payload []byte
 			switch v := data.(type) {
 			case ValueBytes:
@@ -159,7 +159,7 @@ var (
 				payload = []byte(v.Value())
 			default:
 				var err error
-				payload, err = jsonMarshal(data.ToGoValue())
+				payload, err = jsonMarshal(data.ToGoValue(c))
 				if err != nil {
 					c.RaiseRuntimeError("nsq.Producer.publish marshal data error %+v", err)
 				}
@@ -170,14 +170,14 @@ var (
 			return this
 		}).
 		Method("ping", func(c *Context, this ValueObject, args []Value) Value {
-			p := this.GetMember("_producer", c).ToGoValue().(*nsq.Producer)
+			p := this.GetMember("_producer", c).ToGoValue(c).(*nsq.Producer)
 			if err := p.Ping(); err != nil {
 				c.RaiseRuntimeError("nsq.Producer.ping ping error %+v", err)
 			}
 			return this
 		}).
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
-			p := this.GetMember("_producer", c).ToGoValue().(*nsq.Producer)
+			p := this.GetMember("_producer", c).ToGoValue(c).(*nsq.Producer)
 			p.Stop()
 			return Undefined()
 		}).

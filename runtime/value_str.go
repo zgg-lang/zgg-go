@@ -37,7 +37,7 @@ func (v ValueStr) GoType() reflect.Type {
 	return reflect.TypeOf(vv)
 }
 
-func (v ValueStr) ToGoValue() interface{} {
+func (v ValueStr) ToGoValue(*Context) interface{} {
 	return v.Value()
 }
 

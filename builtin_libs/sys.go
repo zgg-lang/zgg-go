@@ -158,7 +158,7 @@ var sysCommandClass = func() ValueType {
 		}).
 		Method("start", func(c *Context, this ValueObject, args []Value) Value {
 			name := this.GetMember("_name", c)
-			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
+			cmd := this.GetMember("_cmd", c).ToGoValue(c).(*exec.Cmd)
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
 				c.RaiseRuntimeError("sys.Command,input get stdin pipe error %s", err)
@@ -172,7 +172,7 @@ var sysCommandClass = func() ValueType {
 			return this
 		}).
 		Method("input", func(c *Context, this ValueObject, args []Value) Value {
-			stdin := this.GetMember("_input", c).ToGoValue().(io.WriteCloser)
+			stdin := this.GetMember("_input", c).ToGoValue(c).(io.WriteCloser)
 			for _, arg := range args {
 				var bs []byte
 				switch a := arg.(type) {
@@ -200,7 +200,7 @@ var sysCommandClass = func() ValueType {
 				c.RaiseRuntimeError("sys.Command.onStdout: stdoutCallback already set")
 				return nil
 			}
-			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
+			cmd := this.GetMember("_cmd", c).ToGoValue(c).(*exec.Cmd)
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
 				c.RaiseRuntimeError("sys.Command.onStdout: get stdout pipe error %s", err)
@@ -217,7 +217,7 @@ var sysCommandClass = func() ValueType {
 				c.RaiseRuntimeError("sys.Command.onStderr: stderrCallback already set")
 				return nil
 			}
-			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
+			cmd := this.GetMember("_cmd", c).ToGoValue(c).(*exec.Cmd)
 			stderr, err := cmd.StderrPipe()
 			if err != nil {
 				c.RaiseRuntimeError("sys.Command.onStderr: get stderr pipe error %s", err)
@@ -228,7 +228,7 @@ var sysCommandClass = func() ValueType {
 		}).
 		Method("wait", func(c *Context, this ValueObject, args []Value) Value {
 			name := this.GetMember("_name", c)
-			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
+			cmd := this.GetMember("_cmd", c).ToGoValue(c).(*exec.Cmd)
 			started := c.MustBool(this.GetMember("_started", c))
 			if !started {
 				if err := cmd.Start(); err != nil {
@@ -248,7 +248,7 @@ var sysCommandClass = func() ValueType {
 		}).
 		Method("waitOutput", func(c *Context, this ValueObject, args []Value) Value {
 			name := this.GetMember("_name", c)
-			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
+			cmd := this.GetMember("_cmd", c).ToGoValue(c).(*exec.Cmd)
 			bs, err := cmd.CombinedOutput()
 			if err != nil {
 				c.RaiseRuntimeError("sys.Command.waitOutput: command %s error %s", name.ToString(c), err)
@@ -257,7 +257,7 @@ var sysCommandClass = func() ValueType {
 			return NewBytes(bs)
 		}).
 		Method("kill", func(c *Context, this ValueObject, args []Value) Value {
-			cmd := this.GetMember("_cmd", c).ToGoValue().(*exec.Cmd)
+			cmd := this.GetMember("_cmd", c).ToGoValue(c).(*exec.Cmd)
 			cmd.Process.Kill()
 			return Undefined()
 		}).

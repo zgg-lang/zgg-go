@@ -88,7 +88,7 @@ func (a *timeDurationArg) Get(c *Context) ValueObject {
 }
 
 func (a *timeDurationArg) GetDuration(c *Context) time.Duration {
-	return a.Get(c).ToGoValue().(time.Duration)
+	return a.Get(c).ToGoValue(c).(time.Duration)
 }
 
 func libTime(c *Context) ValueObject {
@@ -132,7 +132,7 @@ func libTime(c *Context) ValueObject {
 	lib.SetMember("fromGoTime", NewNativeFunction("fromGoTime", func(c *Context, this Value, args []Value) Value {
 		var gt GoValue
 		EnsureFuncParams(c, "time.fromGoTime", args, ArgRuleRequired("time", TypeGoValue, &gt))
-		if _, ok := gt.ToGoValue().(time.Time); !ok {
+		if _, ok := gt.ToGoValue(c).(time.Time); !ok {
 			c.RaiseRuntimeError("Not a time.Time!")
 		}
 		return NewObjectAndInit(timeTimeClass, c, gt)
@@ -267,7 +267,7 @@ func timeInittimeTimeClass() {
 					ts := v.Value()
 					_t = time.Unix(ts/1e9, ts%1e9)
 				case GoValue:
-					switch gv := v.ToGoValue().(type) {
+					switch gv := v.ToGoValue(c).(type) {
 					case time.Time:
 						_t = gv
 					case timeTimeInfo:
@@ -395,6 +395,10 @@ func timeInittimeTimeClass() {
 				return NewInt(int64(t.Weekday()))
 			}
 			return Undefined()
+		}).
+		Method("__goValue__", func(c *Context, this ValueObject, args []Value) Value {
+			t := this.Reserved.(timeTimeInfo).t
+			return NewGoValue(t)
 		}).
 		Method("add", func(c *Context, this ValueObject, args []Value) Value {
 			var duration ValueStr
@@ -691,7 +695,7 @@ func timeInitDurationClass() {
 					this.Reserved = du
 					return
 				case GoValue:
-					if du, is := dv.ToGoValue().(time.Duration); is {
+					if du, is := dv.ToGoValue(c).(time.Duration); is {
 						this.Reserved = du
 						return
 					}

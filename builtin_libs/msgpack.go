@@ -17,7 +17,7 @@ func libMsgpack(*Context) ValueObject {
 				c.RaiseRuntimeError("msgpack.encode: requires 1 argument")
 				return nil
 			}
-			bs, err := msgpack.Marshal(args[0].ToGoValue())
+			bs, err := msgpack.Marshal(args[0].ToGoValue(c))
 			if err != nil {
 				c.RaiseRuntimeError("msgpack.encode: " + err.Error())
 				return nil

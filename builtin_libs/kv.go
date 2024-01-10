@@ -74,7 +74,7 @@ func getKvManagerClass() ValueType {
 func initKvFileSystemAdapter() {
 	t := NewClassBuilder("FileSystemAdapter").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
-			u := args[0].ToGoValue().(*url.URL)
+			u := args[0].ToGoValue(c).(*url.URL)
 			q := u.Query()
 			this.SetMember("__root", NewStr(u.Path), c)
 			this.SetMember("__prefix", NewStr(q.Get("prefix")), c)
@@ -126,7 +126,7 @@ func initKvFileSystemAdapter() {
 func initKvRedisAdapter() {
 	t := NewClassBuilder("RedisAdapter").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
-			u := args[0].ToGoValue().(*url.URL)
+			u := args[0].ToGoValue(c).(*url.URL)
 			q := u.Query()
 			var host string
 			if h, p, err := net.SplitHostPort(u.Host); err != nil {
@@ -167,7 +167,7 @@ func initKvRedisAdapter() {
 		}).
 		Method("get", func(c *Context, this ValueObject, args []Value) Value {
 			var (
-				pool   = this.GetMember("__pool", c).ToGoValue().(*redis.Pool)
+				pool   = this.GetMember("__pool", c).ToGoValue(c).(*redis.Pool)
 				prefix = c.MustStr(this.GetMember("__prefix", c))
 				key    ValueStr
 			)
@@ -185,7 +185,7 @@ func initKvRedisAdapter() {
 		}).
 		Method("set", func(c *Context, this ValueObject, args []Value) Value {
 			var (
-				pool   = this.GetMember("__pool", c).ToGoValue().(*redis.Pool)
+				pool   = this.GetMember("__pool", c).ToGoValue(c).(*redis.Pool)
 				prefix = c.MustStr(this.GetMember("__prefix", c))
 				ttl    = c.MustInt(this.GetMember("__ttl", c))
 				key    ValueStr
@@ -222,7 +222,7 @@ func initKvRedisAdapter() {
 func initKvRedisHashAdapter() {
 	t := NewClassBuilder("RedisHashAdapter").
 		Constructor(func(c *Context, this ValueObject, args []Value) {
-			u := args[0].ToGoValue().(*url.URL)
+			u := args[0].ToGoValue(c).(*url.URL)
 			q := u.Query()
 			hashkey := u.Path
 			if strings.HasPrefix(hashkey, "/") {
@@ -266,7 +266,7 @@ func initKvRedisHashAdapter() {
 		}).
 		Method("get", func(c *Context, this ValueObject, args []Value) Value {
 			var (
-				pool    = this.GetMember("__pool", c).ToGoValue().(*redis.Pool)
+				pool    = this.GetMember("__pool", c).ToGoValue(c).(*redis.Pool)
 				hashkey = this.GetMember("__hashkey", c)
 				prefix  = c.MustStr(this.GetMember("__prefix", c))
 				key     ValueStr
@@ -285,7 +285,7 @@ func initKvRedisHashAdapter() {
 		}).
 		Method("set", func(c *Context, this ValueObject, args []Value) Value {
 			var (
-				pool    = this.GetMember("__pool", c).ToGoValue().(*redis.Pool)
+				pool    = this.GetMember("__pool", c).ToGoValue(c).(*redis.Pool)
 				hashkey = this.GetMember("__hashkey", c)
 				prefix  = c.MustStr(this.GetMember("__prefix", c))
 				key     ValueStr

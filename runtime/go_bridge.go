@@ -94,7 +94,7 @@ func toGoValue(c *Context, v Value, goVal reflect.Value) {
 	}
 	goTyp := goVal.Type()
 	if v.GoType() == goTyp {
-		goVal.Set(reflect.ValueOf(v.ToGoValue()))
+		goVal.Set(reflect.ValueOf(v.ToGoValue(c)))
 		return
 	}
 	switch goTyp.Kind() {

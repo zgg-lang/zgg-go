@@ -82,7 +82,7 @@ func initRedisPipeSessionClass() ValueType {
 		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
 			cmd := c.MustStr(args[0])
 			if cmd == strings.ToUpper(cmd) {
-				cmds := this.GetMember("_cmds", c).ToGoValue().([]redisPipeCmd)
+				cmds := this.GetMember("_cmds", c).ToGoValue(c).([]redisPipeCmd)
 				session := this
 				return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
 					defer func() {
@@ -90,7 +90,7 @@ func initRedisPipeSessionClass() ValueType {
 					}()
 					cmdArgs := make([]interface{}, len(args))
 					for i, arg := range args {
-						cmdArgs[i] = arg.ToGoValue()
+						cmdArgs[i] = arg.ToGoValue(c)
 					}
 					cmds = append(cmds, redisPipeCmd{cmd: cmd, args: cmdArgs})
 					return Undefined()
@@ -109,7 +109,7 @@ func initRedisClientClass() ValueType {
 			thisObj.SetMember("_conn", args[0], c)
 		}).
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
-			conn := this.GetMember("_conn", c).ToGoValue().(redis.Conn)
+			conn := this.GetMember("_conn", c).ToGoValue(c).(redis.Conn)
 			if err := conn.Close(); err != nil {
 				c.RaiseRuntimeError("RedisClient.close fail on close: %s", err)
 			}
@@ -120,7 +120,7 @@ func initRedisClientClass() ValueType {
 				c.RaiseRuntimeError("RedisClient.exec requires at least 1 argument")
 				return nil
 			}
-			conn := this.GetMember("_conn", c).ToGoValue().(redis.Conn)
+			conn := this.GetMember("_conn", c).ToGoValue(c).(redis.Conn)
 			if cmds, ok := args[0].(ValueArray); ok {
 				n := cmds.Len()
 				for i := 0; i < n; i++ {
@@ -134,7 +134,7 @@ func initRedisClientClass() ValueType {
 							cmdName = cmdItems.GetIndex(0, c).ToString(c)
 							cmdArgs = make([]interface{}, 0, n2-1)
 							for i := 1; i < n2; i++ {
-								cmdArgs = append(cmdArgs, cmdItems.GetIndex(i, c).ToGoValue())
+								cmdArgs = append(cmdArgs, cmdItems.GetIndex(i, c).ToGoValue(c))
 							}
 						} else {
 							cmdName = "PING"
@@ -168,7 +168,7 @@ func initRedisClientClass() ValueType {
 				cmd := c.MustStr(args[0], "command")
 				cmdArgs := make([]interface{}, len(args)-1)
 				for i, arg := range args[1:] {
-					cmdArgs[i] = arg.ToGoValue()
+					cmdArgs[i] = arg.ToGoValue(c)
 				}
 				rsp, err := conn.Do(cmd, cmdArgs...)
 				if err != nil {
@@ -189,8 +189,8 @@ func initRedisClientClass() ValueType {
 			action := c.MustCallable(args[0])
 			session := NewObjectAndInit(redisPipeSessionClass, c)
 			c.Invoke(action, nil, Args(session))
-			cmds := session.GetMember("_cmds", c).ToGoValue().([]redisPipeCmd)
-			conn := this.GetMember("_conn", c).ToGoValue().(redis.Conn)
+			cmds := session.GetMember("_cmds", c).ToGoValue(c).([]redisPipeCmd)
+			conn := this.GetMember("_conn", c).ToGoValue(c).(redis.Conn)
 			for _, cmd := range cmds {
 				if err := conn.Send(cmd.cmd, cmd.args...); err != nil {
 					c.RaiseRuntimeError("redis.pipe: send piped command error: %s", err)
@@ -218,11 +218,11 @@ func initRedisClientClass() ValueType {
 		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
 			cmd := c.MustStr(args[0])
 			if cmd == strings.ToUpper(cmd) {
-				conn := this.GetMember("_conn", c).ToGoValue().(redis.Conn)
+				conn := this.GetMember("_conn", c).ToGoValue(c).(redis.Conn)
 				return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
 					cmdArgs := make([]interface{}, len(args))
 					for i, arg := range args {
-						cmdArgs[i] = arg.ToGoValue()
+						cmdArgs[i] = arg.ToGoValue(c)
 					}
 					rsp, err := conn.Do(cmd, cmdArgs...)
 					if err != nil {

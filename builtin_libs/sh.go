@@ -58,17 +58,17 @@ func init() {
 			this.SetMember("__cmds", args[0], c)
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
-			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
+			cmds := this.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)
 			outs := shGetCommandOutput(c, cmds)
 			return NewStr(string(outs))
 		}).
 		Method("text", func(c *Context, this ValueObject, args []Value) Value {
-			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
+			cmds := this.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)
 			outs := shGetCommandOutput(c, cmds)
 			return NewStr(string(outs))
 		}).
 		Method("lines", func(c *Context, this ValueObject, args []Value) Value {
-			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
+			cmds := this.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)
 			outs := shGetCommandOutput(c, cmds)
 			rd := bufio.NewReader(bytes.NewReader(outs))
 			rv := NewArray()
@@ -84,7 +84,7 @@ func init() {
 			return rv
 		}).
 		Method("json", func(c *Context, this ValueObject, args []Value) Value {
-			cmds := this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)
+			cmds := this.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)
 			outs := shGetCommandOutput(c, cmds)
 			var j interface{}
 			if err := json.Unmarshal(outs, &j); err != nil {
@@ -94,8 +94,8 @@ func init() {
 		}).
 		Method("__bitOr__", func(c *Context, this ValueObject, args []Value) Value {
 			other := c.MustObject(args[0])
-			cmds := append([]*exec.Cmd{}, this.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)...)
-			cmds = append(cmds, other.GetMember("__cmds", c).ToGoValue().([]*exec.Cmd)...)
+			cmds := append([]*exec.Cmd{}, this.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)...)
+			cmds = append(cmds, other.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)...)
 			return NewObjectAndInit(shCommand, c, NewGoValue(cmds))
 		}).
 		Build()

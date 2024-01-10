@@ -342,11 +342,11 @@ func (c *Context) ValuesMod(left, right Value) Value {
 		case ValueArray:
 			fargs := make([]interface{}, val2.Len())
 			for i := range fargs {
-				fargs[i] = val2.GetIndex(i, c).ToGoValue()
+				fargs[i] = val2.GetIndex(i, c).ToGoValue(c)
 			}
 			c.RetVal = NewStr(fmt.Sprintf(val1.Value(), fargs...))
 		default:
-			c.RetVal = NewStr(fmt.Sprintf(val1.Value(), val2.ToGoValue()))
+			c.RetVal = NewStr(fmt.Sprintf(val1.Value(), val2.ToGoValue(c)))
 		}
 		return c.RetVal
 	default:

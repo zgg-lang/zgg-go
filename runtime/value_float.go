@@ -21,7 +21,7 @@ func (v ValueFloat) GoType() reflect.Type {
 	return reflect.TypeOf(v.v)
 }
 
-func (v ValueFloat) ToGoValue() interface{} {
+func (v ValueFloat) ToGoValue(*Context) interface{} {
 	return v.Value()
 }
 

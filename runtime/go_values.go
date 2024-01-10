@@ -70,7 +70,7 @@ func (v GoValue) GoType() reflect.Type {
 	return v.v.Type()
 }
 
-func (v GoValue) ToGoValue() interface{} {
+func (v GoValue) ToGoValue(*Context) interface{} {
 	return v.v.Interface()
 }
 
@@ -607,7 +607,7 @@ func (t GoType) ToString(*Context) string {
 	return t.typ.String()
 }
 
-func (t GoType) ToGoValue() interface{} {
+func (t GoType) ToGoValue(*Context) interface{} {
 	return t.typ
 }
 

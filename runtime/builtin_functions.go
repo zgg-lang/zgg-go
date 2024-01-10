@@ -77,7 +77,7 @@ func (f *ValueBuiltinFunction) ToString(*Context) string {
 	return fmt.Sprintf("<function %s>", f.name)
 }
 
-func (f *ValueBuiltinFunction) ToGoValue() interface{} {
+func (f *ValueBuiltinFunction) ToGoValue(*Context) interface{} {
 	return f.body
 }
 
@@ -109,11 +109,11 @@ func (f *ValueBuiltinFunction) Invoke(c *Context, thisArg Value, args []Value) {
 func buildJson(v Value, c *Context) interface{} {
 	switch val := v.(type) {
 	case ValueInt:
-		return val.ToGoValue()
+		return val.ToGoValue(c)
 	case ValueFloat:
-		return val.ToGoValue()
+		return val.ToGoValue(c)
 	case ValueBool:
-		return val.ToGoValue()
+		return val.ToGoValue(c)
 	case ValueObject:
 		{
 			rv := make(map[string]interface{})
@@ -201,7 +201,7 @@ var builtinFunctions = map[string]ValueCallable{
 			args = args[1:]
 			printArgs := make([]interface{}, len(args))
 			for i, arg := range args {
-				printArgs[i] = arg.ToGoValue()
+				printArgs[i] = arg.ToGoValue(c)
 			}
 			fmt.Fprintf(c.Stdout, printFmt, printArgs...)
 			return NewInt(0)
@@ -218,7 +218,7 @@ var builtinFunctions = map[string]ValueCallable{
 			args = args[1:]
 			printArgs := make([]interface{}, len(args))
 			for i, arg := range args {
-				printArgs[i] = arg.ToGoValue()
+				printArgs[i] = arg.ToGoValue(c)
 			}
 			return NewStr(fmt.Sprintf(printFmt, printArgs...))
 		},
@@ -564,7 +564,7 @@ var builtinFunctions = map[string]ValueCallable{
 			l := arr.Len()
 			if l > 0 {
 				lastVal := arr.GetIndex(l-1, c)
-				if err, isErr := lastVal.ToGoValue().(error); isErr {
+				if err, isErr := lastVal.ToGoValue(c).(error); isErr {
 					c.RaiseRuntimeError("assertError failed: %s", err)
 					return nil
 				}
@@ -582,7 +582,7 @@ var builtinFunctions = map[string]ValueCallable{
 				return rv
 			}
 		}
-		if err, isErr := args[0].ToGoValue().(error); isErr {
+		if err, isErr := args[0].ToGoValue(c).(error); isErr {
 			c.RaiseRuntimeError("assertError failed: %s", err)
 			return nil
 		}
@@ -800,7 +800,7 @@ var builtinFunctions = map[string]ValueCallable{
 			}
 			b.WriteRune('\n')
 			var logWriter io.Writer
-			if w, ok := rv.GetMember("writer", c).ToGoValue().(io.Writer); ok {
+			if w, ok := rv.GetMember("writer", c).ToGoValue(c).(io.Writer); ok {
 				logWriter = w
 			} else {
 				logWriter = c.Stdout

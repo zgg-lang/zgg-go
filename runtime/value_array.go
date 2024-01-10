@@ -71,10 +71,10 @@ func (v ValueArray) ToString(c *Context) string {
 	return b.String()
 }
 
-func (v ValueArray) ToGoValue() interface{} {
+func (v ValueArray) ToGoValue(c *Context) interface{} {
 	rv := make([]interface{}, v.Len())
 	for i := range rv {
-		rv[i] = v.GetIndex(i, nil).ToGoValue()
+		rv[i] = v.GetIndex(i, nil).ToGoValue(c)
 	}
 	return rv
 }

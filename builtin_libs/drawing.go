@@ -27,7 +27,7 @@ func libDrawing(c *Context) ValueObject {
 			gc *gg.Context
 		)
 		EnsureFuncParams(c, "fromImage", args, ArgRuleRequired("srcImage", TypeGoValue, &s))
-		switch v := s.ToGoValue().(type) {
+		switch v := s.ToGoValue(c).(type) {
 		case *image.RGBA:
 			gc = gg.NewContextForRGBA(v)
 		case image.Image:
@@ -152,7 +152,7 @@ var (
 				ArgRuleRequired("text", TypeStr, &text),
 				ArgRuleRequired("points", TypeFloat, &points),
 			)
-			fo := this.GetMember("__font", c).ToGoValue().(*truetype.Font)
+			fo := this.GetMember("__font", c).ToGoValue(c).(*truetype.Font)
 			sz := points.Value()
 			ff := truetype.NewFace(fo, &truetype.Options{Size: sz})
 			fd := &font.Drawer{Face: ff}
@@ -187,23 +187,23 @@ var (
 			EnsureFuncParams(c, "Canvas.set", args,
 				ArgRuleRequired("options", TypeObject, &opts),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
-			if lineCap, is := opts.GetMember("lineCap", c).ToGoValue().(int); is {
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
+			if lineCap, is := opts.GetMember("lineCap", c).ToGoValue(c).(int); is {
 				dc.SetLineCap(gg.LineCap(lineCap))
 			}
-			switch lineWidth := opts.GetMember("lineWidth", c).ToGoValue().(type) {
+			switch lineWidth := opts.GetMember("lineWidth", c).ToGoValue(c).(type) {
 			case int64:
 				dc.SetLineWidth(float64(lineWidth))
 			case float64:
 				dc.SetLineWidth(lineWidth)
 			}
-			if color, is := opts.GetMember("color", c).ToGoValue().(string); is {
+			if color, is := opts.GetMember("color", c).ToGoValue(c).(string); is {
 				dc.SetColor(drawingMustParseColor(c, color))
 			}
-			if color, is := opts.GetMember("strokeColor", c).ToGoValue().(string); is {
+			if color, is := opts.GetMember("strokeColor", c).ToGoValue(c).(string); is {
 				dc.SetStrokeStyle(gg.NewSolidPattern(drawingMustParseColor(c, color)))
 			}
-			if color, is := opts.GetMember("fillColor", c).ToGoValue().(string); is {
+			if color, is := opts.GetMember("fillColor", c).ToGoValue(c).(string); is {
 				dc.SetFillStyle(gg.NewSolidPattern(drawingMustParseColor(c, color)))
 			}
 			return this
@@ -214,7 +214,7 @@ var (
 				ArgRuleRequired("x", TypeFloat, &x),
 				ArgRuleRequired("y", TypeFloat, &y),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			dc.MoveTo(x.Value(), y.Value())
 			return this
 		}).
@@ -224,7 +224,7 @@ var (
 				ArgRuleRequired("x", TypeFloat, &x),
 				ArgRuleRequired("y", TypeFloat, &y),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			dc.LineTo(x.Value(), y.Value())
 			return this
 		}).
@@ -236,7 +236,7 @@ var (
 				ArgRuleRequired("y", TypeInt, &y),
 				ArgRuleOptional("c", TypeStr, &cl, NewStr("")),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			drawingUseColor(c, dc, cl, func() {
 				dc.SetPixel(x.AsInt(), y.AsInt())
 			})
@@ -252,7 +252,7 @@ var (
 				ArgRuleRequired("y2", TypeFloat, &y2),
 				ArgRuleOptional("c", TypeStr, &cl, NewStr("")),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			drawingUseColor(c, dc, cl, func() {
 				dc.DrawLine(x1.Value(), y1.Value(), x2.Value(), y2.Value())
 			})
@@ -268,7 +268,7 @@ var (
 				ArgRuleRequired("h", TypeFloat, &h),
 				ArgRuleOptional("c", TypeStr, &cl, NewStr("")),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			drawingUseColor(c, dc, cl, func() {
 				dc.DrawRectangle(x.Value(), y.Value(), w.Value(), h.Value())
 			})
@@ -283,7 +283,7 @@ var (
 				ArgRuleRequired("r", TypeFloat, &r),
 				ArgRuleOptional("c", TypeStr, &cl, NewStr("")),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			drawingUseColor(c, dc, cl, func() {
 				dc.DrawCircle(x.Value(), y.Value(), r.Value())
 			})
@@ -300,7 +300,7 @@ var (
 				ArgRuleRequired("end", TypeFloat, &end),
 				ArgRuleOptional("c", TypeStr, &cl, NewStr("")),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			drawingUseColor(c, dc, cl, func() {
 				dc.DrawArc(x.Value(), y.Value(), r.Value(), begin.Value(), end.Value())
 			})
@@ -315,7 +315,7 @@ var (
 				ArgRuleRequired("fontPath", TypeStr, &fontPath),
 				ArgRuleRequired("points", TypeFloat, &points),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			if err := dc.LoadFontFace(fontPath.Value(), points.Value()); err != nil {
 				c.RaiseRuntimeError("load font face error %s", err)
 			}
@@ -330,18 +330,18 @@ var (
 				ArgRuleRequired("font", TypeObject, &fontObj),
 				ArgRuleRequired("points", TypeFloat, &points),
 			)
-			f, is := fontObj.GetMember("__font", c).ToGoValue().(*truetype.Font)
+			f, is := fontObj.GetMember("__font", c).ToGoValue(c).(*truetype.Font)
 			if !is {
 				c.RaiseRuntimeError("Cannot get font from argument")
 			}
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			dc.SetFontFace(truetype.NewFace(f, &truetype.Options{Size: points.Value()}))
 			return this
 		}).
 		Method("rotate", func(c *Context, this ValueObject, args []Value) Value {
 			var angle ValueFloat
 			EnsureFuncParams(c, "Canvas.rotate", args, ArgRuleRequired("angle", TypeFloat, &angle))
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			dc.Rotate(angle.Value())
 			return this
 		}, "angle").
@@ -358,7 +358,7 @@ var (
 				ArgRuleRequired("y", TypeFloat, &y),
 				ArgRuleOptional("c", TypeStr, &cl, NewStr("")),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			if colorStr := cl.Value(); colorStr != "" {
 				dc.SetColor(drawingMustParseColor(c, colorStr))
 			}
@@ -372,7 +372,7 @@ var (
 			EnsureFuncParams(c, "Canvas.measureText", args,
 				ArgRuleRequired("s", TypeStr, &s),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			w, h := dc.MeasureString(s.Value())
 			return NewArrayByValues(NewFloat(w), NewFloat(h))
 		}).
@@ -381,7 +381,7 @@ var (
 			EnsureFuncParams(c, "Canvas.stroke", args,
 				ArgRuleRequired("c", TypeStr, &cl),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			dc.SetColor(drawingMustParseColor(c, cl.Value()))
 			dc.Stroke()
 			return this
@@ -391,7 +391,7 @@ var (
 			EnsureFuncParams(c, "Canvas.fill", args,
 				ArgRuleRequired("c", TypeStr, &cl),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			dc.SetColor(drawingMustParseColor(c, cl.Value()))
 			dc.Fill()
 			return this
@@ -412,12 +412,12 @@ var (
 					NewInt(0),
 				),
 			)
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			switch selected {
 			case 0:
 				dc.SavePNG(filename.Value())
 			case 1:
-				if w, is := writer.ToGoValue().(io.Writer); !is {
+				if w, is := writer.ToGoValue(c).(io.Writer); !is {
 					c.RaiseRuntimeError("not an io.Writer")
 				} else {
 					dc.EncodePNG(w)
@@ -448,7 +448,7 @@ var (
 			if err != nil {
 				c.RaiseRuntimeError("create temp file error %s", err)
 			}
-			dc := this.GetMember("__dc", c).ToGoValue().(*gg.Context)
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
 			dc.EncodePNG(f)
 			openArgs = append(openArgs, f.Name())
 			if err := f.Close(); err != nil {

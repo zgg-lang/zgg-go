@@ -152,7 +152,7 @@ func libGo(c *Context) ValueObject {
 		EnsureFuncParams(c, "go.type", args,
 			ArgRuleRequired("t", TypeGoValue, &t),
 		)
-		if tt, ok = t.ToGoValue().(reflect.Type); !ok {
+		if tt, ok = t.ToGoValue(c).(reflect.Type); !ok {
 			c.RaiseRuntimeError("go.type require reflect.Type")
 		}
 		return NewGoType(tt)
@@ -171,7 +171,7 @@ func libGo(c *Context) ValueObject {
 		case GoValue:
 			srcGo = srcVal
 		case Value:
-			srcGo = NewGoValue(srcVal.ToGoValue()).(GoValue)
+			srcGo = NewGoValue(srcVal.ToGoValue(c)).(GoValue)
 		}
 		return NewGoValue(srcGo.ReflectedValue().Convert(targetType.GoType()))
 	}, "src", "targetType"), c)

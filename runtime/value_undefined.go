@@ -14,7 +14,7 @@ func (ValueUndefined) IsTrue() bool {
 	return false
 }
 
-func (ValueUndefined) ToGoValue() interface{} {
+func (ValueUndefined) ToGoValue(*Context) interface{} {
 	return nil
 }
 

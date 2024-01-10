@@ -159,7 +159,7 @@ func compressBuildAlgorithmClass() ValueType {
 				ArgRuleRequired("name", TypeStr, &name),
 				ArgRuleRequired("algo", TypeGoValue, &algo),
 			)
-			a := algo.ToGoValue()
+			a := algo.ToGoValue(c)
 			_, canCompress := a.(compressCompressor)
 			_, canDecompress := a.(compressDecompressor)
 			if !canCompress && !canDecompress {

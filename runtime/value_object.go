@@ -69,10 +69,14 @@ func (v *valueObject) GoType() reflect.Type {
 	return reflect.TypeOf(vv)
 }
 
-func (v *valueObject) ToGoValue() interface{} {
+func (v *valueObject) ToGoValue(c *Context) interface{} {
+	if f, ok := c.GetCallable(v.GetMember("__goValue__", c)); ok {
+		c.Invoke(f, v, NoArgs)
+		return c.RetVal.ToGoValue(c)
+	}
 	rv := map[string]interface{}{}
 	v.Iterate(func(key string, value Value) {
-		rv[key] = value.ToGoValue()
+		rv[key] = value.ToGoValue(c)
 	})
 	return rv
 }

@@ -82,7 +82,7 @@ func tcpInitConnClass() {
 				ArgRuleRequired("conn", TypeGoValue, &conn),
 			)
 			this.Reserved = &tcpConnReserved{
-				conn: conn.ToGoValue().(*net.TCPConn),
+				conn: conn.ToGoValue(c).(*net.TCPConn),
 			}
 		}).
 		Method("addr", func(c *Context, this ValueObject, args []Value) Value {

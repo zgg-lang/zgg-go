@@ -84,7 +84,7 @@ func (t *valueType) ToString(*Context) string {
 	return fmt.Sprintf("<type %s>", t.Name)
 }
 
-func (*valueType) ToGoValue() interface{} {
+func (*valueType) ToGoValue(*Context) interface{} {
 	return nil
 }
 

@@ -138,7 +138,7 @@ func (r *Runner) execute(code interface{}, compileFunc compileFunc) (rv interfac
 		}
 	}()
 	codeNode.Eval(r.context)
-	rv = r.context.RetVal.ToGoValue()
+	rv = r.context.RetVal.ToGoValue(r.context)
 	return
 }
 

@@ -62,7 +62,7 @@ func etreeInitDocument() {
 		Method("encode", func(c *Context, this ValueObject, args []Value) Value {
 			var indent ValueInt
 			EnsureFuncParams(c, "Document.encode", args, ArgRuleOptional("indent", TypeInt, &indent, NewInt(0)))
-			doc := this.GetMember("__doc", c).ToGoValue().(*etree.Document)
+			doc := this.GetMember("__doc", c).ToGoValue(c).(*etree.Document)
 			if ind := indent.AsInt(); ind > 0 {
 				doc.Indent(ind)
 				defer doc.Unindent()
@@ -82,12 +82,12 @@ func etreeInitDocument() {
 				ArgRuleRequired("writer", TypeGoValue, &writer),
 				ArgRuleOptional("indent", TypeInt, &indent, NewInt(0)),
 			)
-			doc := this.GetMember("__doc", c).ToGoValue().(*etree.Document)
+			doc := this.GetMember("__doc", c).ToGoValue(c).(*etree.Document)
 			if ind := indent.AsInt(); ind > 0 {
 				doc.Indent(ind)
 				defer doc.Unindent()
 			}
-			if w, is := writer.ToGoValue().(io.Writer); !is {
+			if w, is := writer.ToGoValue(c).(io.Writer); !is {
 				c.RaiseRuntimeError("document write target is not a writer")
 			} else if _, err := doc.WriteTo(w); err != nil {
 				c.RaiseRuntimeError("document write error %+v", err)
@@ -95,7 +95,7 @@ func etreeInitDocument() {
 			return this
 		}).
 		Method("root", func(c *Context, this ValueObject, args []Value) Value {
-			doc := this.GetMember("__doc", c).ToGoValue().(*etree.Document)
+			doc := this.GetMember("__doc", c).ToGoValue(c).(*etree.Document)
 			el := doc.Root()
 			if el == nil {
 				return Nil()
@@ -112,7 +112,7 @@ func etreeInitDocument() {
 		Method("find", func(c *Context, this ValueObject, args []Value) Value {
 			var path ValueStr
 			EnsureFuncParams(c, "Document.find", args, ArgRuleRequired("path", TypeStr, &path))
-			doc := this.GetMember("__doc", c).ToGoValue().(*etree.Document)
+			doc := this.GetMember("__doc", c).ToGoValue(c).(*etree.Document)
 			el := doc.FindElement(path.Value())
 			if el == nil {
 				return Nil()
@@ -122,7 +122,7 @@ func etreeInitDocument() {
 		Method("findAll", func(c *Context, this ValueObject, args []Value) Value {
 			var path ValueStr
 			EnsureFuncParams(c, "Document.findAll", args, ArgRuleRequired("path", TypeStr, &path))
-			doc := this.GetMember("__doc", c).ToGoValue().(*etree.Document)
+			doc := this.GetMember("__doc", c).ToGoValue(c).(*etree.Document)
 			els := doc.FindElements(path.Value())
 			rv := NewArray(len(els))
 			for _, el := range els {
@@ -144,7 +144,7 @@ func etreeInitElement() {
 		Method("find", func(c *Context, this ValueObject, args []Value) Value {
 			var path ValueStr
 			EnsureFuncParams(c, "Element.find", args, ArgRuleRequired("path", TypeStr, &path))
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			el := cur.FindElement(path.Value())
 			if el == nil {
 				return Nil()
@@ -154,7 +154,7 @@ func etreeInitElement() {
 		Method("findAll", func(c *Context, this ValueObject, args []Value) Value {
 			var path ValueStr
 			EnsureFuncParams(c, "Element.findAll", args, ArgRuleRequired("path", TypeStr, &path))
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			els := cur.FindElements(path.Value())
 			rv := NewArray(len(els))
 			for _, el := range els {
@@ -164,7 +164,7 @@ func etreeInitElement() {
 			return rv
 		}).
 		Method("children", func(c *Context, this ValueObject, args []Value) Value {
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			els := cur.ChildElements()
 			rv := NewArray(len(els))
 			for _, el := range els {
@@ -182,7 +182,7 @@ func etreeInitElement() {
 				ArgRuleRequired("tag", TypeStr, &tag),
 				ArgRuleOptional("attrs", TypeObject, &attrs, NewObject()),
 			)
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			child := cur.CreateElement(tag.Value())
 			attrs.Iterate(func(k string, v Value) {
 				child.CreateAttr(k, v.ToString(c))
@@ -195,7 +195,7 @@ func etreeInitElement() {
 				EnsureFuncParams(c, "Element.setAttr", args,
 					ArgRuleRequired("attrs", TypeObject, &attrs),
 				)
-				cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+				cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 				attrs.Iterate(func(k string, v Value) {
 					cur.CreateAttr(k, v.ToString(c))
 				})
@@ -206,7 +206,7 @@ func etreeInitElement() {
 					ArgRuleRequired("key", TypeStr, &key),
 					ArgRuleOptional("value", TypeAny, &value, Undefined()),
 				)
-				cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+				cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 				if IsUndefined(value) {
 					cur.RemoveAttr(key.Value())
 				} else {
@@ -220,16 +220,16 @@ func etreeInitElement() {
 			EnsureFuncParams(c, "Element.setText", args,
 				ArgRuleRequired("text", TypeAny, &text),
 			)
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			cur.SetText(text.ToString(c))
 			return this
 		}).
 		Method("tag", func(c *Context, this ValueObject, args []Value) Value {
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			return NewStr(cur.Tag)
 		}).
 		Method("fullTag", func(c *Context, this ValueObject, args []Value) Value {
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			return NewStr(cur.FullTag())
 		}).
 		Method("attr", func(c *Context, this ValueObject, args []Value) Value {
@@ -237,7 +237,7 @@ func etreeInitElement() {
 			EnsureFuncParams(c, "Element.attr", args,
 				ArgRuleRequired("key", TypeStr, &key),
 			)
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			attr := cur.SelectAttr(key.Value())
 			if attr == nil {
 				return Nil()
@@ -245,7 +245,7 @@ func etreeInitElement() {
 			return NewStr(attr.Value)
 		}).
 		Method("attrs", func(c *Context, this ValueObject, args []Value) Value {
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			rv := NewObject()
 			for _, attr := range cur.Attr {
 				rv.SetMember(attr.FullKey(), NewStr(attr.Value), c)
@@ -253,7 +253,7 @@ func etreeInitElement() {
 			return rv
 		}).
 		Method("text", func(c *Context, this ValueObject, args []Value) Value {
-			cur := this.GetMember("__el", c).ToGoValue().(*etree.Element)
+			cur := this.GetMember("__el", c).ToGoValue(c).(*etree.Element)
 			return NewStr(cur.Text())
 		}).
 		Build()

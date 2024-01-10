@@ -35,7 +35,7 @@ var libPsutilModCPU = func() ValueObject {
 			ArgRuleOptional("perCPU", TypeBool, &perCPU, NewBool(false)),
 		)
 		if intervalBy == 1 {
-			interval = intervalDuration.GetMember("__du", c).ToGoValue().(time.Duration)
+			interval = intervalDuration.GetMember("__du", c).ToGoValue(c).(time.Duration)
 		} else {
 			var err error
 			interval, err = time.ParseDuration(intervalStr.Value())
