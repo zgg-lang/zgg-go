@@ -142,8 +142,10 @@ func (e *ExprObject) Eval(c *runtime.Context) {
 
 type ArrayItem struct {
 	Expr         Expr
+	Condition    Expr
 	ShouldExpand bool
 }
+
 type ExprArray struct {
 	Items []*ArrayItem
 }
@@ -151,6 +153,12 @@ type ExprArray struct {
 func (e *ExprArray) Eval(c *runtime.Context) {
 	rv := runtime.NewArray(len(e.Items))
 	for _, item := range e.Items {
+		if item.Condition != nil {
+			item.Condition.Eval(c)
+			if !c.RetVal.IsTrue() {
+				continue
+			}
+		}
 		item.Expr.Eval(c)
 		val := c.RetVal
 		if item.ShouldExpand {
