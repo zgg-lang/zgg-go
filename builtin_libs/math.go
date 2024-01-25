@@ -49,6 +49,40 @@ func libMath(*Context) ValueObject {
 		}
 		return rv
 	}), nil)
+	r.SetMember("P", NewNativeFunction("P", func(c *Context, _ Value, args []Value) Value {
+		var an, ar ValueInt
+		EnsureFuncParams(c, "P", args, ArgRuleRequired("n", TypeInt, &an), ArgRuleRequired("r", TypeInt, &ar))
+		n, r := an.AsInt(), ar.AsInt()
+		if r <= 0 || n <= r {
+			c.RaiseRuntimeError("invalid arguments! n %d r %d", n, r)
+		}
+		rv := 1
+		for i := n - r + 1; i <= n; i++ {
+			rv *= i
+		}
+		return NewInt(int64(rv))
+
+	}, "n", "r"), nil)
+	r.SetMember("C", NewNativeFunction("C", func(c *Context, _ Value, args []Value) Value {
+		var an, ar ValueInt
+		EnsureFuncParams(c, "C", args, ArgRuleRequired("n", TypeInt, &an), ArgRuleRequired("r", TypeInt, &ar))
+		n, r := an.AsInt(), ar.AsInt()
+		if r <= 0 || n <= r {
+			c.RaiseRuntimeError("invalid arguments! n %d r %d", n, r)
+		}
+		if r+r < n {
+			r = n - r
+		}
+		rv := 1
+		for i := r + 1; i <= n; i++ {
+			rv *= i
+		}
+		for i := n - r; i > 1; i-- {
+			rv /= i
+		}
+		return NewInt(int64(rv))
+
+	}, "n", "r"), nil)
 	for name, fnv := range mathPortFuncs {
 		switch fn := fnv.(type) {
 		case func(float64) float64:

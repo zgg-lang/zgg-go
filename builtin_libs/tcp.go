@@ -2,38 +2,44 @@ package builtin_libs
 
 import (
 	"net"
+	"time"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
 var (
-	tcpConnClass ValueType
+	tcpConnClass  ValueType
+	tcpNoDeadline ValueObject
 )
 
-func libTcp(*Context) ValueObject {
+func libTcp(c *Context) ValueObject {
 	lib := NewObject()
+	tcpNoDeadline = NewObjectAndInit(timeDurationClass, c, NewGoValue(time.Duration(-1)))
 	tcpInitConnClass()
 	lib.SetMember("connect", NewNativeFunction("connect", func(c *Context, _ Value, args []Value) Value {
-		var remoteAddr, localAddr ValueStr
+		var (
+			remoteAddr   ValueStr
+			waitDuration timeDurationArg
+			conn         net.Conn
+			err          error
+		)
 		EnsureFuncParams(c, "connect", args,
 			ArgRuleRequired("remoteAddr", TypeStr, &remoteAddr),
-			ArgRuleOptional("localAddr", TypeStr, &localAddr, NewStr("")),
+			waitDuration.Rule(c, "waitDuration", tcpNoDeadline),
 		)
-		raddr, err := net.ResolveTCPAddr("tcp", remoteAddr.Value())
-		if err != nil {
-			c.RaiseRuntimeError("resolve remote addr %s error %+v", remoteAddr.Value(), err)
+		if d := waitDuration.GetDuration(c); d >= 0 {
+			conn, err = net.DialTimeout("tcp", remoteAddr.Value(), d)
+		} else {
+			conn, err = net.Dial("tcp", remoteAddr.Value())
 		}
-		var laddr *net.TCPAddr
-		if la := localAddr.Value(); la != "" {
-			if laddr, err = net.ResolveTCPAddr("tcp", la); err != nil {
-				c.RaiseRuntimeError("resolve local addr %s error %+v", la, err)
-			}
-		}
-		conn, err := net.DialTCP("tcp", laddr, raddr)
 		if err != nil {
 			c.RaiseRuntimeError("connecting to %s error %+v", remoteAddr.Value(), err)
+		} else if tcpc, is := conn.(*net.TCPConn); !is {
+			c.RaiseRuntimeError("connecting to %s error invalid conn type", remoteAddr.Value())
+		} else {
+			return NewObjectAndInit(tcpConnClass, c, NewGoValue(tcpc))
 		}
-		return NewObjectAndInit(tcpConnClass, c, NewGoValue(conn))
+		return nil
 	}), nil)
 	lib.SetMember("serve", NewNativeFunction("serve", func(c *Context, _ Value, args []Value) Value {
 		var (
@@ -97,38 +103,60 @@ func tcpInitConnClass() {
 			return this
 		}).
 		Method("send", func(c *Context, this ValueObject, args []Value) Value {
+			var (
+				content      Value
+				waitDuration timeDurationArg
+			)
+			EnsureFuncParams(c, "TcpConn.send", args,
+				ArgRuleRequired("content", TypeAny, &content),
+				waitDuration.Rule(c, "waitDuration", tcpNoDeadline),
+			)
 			conn := this.Reserved.(*tcpConnReserved).conn
-			totalSent := 0
-			for _, a := range args {
-				var pkg []byte
-				switch arg := a.(type) {
-				case ValueBytes:
-					pkg = arg.Value()
-				default:
-					pkg = []byte(arg.ToString(c))
-				}
-				n, err := conn.Write(pkg)
-				if err != nil {
-					c.RaiseRuntimeError("TcpConn.send: send error %+v", err)
-				}
-				totalSent += n
-				if n < len(pkg) {
-					break
+			if d := waitDuration.GetDuration(c); d >= 0 {
+				if err := conn.SetWriteDeadline(time.Now().Add(d)); err != nil {
+					c.RaiseRuntimeError("TcpConn.send: send set write deadline error %+v", err)
 				}
 			}
-			return NewInt(int64(totalSent))
+			var pkg []byte
+			switch arg := content.(type) {
+			case ValueBytes:
+				pkg = arg.Value()
+			default:
+				pkg = []byte(arg.ToString(c))
+			}
+			n, err := conn.Write(pkg)
+			if err != nil {
+				if e, is := err.(net.Error); is && e.Timeout() {
+					return NewInt(0)
+				}
+				c.RaiseRuntimeError("TcpConn.send: send error %+v", err)
+			}
+			return NewInt(int64(n))
 		}).
 		Method("recv", func(c *Context, this ValueObject, args []Value) Value {
-			var maxRecv ValueInt
+			var (
+				maxRecv      ValueInt
+				waitDuration timeDurationArg
+			)
 			EnsureFuncParams(c, "TcpConn.recv", args,
-				ArgRuleRequired("maxRecv", TypeInt, &maxRecv))
+				ArgRuleRequired("maxRecv", TypeInt, &maxRecv),
+				waitDuration.Rule(c, "waitDuration", tcpNoDeadline),
+			)
 			conn := this.Reserved.(*tcpConnReserved).conn
 			buf := make([]byte, maxRecv.AsInt())
+			if d := waitDuration.GetDuration(c); d >= 0 {
+				if err := conn.SetReadDeadline(time.Now().Add(d)); err != nil {
+					c.RaiseRuntimeError("TcpConn.recv: recv set read deadline error %+v", err)
+				}
+			}
 			n, err := conn.Read(buf)
 			if err != nil {
+				if e, is := err.(net.Error); is && e.Timeout() {
+					return NewBytes(buf[:0])
+				}
 				c.RaiseRuntimeError("TcpConn.recv: recv error %+v", err)
 			}
 			return NewBytes(buf[:n])
-		}).
+		}, "maxRecv", "waitDuration").
 		Build()
 }

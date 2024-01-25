@@ -61,13 +61,12 @@ type timeDurationArg struct {
 	which int
 }
 
-func (a *timeDurationArg) Rule(name string, dv ...ValueObject) ArgRule {
+func (a *timeDurationArg) Rule(c *Context, name string, dv ...ValueObject) ArgRule {
 	if len(dv) > 0 {
 		return ArgRuleOneOf(name,
 			[]ValueType{timeDurationClass, TypeStr, TypeFloat},
 			[]any{&a.o, &a.s, &a.f},
-			&a.which,
-			&a.o, dv[0])
+			&a.which, &a.o, dv[0])
 	}
 	return ArgRuleOneOf(name,
 		[]ValueType{timeDurationClass, TypeStr, TypeFloat},
@@ -88,7 +87,7 @@ func (a *timeDurationArg) Get(c *Context) ValueObject {
 }
 
 func (a *timeDurationArg) GetDuration(c *Context) time.Duration {
-	return a.Get(c).ToGoValue(c).(time.Duration)
+	return a.Get(c).Reserved.(time.Duration)
 }
 
 func libTime(c *Context) ValueObject {
@@ -139,7 +138,7 @@ func libTime(c *Context) ValueObject {
 	}, "time"), nil)
 	lib.SetMember("sleep", NewNativeFunction("sleep", func(c *Context, this Value, args []Value) Value {
 		var sleepDur timeDurationArg
-		EnsureFuncParams(c, "time.sleep", args, sleepDur.Rule("duration"))
+		EnsureFuncParams(c, "time.sleep", args, sleepDur.Rule(c, "duration"))
 		time.Sleep(sleepDur.Get(c).Reserved.(time.Duration))
 		return Undefined()
 	}), nil)
@@ -158,7 +157,7 @@ func libTime(c *Context) ValueObject {
 			rules    = []ArgRule{
 				beginArg.Rule("begin"),
 				endArg.Rule("end"),
-				stepArg.Rule("step", oneDay),
+				stepArg.Rule(c, "step", oneDay),
 			}
 		)
 		if canCallback {

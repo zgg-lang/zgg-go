@@ -48,6 +48,7 @@ var (
 		"tcp":        LibInfo{name: "tcp", getter: libTcp},
 		"template":   LibInfo{name: "template", getter: libTemplate},
 		"time":       LibInfo{name: "time", getter: libTime},
+		"udp":        LibInfo{name: "udp", getter: libUdp},
 		"url":        LibInfo{name: "url", getter: libUrl},
 		"yaml":       LibInfo{name: "yaml", getter: libYaml},
 	}
