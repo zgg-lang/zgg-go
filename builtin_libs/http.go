@@ -819,7 +819,7 @@ func initHttpRequestContextClass() ValueType {
 			)
 			EnsureFuncParams(c, "http.RequestContext.redirect", args,
 				ArgRuleRequired("url", TypeStr, &url),
-				ArgRuleOptional("code", TypeInt, &code, NewInt(200)),
+				ArgRuleOptional("code", TypeInt, &code, NewInt(302)),
 			)
 			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
 			w := this.GetMember("_w", c).ToGoValue(c).(http.ResponseWriter)

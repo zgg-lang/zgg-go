@@ -259,10 +259,14 @@ func (v *ParseVisitor) VisitLiteralArray(ctx *LiteralArrayContext) interface{} {
 }
 
 func (v *ParseVisitor) VisitArrayItem(ctx *ArrayItemContext) interface{} {
-	return &ast.ArrayItem{
-		Expr:         ctx.Expr().Accept(v).(ast.Expr),
+	rv := &ast.ArrayItem{
+		Expr:         ctx.Expr(0).Accept(v).(ast.Expr),
 		ShouldExpand: ctx.MORE_ARGS() != nil,
 	}
+	if cond := ctx.GetCondition(); cond != nil {
+		rv.Condition = cond.Accept(v).(ast.Expr)
+	}
+	return rv
 }
 
 func (v *ParseVisitor) VisitArrayComprehension(ctx *ArrayComprehensionContext) interface{} {

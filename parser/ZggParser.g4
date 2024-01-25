@@ -239,7 +239,7 @@ literal
     ;
 
 arrayItem
-    : '...'? expr
+    : '...'? expr (IF condition=expr)?
     ;
 
 objItem
