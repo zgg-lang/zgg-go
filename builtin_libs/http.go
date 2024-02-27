@@ -2,6 +2,7 @@ package builtin_libs
 
 import (
 	"bytes"
+	"bufio"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -40,6 +41,8 @@ func libHttp(*Context) ValueObject {
 	lib := NewObject()
 	// Client
 	lib.SetMember("get", httpGet, nil)
+	lib.SetMember("getText", httpGetText, nil)
+	lib.SetMember("getLines", httpGetLines, nil)
 	lib.SetMember("getJson", httpGetJson, nil)
 	lib.SetMember("postForm", httpPostForm, nil)
 	lib.SetMember("postMultipartForm", httpPostMultipartForm, nil)
@@ -152,18 +155,18 @@ func libHttp(*Context) ValueObject {
 	return lib
 }
 
-var httpGet = NewNativeFunction("http.get", func(c *Context, thisArg Value, args []Value) Value {
+func _httpGet(c *Context, fn string, args []Value, procBody func(io.Reader) error) {
 	var (
 		url     ValueStr
 		headers ValueObject
 	)
-	EnsureFuncParams(c, "http.get", args,
+	EnsureFuncParams(c, "http."+fn, args,
 		ArgRuleRequired("url", TypeStr, &url),
 		ArgRuleOptional("headers", TypeObject, &headers, NewObject()),
 	)
 	request, err := http.NewRequest("GET", url.Value(), nil)
 	if err != nil {
-		c.RaiseRuntimeError("http.get: make reqeust failed %s", err)
+		c.RaiseRuntimeError("http.%s: make request error %+v", fn, err)
 	}
 	headers.Each(func(key string, value Value) bool {
 		request.Header.Add(key, value.ToString(c))
@@ -171,41 +174,60 @@ var httpGet = NewNativeFunction("http.get", func(c *Context, thisArg Value, args
 	})
 	rsp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		c.RaiseRuntimeError("http.get: request failed %s", err)
+		c.RaiseRuntimeError("http.%s: do request error %+v", fn, err)
 	}
 	defer rsp.Body.Close()
-	bs, err := ioutil.ReadAll(rsp.Body)
-	if err != nil {
-		c.RaiseRuntimeError("http.get: read response failed %s", err)
+	if err := procBody(rsp.Body); err != nil {
+		c.RaiseRuntimeError("http.%s: process response error %+v", fn, err)
 	}
-	return NewBytes(bs)
+}
+
+var httpGet = NewNativeFunction("http.get", func(c *Context, thisArg Value, args []Value) Value {
+	var bb bytes.Buffer
+	_httpGet(c, "get", args, func(rd io.Reader) (err error) {
+		_, err = io.Copy(&bb, rd)
+		return
+	})
+	return NewBytes(bb.Bytes())
+}, "url", "headers")
+
+var httpGetText = NewNativeFunction("http.getText", func(c *Context, thisArg Value, args []Value) Value {
+	var sb strings.Builder
+	_httpGet(c, "getText", args, func(rd io.Reader) (err error) {
+		_, err = io.Copy(&sb, rd)
+		return
+	})
+	return NewStr(sb.String())
+}, "url", "headers")
+
+var httpGetLines = NewNativeFunction("http.getLines", func(c *Context, thisArg Value, args []Value) Value {
+	rv := NewArray()
+	_httpGet(c, "getLines", args, func(rd io.Reader) error {
+		brd := bufio.NewReader(rd)
+		for {
+			s, err := brd.ReadString('\n')
+			if n := len(s); n > 0 && s[n-1] == '\n' {
+				s = s[:n-1]
+			}
+			if err == nil {
+				rv.PushBack(NewStr(s))
+			} else if err == io.EOF {
+				rv.PushBack(NewStr(s))
+				break
+			} else {
+				return err
+			}
+		}
+		return nil
+	})
+	return rv
 }, "url", "headers")
 
 var httpGetJson = NewNativeFunction("getJson", func(c *Context, thisArg Value, args []Value) Value {
-	c.AssertArgNum(len(args), 1, 2, "http.getJson")
-	url := c.MustStr(args[0])
-	request, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		c.RaiseRuntimeError("http.getJson: make request error %s", err)
-		return nil
-	}
-	if len(args) > 1 {
-		headers := c.MustObject(args[1], "http.getJson::headers")
-		headers.Each(func(key string, value Value) bool {
-			request.Header.Add(key, value.ToString(c))
-			return true
-		})
-	}
-	resp, err := http.DefaultClient.Do(request)
-	if err != nil {
-		c.RaiseRuntimeError("http.getJson: " + err.Error())
-	}
-	defer resp.Body.Close()
-	respBytes, err := ioutil.ReadAll(resp.Body)
 	var j interface{}
-	if err := json.Unmarshal(respBytes, &j); err != nil {
-		c.RaiseRuntimeError("http.getJson: " + err.Error())
-	}
+	_httpGet(c, "getJson", args, func(rd io.Reader) error {
+		return json.NewDecoder(rd).Decode(&j)
+	})
 	return jsonToValue(j, c)
 }, "url", "headers")
 
