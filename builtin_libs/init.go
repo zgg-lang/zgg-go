@@ -26,6 +26,7 @@ var (
 		"drawing":    LibInfo{name: "drawing", getter: libDrawing},
 		"etree":      LibInfo{name: "etree", getter: libEtree},
 		"file":       LibInfo{name: "file", getter: libFile},
+		"flag":       LibInfo{name: "flag", getter: libFlag},
 		"fsnotify":   LibInfo{name: "fsnotify", getter: libFsnotify},
 		"go":         LibInfo{name: "go", getter: libGo},
 		"graph":      LibInfo{name: "graph", getter: libGraph},
