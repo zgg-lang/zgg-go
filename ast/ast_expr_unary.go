@@ -124,5 +124,10 @@ func (e *ExprAssertError) Eval(c *runtime.Context) {
 		} else {
 			c.RetVal = runtime.Undefined()
 		}
+	} else if _, is := r.(runtime.ValueNil); is {
+		c.RaiseRuntimeError("assert not nil/undefined fail!")
+	} else if _, is := r.(runtime.ValueUndefined); is {
+		c.RaiseRuntimeError("assert not nil/undefined fail!")
 	}
+	c.RetVal = r
 }
