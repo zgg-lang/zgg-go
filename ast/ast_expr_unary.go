@@ -125,5 +125,4 @@ func (e *ExprAssertError) Eval(c *runtime.Context) {
 			c.RetVal = runtime.Undefined()
 		}
 	}
-	c.RetVal = r
 }

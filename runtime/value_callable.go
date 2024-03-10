@@ -11,7 +11,7 @@ func getCallableMember(v ValueCallable, name string, c *Context) Value {
 	if member, found := builtinCallableMembers[name]; found {
 		return makeMember(v, member, c)
 	}
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 var builtinCallableMembers = map[string]Value{}

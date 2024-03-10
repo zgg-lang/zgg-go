@@ -27,7 +27,7 @@ func (ValueUndefined) GetIndex(int, *Context) Value {
 }
 
 func (v ValueUndefined) GetMember(name string, c *Context) Value {
-	return getExtMember(v, name, c)
+	return getMemberByType(c, v, name)
 }
 
 func (ValueUndefined) Type() ValueType {

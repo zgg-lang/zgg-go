@@ -262,6 +262,11 @@ func GetValueByPath(c *Context, v Value, path string) Value {
 	}
 }
 
+var (
+	commonMembers         map[string]*ValueBuiltinFunction
+	commonMembersInitOnce sync.Once
+)
+
 func getMemberByType(c *Context, v Value, name string) Value {
 	t := v.Type()
 	if member := t.findMember(name); member != nil {
@@ -272,6 +277,37 @@ func getMemberByType(c *Context, v Value, name string) Value {
 		if _, isUndefiend := c.RetVal.(ValueUndefined); !isUndefiend {
 			return makeMember(v, c.RetVal, c)
 		}
+	}
+	commonMembersInitOnce.Do(func() {
+		commonMembers = map[string]*ValueBuiltinFunction{
+			"must": NewNativeFunction("must", func(c *Context, this Value, args []Value) Value {
+				thisArg := Args(this)
+				for _, a := range args {
+					if callable, is := c.GetCallable(a); is {
+						c.Invoke(callable, nil, thisArg)
+						if !c.RetVal.IsTrue() {
+							c.RaiseRuntimeError("assert 'must' failed")
+						}
+					} else if !c.ValuesEqual(this, a) {
+						c.RaiseRuntimeError("assert 'must' failed")
+					}
+				}
+				return this
+			}),
+			"notNil": NewNativeFunction("notNil", func(c *Context, this Value, args []Value) Value {
+				switch this.(type) {
+				case ValueNil:
+				case ValueUndefined:
+				default:
+					return this
+				}
+				c.RaiseRuntimeError("assert not nil/undefined failed")
+				return nil
+			}),
+		}
+	})
+	if f, found := commonMembers[name]; found {
+		return makeMember(v, f, c)
 	}
 	return getExtMember(v, name, c)
 }
