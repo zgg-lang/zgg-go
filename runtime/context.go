@@ -687,11 +687,11 @@ func (c *Context) ValuesGreater(v1, v2 Value) bool {
 }
 
 func (c *Context) ValuesLessEqual(v1, v2 Value) bool {
-	return c.valuesCompare(v1, v2, "__lt__", CompareResultLess, CompareResultEqual)
+	return c.valuesCompare(v1, v2, "__le__", CompareResultLess, CompareResultEqual)
 }
 
 func (c *Context) ValuesGreaterEqual(v1, v2 Value) bool {
-	return c.valuesCompare(v1, v2, "__gt__", CompareResultGreater, CompareResultEqual)
+	return c.valuesCompare(v1, v2, "__ge__", CompareResultGreater, CompareResultEqual)
 }
 
 func (c *Context) EvalConst(n IEval) {
