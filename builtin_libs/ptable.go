@@ -887,11 +887,13 @@ var ptableFromCsv = NewNativeFunction("ptable.fromCsv", func(c *Context, this Va
 		argFilename ValueStr
 		argUrl      ValueStr
 		argContent  ValueStr
+		argSplitter ValueStr
 	)
 	EnsureFuncParams(c, "ptable.fromCsv", args,
 		ArgRuleOptional("filename", TypeStr, &argFilename, NewStr("")),
 		ArgRuleOptional("url", TypeStr, &argUrl, NewStr("")),
 		ArgRuleOptional("content", TypeStr, &argContent, NewStr("")),
+		ArgRuleOptional("splitter", TypeStr, &argSplitter, NewStr("")),
 	)
 	var contentReader io.Reader
 	if content := argContent.Value(); content != "" {
@@ -911,7 +913,11 @@ var ptableFromCsv = NewNativeFunction("ptable.fromCsv", func(c *Context, this Va
 		defer f.Close()
 		contentReader = f
 	}
-	rows, err := csv.NewReader(contentReader).ReadAll()
+	csvReader := csv.NewReader(contentReader)
+	if sp := argSplitter.Runes(); len(sp) > 0 {
+		csvReader.Comma = sp[0]
+	}
+	rows, err := csvReader.ReadAll()
 	if err != nil {
 		c.RaiseRuntimeError("read csv error %s", err)
 	}
@@ -931,7 +937,7 @@ var ptableFromCsv = NewNativeFunction("ptable.fromCsv", func(c *Context, this Va
 		c.InvokeMethod(rv, "add", Args(tableArgs...))
 	}
 	return rv
-}, "filename", "url", "content")
+}, "filename", "url", "content", "splitter")
 
 func init() {
 	initPTableClass()
