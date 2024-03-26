@@ -386,11 +386,13 @@ func (c *Context) GetModule(name string) (Value, int64) {
 }
 
 const (
-	ImportTypeScript = "script"
-	ImportTypeText   = "text"
-	ImportTypeBytes  = "bytes"
-	ImportTypeCsv    = "csv"
-	ImportTypeJson   = "json"
+	ImportTypeScript     = "script"
+	ImportTypeText       = "text"
+	ImportTypeBytes      = "bytes"
+	ImportTypeCsv        = "csv"
+	ImportTypeCsvByTab   = "csv+tab"
+	ImportTypeCsvByComma = "csv+comma"
+	ImportTypeJson       = "json"
 )
 
 func (c *Context) ImportModule(modPath string, reloadIfNewer bool, importType string) Value {

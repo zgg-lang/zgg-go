@@ -399,6 +399,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 			return
 		}
 	}()
+	csvSplitter := ','
 	switch importType {
 	case runtime.ImportTypeScript:
 		modAst, errs := ParseFromString(filename, string(codeBs), true)
@@ -417,9 +418,15 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 	case runtime.ImportTypeBytes:
 		modVal, success = runtime.NewBytes(codeBs), true
 		return
+	case runtime.ImportTypeCsvByTab:
+		csvSplitter = '\t'
+		fallthrough
+	case runtime.ImportTypeCsvByComma:
+		fallthrough
 	case runtime.ImportTypeCsv:
 		{
 			rd := csv.NewReader(bytes.NewReader(codeBs))
+			rd.Comma = csvSplitter
 			all, err := rd.ReadAll()
 			if err != nil {
 				c.RaiseRuntimeError("read csv %s fail: %s", name, err)
