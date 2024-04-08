@@ -107,6 +107,10 @@ func (v ValueStr) Hash() int64 {
 	return int64(hash & 0x7FFFFFFF)
 }
 
+func (v ValueStr) Slice(c *Context, begin, end int64) Value {
+	return c.InvokeMethod(v, "substr", Args(NewInt(begin), NewInt(end)))
+}
+
 var builtinStrMethods = map[string]ValueCallable{
 	"substr": &ValueBuiltinFunction{
 		name: "str.substr",

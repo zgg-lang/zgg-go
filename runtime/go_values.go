@@ -103,6 +103,9 @@ func (v GoValue) SetIndex(index int, val Value, c *Context) {
 	switch v.v.Kind() {
 	case reflect.Slice, reflect.Array:
 		gv := MakeGoValueByArg(c, val, v.v.Type().Elem())
+		if index < 0 {
+			index += v.v.Len()
+		}
 		v.v.Index(index).Set(gv)
 	}
 }
@@ -384,6 +387,16 @@ var (
 		return NewBool(gv.ReflectedValue().Type().ConvertibleTo(targetType.GoType()))
 	})
 )
+
+func (v GoValue) Slice(c *Context, begin, end int64) Value {
+	switch v.v.Kind() {
+	case reflect.Slice, reflect.String, reflect.Array:
+		begin, end = fixSliceRange(begin, end, int64(v.v.Len()))
+		return NewReflectedGoValue(v.v.Slice(int(begin), int(end)))
+	}
+	c.RaiseRuntimeError("cannot slice")
+	return nil
+}
 
 func (v GoValue) GetMember(key string, c *Context) Value {
 	if v.canBeNil() && v.v.IsNil() {

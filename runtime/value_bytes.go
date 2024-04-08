@@ -100,6 +100,12 @@ func (v ValueBytes) ToString(*Context) string {
 	return string(v.v)
 }
 
+func (v ValueBytes) Slice(c *Context, begin, end int64) Value {
+	begin, end = fixSliceRange(begin, end, int64(len(v.v)))
+	rbs := v.v[int(begin):int(end)]
+	return NewBytes(rbs)
+}
+
 var builtinBytesMethods = map[string]ValueCallable{
 	"len": &ValueBuiltinFunction{
 		name: "bytes.len",

@@ -128,6 +128,10 @@ func (v ValueArray) Len() int {
 	return len(*v.Values)
 }
 
+func (v ValueArray) Slice(c *Context, begin, end int64) Value {
+	return c.InvokeMethod(v, "slice", Args(NewInt(begin), NewInt(end)))
+}
+
 func (v ValueArray) slice(i, j int) ValueArray {
 	rslice := (*v.Values)[i:j]
 	rv := NewArray(len(rslice))

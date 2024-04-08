@@ -81,3 +81,7 @@ type CanHash interface {
 type Container interface {
 	Contains(c *Context, v Value) bool
 }
+
+type CanSlice interface {
+	Slice(c *Context, begin, end int64) Value
+}

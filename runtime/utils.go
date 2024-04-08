@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"math"
 	"reflect"
 	"regexp"
 	"strings"
@@ -364,4 +365,27 @@ func MakeIterator(c *Context, nextFn func() Value, closeFn func()) ValueObject {
 		return NewObjectAndInit(iteratorType, c, NewGoValue(nextFn), NewGoValue(closeFn))
 	}), nil)
 	return rv
+}
+
+func fixSliceRange(begin, end, size int64) (int64, int64) {
+	if end == math.MaxInt64 {
+		end = size
+	}
+	if begin < 0 {
+		begin += size
+	}
+	if begin < 0 {
+		begin = 0
+	} else if begin > size {
+		begin = size
+	}
+	if end < 0 {
+		end += size
+	}
+	if end < 0 {
+		end = 0
+	} else if end > size {
+		end = size
+	}
+	return begin, end
 }
