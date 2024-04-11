@@ -215,6 +215,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#exprPostIncDec.
 	VisitExprPostIncDec(ctx *ExprPostIncDecContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#exprBySlice.
+	VisitExprBySlice(ctx *ExprBySliceContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#exprIsType.
 	VisitExprIsType(ctx *ExprIsTypeContext) interface{}
 

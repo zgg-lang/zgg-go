@@ -108,6 +108,19 @@ func (v *ParseVisitor) VisitExprByIndex(ctx *ExprByIndexContext) interface{} {
 	}
 }
 
+func (v *ParseVisitor) VisitExprBySlice(ctx *ExprBySliceContext) interface{} {
+	r := &ast.ExprSlice{
+		Container: ctx.GetContainer().Accept(v).(ast.Expr),
+	}
+	if b := ctx.GetBegin(); b != nil {
+		r.Begin = b.Accept(v).(ast.Expr)
+	}
+	if e := ctx.GetEnd(); e != nil {
+		r.End = e.Accept(v).(ast.Expr)
+	}
+	return r
+}
+
 func (v *ParseVisitor) VisitLvalById(ctx *LvalByIdContext) interface{} {
 	id := ctx.IDENTIFIER().GetText()
 	return &ast.LvalById{Name: id}

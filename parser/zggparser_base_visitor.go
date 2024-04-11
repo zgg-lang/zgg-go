@@ -284,6 +284,10 @@ func (v *BaseZggParserVisitor) VisitExprPostIncDec(ctx *ExprPostIncDecContext) i
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitExprBySlice(ctx *ExprBySliceContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitExprIsType(ctx *ExprIsTypeContext) interface{} {
 	return v.VisitChildren(ctx)
 }

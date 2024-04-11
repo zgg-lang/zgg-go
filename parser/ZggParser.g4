@@ -36,7 +36,7 @@ stmt
     | EXPORT? CLASS className=IDENTIFIER
         ( '(' baseCls+=expr (',' baseCls+=expr)? ')' )?
         L_CURLY memberDef* R_CURLY                       # stmtClassDefine
-    | (label=IDENTIFIER ':')? FOR   
+    | (label=IDENTIFIER ':')? FOR
             initExpr=expr
             ';'
             checkExpr=expr
@@ -109,6 +109,7 @@ expr
     | postIncDec                                            	        # exprPostIncDec
     | expr '.' field=IDENTIFIER                             	        # exprByField
     | expr '[' index=expr ']'                               	        # exprByIndex
+    | container=expr '[' (begin=expr)? ':' (end=expr)? ']'              # exprBySlice
     | IDENTIFIER                                            	        # exprIdentifier
     | literal                                               	        # exprLiteral
     | '-' expr                                              	        # exprNegative
@@ -144,7 +145,7 @@ expr
     | USE expr                                              	        # exprUseCloser
     | expr '!'                                              	        # exprAssertError
     ;
-    
+
 whenCondition
     : expr (',' expr)*          # whenConditionInList
     | lowerBound=expr? ('..'|'..<') upperBound=expr?    # whenConditionInRange
@@ -203,7 +204,7 @@ literal
     | FUNC '('
         ( (IDENTIFIER (',' IDENTIFIER)* (',' '...' IDENTIFIER)? ','?)
         | ('...' IDENTIFIER)
-        )? ')' codeBlock               # LiteralFunc            
+        )? ')' codeBlock               # LiteralFunc
     | ( '(' (
                 IDENTIFIER (',' IDENTIFIER)* (',' '...' IDENTIFIER)? ','?
                 | '...' IDENTIFIER
@@ -253,7 +254,7 @@ keyValue
     | '[' expr ']' ':' expr  # KVExprKey
     | IDENTIFIER '('
         ( IDENTIFIER (',' IDENTIFIER)* (',' '...' IDENTIFIER)? ','?
-        | '...' IDENTIFIER 
+        | '...' IDENTIFIER
         )?
       ')' codeBlock # KVKeyFunc
     | IDENTIFIER             # KVIdOnly
