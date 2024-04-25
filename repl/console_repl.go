@@ -3,7 +3,6 @@ package repl
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"unicode"
 
@@ -93,14 +92,6 @@ func (c *ConsoleReplContext) ReadAction(shouldRecover bool) ReplAction {
 			indent = string(inputRunes[:s]) + "  "
 		}
 	}
-}
-
-func (ConsoleReplContext) write(msg string) {
-	tc := os.Getenv("ZGG_TEXT_STYLE")
-	if tc == "" {
-		tc = "36"
-	}
-	fmt.Printf("\033[%sm%s\033[0m\n", tc, msg)
 }
 
 func (c ConsoleReplContext) WriteResult(result interface{}) {

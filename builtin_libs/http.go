@@ -49,6 +49,13 @@ func libHttp(*Context) ValueObject {
 	lib.SetMember("postJson", httpPostJson, nil)
 	lib.SetMember("Request", httpRequestClass, nil)
 	lib.SetMember("WebsocketClient", websocketClientClass, nil)
+	lib.SetMember("connectWebsocket", NewNativeFunction("connectWebsocket", func(c *Context, this Value, args []Value) Value {
+		var addr ValueStr
+		EnsureFuncParams(c, "connectWebsocket", args, ArgRuleRequired("addr", TypeStr, &addr))
+		conn := NewObjectAndInit(websocketClientClass, c, addr)
+		c.InvokeMethod(conn, "connect", NoArgs)
+		return conn
+	}, "addr"), nil)
 	lib.SetMember("escape", NewNativeFunction("escape", func(c *Context, this Value, args []Value) Value {
 		if len(args) < 1 {
 			return NewStr("")
@@ -1426,6 +1433,10 @@ func initHttpWebsocketClientClass() ValueType {
 			return Undefined()
 		}).
 		Method("close", func(c *Context, this ValueObject, args []Value) Value {
+			conn, ok := this.GetMember("__conn", c).ToGoValue(c).(*websocket.Conn)
+			if ok {
+				conn.Close()
+			}
 			return this
 		}).
 		Method("read", func(c *Context, this ValueObject, args []Value) Value {
