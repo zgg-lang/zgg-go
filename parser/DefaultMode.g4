@@ -54,6 +54,7 @@ INT_OCT     : '0' OCTDIGIT+;
 INT_BIN     : '0' [bB] BINDIGIT+;
 BIGNUM      : ('0' | INT_DEC) ('.' DECDIGIT+)? ('L' | 'l');
 FLOAT       : ('0' | INT_DEC) '.' DECDIGIT+;
+ENUM        : ('0' | INT_DEC) ('.' DECDIGIT+)? 'e' ('+' | '-')? ('0' | INT_DEC);
 fragment ESCCHAR
             : ['"\\bfnrtv]
             ;

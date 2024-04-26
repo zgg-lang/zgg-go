@@ -380,6 +380,10 @@ func (v *BaseZggParserVisitor) VisitLiteralFloat(ctx *LiteralFloatContext) inter
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitLiteralENum(ctx *LiteralENumContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitLiteralBigNum(ctx *LiteralBigNumContext) interface{} {
 	return v.VisitChildren(ctx)
 }

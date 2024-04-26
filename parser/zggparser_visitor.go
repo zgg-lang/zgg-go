@@ -287,6 +287,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#LiteralFloat.
 	VisitLiteralFloat(ctx *LiteralFloatContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#LiteralENum.
+	VisitLiteralENum(ctx *LiteralENumContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#LiteralBigNum.
 	VisitLiteralBigNum(ctx *LiteralBigNumContext) interface{}
 

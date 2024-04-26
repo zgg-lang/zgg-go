@@ -159,6 +159,8 @@ func (v *ParseVisitor) VisitExprLiteral(ctx *ExprLiteralContext) interface{} {
 		return v.VisitLiteralInteger(c)
 	case *LiteralFloatContext:
 		return v.VisitLiteralFloat(c)
+	case *LiteralENumContext:
+		return v.VisitLiteralENum(c)
 	case *LiteralBoolContext:
 		return v.VisitLiteralBool(c)
 	case *LiteralNilContext:

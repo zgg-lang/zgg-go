@@ -196,6 +196,7 @@ integer
 literal
     : integer           # LiteralInteger
     | FLOAT             # LiteralFloat
+    | ENUM              # LiteralENum
     | BIGNUM            # LiteralBigNum
     | ('true'|'false')  # LiteralBool
     | stringLiteral     # LiteralString

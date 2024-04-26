@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"math"
 	"math/big"
 	"strconv"
 	"strings"
@@ -53,6 +54,22 @@ func (v *ParseVisitor) VisitLiteralInteger(ctx *LiteralIntegerContext) interface
 func (v *ParseVisitor) VisitLiteralFloat(ctx *LiteralFloatContext) interface{} {
 	val, _ := strconv.ParseFloat(ctx.GetText(), 64)
 	return &ast.ExprFloat{Value: runtime.NewFloat(val)}
+}
+
+func (v *ParseVisitor) VisitLiteralENum(ctx *LiteralENumContext) interface{} {
+	parts := strings.SplitN(ctx.GetText(), "e", 2)
+	if len(parts) != 2 {
+		panic("parse enum failed")
+	}
+	base, err := strconv.ParseFloat(parts[0], 64)
+	if err != nil {
+		panic("parse enum base failed. " + err.Error())
+	}
+	exponent, err := strconv.Atoi(parts[1])
+	if err != nil {
+		panic("parse enum exponent failed. " + err.Error())
+	}
+	return &ast.ExprFloat{Value: runtime.NewFloat(base * math.Pow10(exponent))}
 }
 
 func (v *ParseVisitor) VisitLiteralBool(ctx *LiteralBoolContext) interface{} {
