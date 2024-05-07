@@ -175,6 +175,49 @@ func libJson(*Context) ValueObject {
 		}
 		return FromGoValue(reflect.ValueOf(res), c)
 	}), nil)
+	lib.SetMember("e2", func() Value {
+		r := NewObject()
+		r.SetMember("__rbitOr__", NewNativeFunction("e2.__rbitOr__", func(c *Context, this Value, args []Value) Value {
+			var left Value
+			EnsureFuncParams(c, "e2.__rbitOr__", args, ArgRuleRequired("left", TypeAny, &left))
+			return c.InvokeMethod(lib, "encode", Args(left, NewInt(2)))
+		}), nil)
+		return r
+	}(), nil)
+	lib.SetMember("e4", func() Value {
+		r := NewObject()
+		r.SetMember("__rbitOr__", NewNativeFunction("e4.__rbitOr__", func(c *Context, this Value, args []Value) Value {
+			var left Value
+			EnsureFuncParams(c, "e4.__rbitOr__", args, ArgRuleRequired("left", TypeAny, &left))
+			return c.InvokeMethod(lib, "encode", Args(left, NewInt(4)))
+		}), nil)
+		return r
+	}(), nil)
+	lib.SetMember("d", func() Value {
+		r := NewObject()
+		r.SetMember("__rbitOr__", NewNativeFunction("d.__rbitOr__", func(c *Context, this Value, args []Value) Value {
+			return c.InvokeMethod(lib, "decode", Args(args...))
+		}), nil)
+		return r
+	}(), nil)
+	lib.SetMember("f2", func() Value {
+		r := NewObject()
+		r.SetMember("__rbitOr__", NewNativeFunction("f2.__rbitOr__", func(c *Context, this Value, args []Value) Value {
+			var left Value
+			EnsureFuncParams(c, "f2.__rbitOr__", args, ArgRuleRequired("left", TypeAny, &left))
+			return c.InvokeMethod(lib, "format", Args(left, NewInt(2)))
+		}), nil)
+		return r
+	}(), nil)
+	lib.SetMember("f4", func() Value {
+		r := NewObject()
+		r.SetMember("__rbitOr__", NewNativeFunction("f4.__rbitOr__", func(c *Context, this Value, args []Value) Value {
+			var left Value
+			EnsureFuncParams(c, "f4.__rbitOr__", args, ArgRuleRequired("left", TypeAny, &left))
+			return c.InvokeMethod(lib, "format", Args(left, NewInt(4)))
+		}), nil)
+		return r
+	}(), nil)
 	return lib
 }
 
