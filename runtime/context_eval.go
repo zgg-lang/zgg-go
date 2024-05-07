@@ -7,6 +7,20 @@ import (
 	"strings"
 )
 
+func (c *Context) TryOverrideBinOp(left, right Value, op string) Value {
+	lfn := fmt.Sprintf("__%s__", op)
+	if opFn, ok := left.GetMember(lfn, c).(ValueCallable); ok {
+		c.Invoke(opFn, left, Args(right))
+		return c.RetVal
+	}
+	rfn := fmt.Sprintf("__r%s__", op)
+	if opFn, ok := right.GetMember(rfn, c).(ValueCallable); ok {
+		c.Invoke(opFn, right, Args(left))
+		return c.RetVal
+	}
+	return nil
+}
+
 func (c *Context) ValuesPlus(left, right Value) Value {
 	if _, isStr := right.(ValueStr); isStr {
 		c.RetVal = NewStr(left.ToString(c) + right.ToString(c))
@@ -81,11 +95,8 @@ func (c *Context) ValuesPlus(left, right Value) Value {
 			}
 		}
 	default:
-		{
-			if opFn, ok := val1.GetMember("__add__", c).(ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []Value { return []Value{right} })
-				return c.RetVal
-			}
+		if rv := c.TryOverrideBinOp(left, right, "add"); rv != nil {
+			return rv
 		}
 	}
 	c.RaiseRuntimeError(fmt.Sprintf("Cannot plus between %s and %s", left.Type().Name, right.Type().Name))
@@ -144,11 +155,8 @@ func (c *Context) ValuesMinus(left, right Value) Value {
 			return c.RetVal
 		}
 	default:
-		{
-			if opFn, ok := val1.GetMember("__sub__", c).(ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []Value { return []Value{right} })
-				return c.RetVal
-			}
+		if rv := c.TryOverrideBinOp(left, right, "sub"); rv != nil {
+			return rv
 		}
 	}
 	c.RaiseRuntimeError(fmt.Sprintf("Cannot minus between %s and %s", left.Type().Name, right.Type().Name))
@@ -234,11 +242,8 @@ func (c *Context) ValuesTimes(left, right Value) (ret Value) {
 			}
 		}
 	default:
-		{
-			if opFn, ok := val1.GetMember("__mul__", c).(ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []Value { return []Value{right} })
-				return c.RetVal
-			}
+		if rv := c.TryOverrideBinOp(left, right, "mul"); rv != nil {
+			return rv
 		}
 	}
 	c.RaiseRuntimeError(fmt.Sprintf("Cannot times between %s and %s", left.Type().Name, right.Type().Name))
@@ -314,11 +319,8 @@ func (c *Context) ValuesDiv(left, right Value) Value {
 			return c.RetVal
 		}
 	default:
-		{
-			if opFn, ok := val1.GetMember("__div__", c).(ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []Value { return []Value{right} })
-				return c.RetVal
-			}
+		if rv := c.TryOverrideBinOp(left, right, "div"); rv != nil {
+			return rv
 		}
 	}
 	c.RaiseRuntimeError(fmt.Sprintf("Cannot div between %s and %s", left.Type().Name, right.Type().Name))
@@ -350,11 +352,8 @@ func (c *Context) ValuesMod(left, right Value) Value {
 		}
 		return c.RetVal
 	default:
-		{
-			if opFn, ok := val1.GetMember("__mod__", c).(ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []Value { return []Value{right} })
-				return c.RetVal
-			}
+		if rv := c.TryOverrideBinOp(left, right, "mod"); rv != nil {
+			return rv
 		}
 	}
 	c.RaiseRuntimeError(fmt.Sprintf("Cannot mod between %s and %s", left.Type().Name, right.Type().Name))
@@ -386,11 +385,8 @@ func (c *Context) ValuesPow(left, right Value) Value {
 			return c.RetVal
 		}
 	default:
-		{
-			if opFn, ok := val1.GetMember("__pow__", c).(ValueCallable); ok {
-				c.Invoke(opFn, val1, func() []Value { return []Value{right} })
-				return c.RetVal
-			}
+		if rv := c.TryOverrideBinOp(left, right, "pow"); rv != nil {
+			return rv
 		}
 	}
 	c.RaiseRuntimeError(fmt.Sprintf("Cannot pow between %s and %s", left.Type().Name, right.Type().Name))

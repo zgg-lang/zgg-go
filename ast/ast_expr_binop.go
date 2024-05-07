@@ -20,11 +20,20 @@ func (binOp *BinOp) GetValues(c *runtime.Context) (runtime.Value, runtime.Value)
 
 func (binOp *BinOp) tryOverride(c *runtime.Context, fn string) (left runtime.Value, right runtime.Value, ret runtime.Value) {
 	left, right = binOp.GetValues(c)
-	if opFn, ok := left.GetMember(fn, c).(runtime.ValueCallable); ok {
-		c.Invoke(opFn, left, runtime.Args(right))
-		ret = c.RetVal
+	if rv := c.TryOverrideBinOp(left, right, fn); rv != nil {
+		c.RetVal = rv
+		ret = rv
 	}
 	return
+}
+
+func (binOp *BinOp) procCanOverride(c *runtime.Context, fn string, proc func(left, right runtime.Value) runtime.Value) {
+	left, right, overrideRet := binOp.tryOverride(c, fn)
+	if overrideRet != nil {
+		c.RetVal = overrideRet
+	} else {
+		c.RetVal = proc(left, right)
+	}
 }
 
 type ExprPlus struct {
@@ -213,70 +222,55 @@ const (
 )
 
 type ExprCompare struct {
-	First   Expr
-	Ops     []int
-	Targets []Expr
+	BinOp
+	Op int
+	//First   Expr
+	//Ops     []int
+	//Targets []Expr
 }
 
 func (expr *ExprCompare) Eval(c *runtime.Context) {
-	if len(expr.Ops) != len(expr.Targets) {
-		c.RaiseRuntimeError("invalid compare!")
+	var (
+		ofn    string
+		isTrue bool
+	)
+	switch expr.Op {
+	case CompareOpEQ:
+		ofn = "eq"
+	case CompareOpNE:
+		ofn = "ne"
+	case CompareOpLT:
+		ofn = "lt"
+	case CompareOpLE:
+		ofn = "le"
+	case CompareOpGT:
+		ofn = "gt"
+	case CompareOpGE:
+		ofn = "ge"
+	default:
+		c.RaiseRuntimeError("invalid compare op %d", expr.Op)
 	}
-	expr.First.Eval(c)
-	v1 := ensureZgg(c.RetVal, c)
-	for i, op := range expr.Ops {
-		expr.Targets[i].Eval(c)
-		v2 := ensureZgg(c.RetVal, c)
-		var overridedMethod string
-		switch op {
-		case CompareOpEQ:
-			overridedMethod = "__eq__"
-		case CompareOpNE:
-			overridedMethod = "__ne__"
-		case CompareOpLT:
-			overridedMethod = "__lt__"
-		case CompareOpLE:
-			overridedMethod = "__le__"
-		case CompareOpGT:
-			overridedMethod = "__gt__"
-		case CompareOpGE:
-			overridedMethod = "__ge__"
-		default:
-			c.RaiseRuntimeError("invalid compare op %d", op)
-		}
-		if opFn, ok := v1.GetMember(overridedMethod, c).(runtime.ValueCallable); ok {
-			c.Invoke(opFn, v1, runtime.Args(v2))
-			if !c.RetVal.IsTrue() {
-				return
-			}
-			v1 = v2
-			continue
-		}
-		comp := v1.CompareTo(v2, c)
-		isTrue := false
-		switch op {
-		case CompareOpEQ:
-			isTrue = comp == runtime.CompareResultEqual
-		case CompareOpNE:
-			isTrue = (comp & runtime.CompareResultEqual) == 0
-		case CompareOpLT:
-			isTrue = comp == runtime.CompareResultLess
-		case CompareOpLE:
-			isTrue = (comp & (runtime.CompareResultLess | runtime.CompareResultEqual)) != 0
-		case CompareOpGT:
-			isTrue = comp == runtime.CompareResultGreater
-		case CompareOpGE:
-			isTrue = (comp & (runtime.CompareResultGreater | runtime.CompareResultEqual)) != 0
-		default:
-			c.RaiseRuntimeError("invalid compare op %d", op)
-		}
-		if !isTrue {
-			c.RetVal = runtime.NewBool(false)
-			return
-		}
-		v1 = v2
+	left, right, overrideRet := expr.tryOverride(c, ofn)
+	if overrideRet != nil {
+		c.RetVal = overrideRet
+		return
 	}
-	c.RetVal = runtime.NewBool(true)
+	comp := left.CompareTo(right, c)
+	switch expr.Op {
+	case CompareOpEQ:
+		isTrue = comp == runtime.CompareResultEqual
+	case CompareOpNE:
+		isTrue = (comp & runtime.CompareResultEqual) == 0
+	case CompareOpLT:
+		isTrue = comp == runtime.CompareResultLess
+	case CompareOpLE:
+		isTrue = (comp & (runtime.CompareResultLess | runtime.CompareResultEqual)) != 0
+	case CompareOpGT:
+		isTrue = comp == runtime.CompareResultGreater
+	case CompareOpGE:
+		isTrue = (comp & (runtime.CompareResultGreater | runtime.CompareResultEqual)) != 0
+	}
+	c.RetVal = runtime.NewBool(isTrue)
 }
 
 type ExprEqual struct {
@@ -412,12 +406,9 @@ type ExprBitShl struct {
 }
 
 func (expr *ExprBitShl) Eval(c *runtime.Context) {
-	left, right, overrideRet := expr.tryOverride(c, "__shl__")
-	if overrideRet != nil {
-		c.RetVal = overrideRet
-	} else {
-		c.RetVal = runtime.NewInt(c.MustInt(left) << c.MustInt(right))
-	}
+	expr.procCanOverride(c, "shl", func(left, right runtime.Value) runtime.Value {
+		return runtime.NewInt(c.MustInt(left) << c.MustInt(right))
+	})
 }
 
 type ExprBitShr struct {
@@ -425,12 +416,9 @@ type ExprBitShr struct {
 }
 
 func (expr *ExprBitShr) Eval(c *runtime.Context) {
-	left, right, overrideRet := expr.tryOverride(c, "__shr__")
-	if overrideRet != nil {
-		c.RetVal = overrideRet
-	} else {
-		c.RetVal = runtime.NewInt(c.MustInt(left) >> c.MustInt(right))
-	}
+	expr.procCanOverride(c, "shr", func(left, right runtime.Value) runtime.Value {
+		return runtime.NewInt(c.MustInt(left) >> c.MustInt(right))
+	})
 }
 
 type ExprBitAnd struct {
@@ -438,12 +426,9 @@ type ExprBitAnd struct {
 }
 
 func (expr *ExprBitAnd) Eval(c *runtime.Context) {
-	left, right, overrideRet := expr.tryOverride(c, "__bitAnd__")
-	if overrideRet != nil {
-		c.RetVal = overrideRet
-	} else {
-		c.RetVal = runtime.NewInt(c.MustInt(left) & c.MustInt(right))
-	}
+	expr.procCanOverride(c, "bitAnd", func(left, right runtime.Value) runtime.Value {
+		return runtime.NewInt(c.MustInt(left) & c.MustInt(right))
+	})
 }
 
 type ExprBitOr struct {
@@ -451,13 +436,9 @@ type ExprBitOr struct {
 }
 
 func (expr *ExprBitOr) Eval(c *runtime.Context) {
-	left, right := expr.GetValues(c)
-	left, right, overrideRet := expr.tryOverride(c, "__bitOr__")
-	if overrideRet != nil {
-		c.RetVal = overrideRet
-	} else {
-		c.RetVal = runtime.NewInt(c.MustInt(left) | c.MustInt(right))
-	}
+	expr.procCanOverride(c, "bitOr", func(left, right runtime.Value) runtime.Value {
+		return runtime.NewInt(c.MustInt(left) | c.MustInt(right))
+	})
 }
 
 type ExprBitXor struct {
@@ -465,12 +446,9 @@ type ExprBitXor struct {
 }
 
 func (expr *ExprBitXor) Eval(c *runtime.Context) {
-	left, right, overrideRet := expr.tryOverride(c, "__bitXor__")
-	if overrideRet != nil {
-		c.RetVal = overrideRet
-	} else {
-		c.RetVal = runtime.NewInt(c.MustInt(left) ^ c.MustInt(right))
-	}
+	expr.procCanOverride(c, "bitXor", func(left, right runtime.Value) runtime.Value {
+		return runtime.NewInt(c.MustInt(left) ^ c.MustInt(right))
+	})
 }
 
 type ExprIsType struct {
@@ -478,7 +456,7 @@ type ExprIsType struct {
 }
 
 func (expr *ExprIsType) Eval(c *runtime.Context) {
-	left, right, overrideRet := expr.tryOverride(c, "__is__")
+	left, right, overrideRet := expr.tryOverride(c, "is")
 	if overrideRet != nil {
 		c.RetVal = overrideRet
 	} else {
