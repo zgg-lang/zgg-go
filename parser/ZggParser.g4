@@ -107,6 +107,7 @@ expr
     | (SINGLE_AT | DOUBLE_AT) IDENTIFIER                                # exprShortImport
     | preIncDec                                             	        # exprPreIncDec
     | postIncDec                                            	        # exprPostIncDec
+    | '.' field=IDENTIFIER                             	                # exprItByField
     | expr '.' field=IDENTIFIER                             	        # exprByField
     | expr '[' index=expr ']'                               	        # exprByIndex
     | container=expr '[' (begin=expr)? ':' (end=expr)? ']'              # exprBySlice
@@ -151,6 +152,7 @@ whenCondition
     | lowerBound=expr? ('..'|'..<') upperBound=expr?    # whenConditionInRange
     | 'is' expr                                         # whenConditionIsType
     ;
+
 arguments
     : '(' ( funcArgument ( ',' funcArgument )* ','? )? ')'
     ;
@@ -181,6 +183,7 @@ postIncDec
 
 lval
     : lval '.' field=IDENTIFIER                             # lvalByField
+    | '.' field=IDENTIFIER                                  # lvalItByField
     | lval '[' index=expr ']'                               # lvalByIndex
     | IDENTIFIER                                            # lvalById
     ;
@@ -221,6 +224,7 @@ literal
       | IDENTIFIER
       ) '=>' codeBlock  # LiteralLambdaBlock
     | L_CURLY (objItem (',' objItem)* ','?)? R_CURLY                                      # LiteralObject
+	| '{' expr '}'   # LiteralLambdaSimpleExpr
     | '{'
           keyExpr=expr ':' valueExpr=expr
           FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER IN

@@ -224,6 +224,10 @@ func (v *BaseZggParserVisitor) VisitExprLogicNot(ctx *ExprLogicNotContext) inter
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitExprItByField(ctx *ExprItByFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitExprLogicAnd(ctx *ExprLogicAndContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -348,6 +352,10 @@ func (v *BaseZggParserVisitor) VisitLvalByIndex(ctx *LvalByIndexContext) interfa
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseZggParserVisitor) VisitLvalItByField(ctx *LvalItByFieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseZggParserVisitor) VisitLvalByField(ctx *LvalByFieldContext) interface{} {
 	return v.VisitChildren(ctx)
 }
@@ -417,6 +425,10 @@ func (v *BaseZggParserVisitor) VisitLiteralLambdaBlock(ctx *LiteralLambdaBlockCo
 }
 
 func (v *BaseZggParserVisitor) VisitLiteralObject(ctx *LiteralObjectContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseZggParserVisitor) VisitLiteralLambdaSimpleExpr(ctx *LiteralLambdaSimpleExprContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

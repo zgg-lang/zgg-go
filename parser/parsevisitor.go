@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -101,6 +100,13 @@ func (v *ParseVisitor) VisitExprByField(ctx *ExprByFieldContext) interface{} {
 	}
 }
 
+func (v *ParseVisitor) VisitExprItByField(ctx *ExprItByFieldContext) interface{} {
+	return &ast.LvalByField{
+		Owner: &ast.ExprIdentifier{Name: "it"},
+		Field: &ast.ExprStr{Value: runtime.NewStr(ctx.IDENTIFIER().GetText())},
+	}
+}
+
 func (v *ParseVisitor) VisitExprByIndex(ctx *ExprByIndexContext) interface{} {
 	return &ast.LvalByField{
 		Owner: ctx.Expr(0).Accept(v).(ast.Expr),
@@ -129,6 +135,13 @@ func (v *ParseVisitor) VisitLvalById(ctx *LvalByIdContext) interface{} {
 func (v *ParseVisitor) VisitLvalByField(ctx *LvalByFieldContext) interface{} {
 	return &ast.LvalByField{
 		Owner: ctx.Lval().Accept(v).(ast.Expr),
+		Field: &ast.ExprStr{Value: runtime.NewStr(ctx.IDENTIFIER().GetText())},
+	}
+}
+
+func (v *ParseVisitor) VisitLvalItByField(ctx *LvalItByFieldContext) interface{} {
+	return &ast.LvalByField{
+		Owner: &ast.LvalById{Name: "it"},
 		Field: &ast.ExprStr{Value: runtime.NewStr(ctx.IDENTIFIER().GetText())},
 	}
 }
@@ -175,6 +188,8 @@ func (v *ParseVisitor) VisitExprLiteral(ctx *ExprLiteralContext) interface{} {
 		return v.VisitLiteralLambdaBlock(c)
 	case *LiteralLambdaExprContext:
 		return v.VisitLiteralLambdaExpr(c)
+	case *LiteralLambdaSimpleExprContext:
+		return v.VisitLiteralLambdaSimpleExpr(c)
 	case *LiteralObjectContext:
 		return v.VisitLiteralObject(c)
 	case *LiteralArrayContext:
@@ -401,7 +416,7 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 			c.RaiseRuntimeError("import: load %s find entry error", name)
 		}
 	}
-	codeBs, err := ioutil.ReadFile(filename)
+	codeBs, err := os.ReadFile(filename)
 	if err != nil {
 		c.RaiseRuntimeError("import: read file %s err %s", filename, err)
 		return

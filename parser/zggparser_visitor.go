@@ -170,6 +170,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#exprLogicNot.
 	VisitExprLogicNot(ctx *ExprLogicNotContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#exprItByField.
+	VisitExprItByField(ctx *ExprItByFieldContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#exprLogicAnd.
 	VisitExprLogicAnd(ctx *ExprLogicAndContext) interface{}
 
@@ -263,6 +266,9 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#lvalByIndex.
 	VisitLvalByIndex(ctx *LvalByIndexContext) interface{}
 
+	// Visit a parse tree produced by ZggParser#lvalItByField.
+	VisitLvalItByField(ctx *LvalItByFieldContext) interface{}
+
 	// Visit a parse tree produced by ZggParser#lvalByField.
 	VisitLvalByField(ctx *LvalByFieldContext) interface{}
 
@@ -316,6 +322,9 @@ type ZggParserVisitor interface {
 
 	// Visit a parse tree produced by ZggParser#LiteralObject.
 	VisitLiteralObject(ctx *LiteralObjectContext) interface{}
+
+	// Visit a parse tree produced by ZggParser#LiteralLambdaSimpleExpr.
+	VisitLiteralLambdaSimpleExpr(ctx *LiteralLambdaSimpleExprContext) interface{}
 
 	// Visit a parse tree produced by ZggParser#ObjectComprehension.
 	VisitObjectComprehension(ctx *ObjectComprehensionContext) interface{}
