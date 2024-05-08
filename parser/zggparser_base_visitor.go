@@ -428,10 +428,6 @@ func (v *BaseZggParserVisitor) VisitLiteralObject(ctx *LiteralObjectContext) int
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseZggParserVisitor) VisitLiteralLambdaSimpleExpr(ctx *LiteralLambdaSimpleExprContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
 func (v *BaseZggParserVisitor) VisitObjectComprehension(ctx *ObjectComprehensionContext) interface{} {
 	return v.VisitChildren(ctx)
 }

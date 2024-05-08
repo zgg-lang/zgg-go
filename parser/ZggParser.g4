@@ -158,7 +158,7 @@ arguments
     ;
 
 funcArgument
-    : ('...'? expr | codeBlock)
+    : ('...'? simpleArg=expr | codeBlock | '{' lambdaExpr=expr '}')
     | IDENTIFIER ':' expr
     ;
 
@@ -224,7 +224,6 @@ literal
       | IDENTIFIER
       ) '=>' codeBlock  # LiteralLambdaBlock
     | L_CURLY (objItem (',' objItem)* ','?)? R_CURLY                                      # LiteralObject
-	| '{' expr '}'   # LiteralLambdaSimpleExpr
     | '{'
           keyExpr=expr ':' valueExpr=expr
           FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER IN

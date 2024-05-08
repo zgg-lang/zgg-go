@@ -188,8 +188,6 @@ func (v *ParseVisitor) VisitExprLiteral(ctx *ExprLiteralContext) interface{} {
 		return v.VisitLiteralLambdaBlock(c)
 	case *LiteralLambdaExprContext:
 		return v.VisitLiteralLambdaExpr(c)
-	case *LiteralLambdaSimpleExprContext:
-		return v.VisitLiteralLambdaSimpleExpr(c)
 	case *LiteralObjectContext:
 		return v.VisitLiteralObject(c)
 	case *LiteralArrayContext:

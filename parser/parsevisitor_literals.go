@@ -178,21 +178,6 @@ func (v *ParseVisitor) VisitLiteralLambdaBlock(ctx *LiteralLambdaBlockContext) i
 	return &ast.ExprFunc{Value: f}
 }
 
-func (v *ParseVisitor) VisitLiteralLambdaSimpleExpr(ctx *LiteralLambdaSimpleExprContext) interface{} {
-	pos := getPos(v, ctx)
-	body := &ast.Block{
-		Pos: pos,
-		Stmts: []ast.Stmt{
-			&ast.StmtReturn{
-				Pos:   pos,
-				Value: ctx.Expr().Accept(v).(ast.Expr),
-			},
-		},
-	}
-	f := runtime.NewFunc("", []string{"it"}, false, body)
-	return &ast.ExprFunc{Value: f}
-}
-
 type memberDef struct {
 	isStatic bool
 	kvPair   kvPair

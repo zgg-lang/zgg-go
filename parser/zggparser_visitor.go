@@ -323,9 +323,6 @@ type ZggParserVisitor interface {
 	// Visit a parse tree produced by ZggParser#LiteralObject.
 	VisitLiteralObject(ctx *LiteralObjectContext) interface{}
 
-	// Visit a parse tree produced by ZggParser#LiteralLambdaSimpleExpr.
-	VisitLiteralLambdaSimpleExpr(ctx *LiteralLambdaSimpleExprContext) interface{}
-
 	// Visit a parse tree produced by ZggParser#ObjectComprehension.
 	VisitObjectComprehension(ctx *ObjectComprehensionContext) interface{}
 

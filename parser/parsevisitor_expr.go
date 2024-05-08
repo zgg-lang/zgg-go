@@ -19,11 +19,24 @@ func (v *ParseVisitor) VisitArguments(ctx *ArgumentsContext) interface{} {
 
 func (v *ParseVisitor) VisitFuncArgument(ctx *FuncArgumentContext) interface{} {
 	var rv ast.CallArgument
-	if e := ctx.Expr(); e != nil {
+	if e := ctx.GetSimpleArg(); e != nil {
 		rv.Arg = e.Accept(v).(ast.Expr)
 		rv.ShouldExpand = ctx.MORE_ARGS() != nil
 	} else if c := ctx.CodeBlock(); c != nil {
 		body := c.Accept(v).(*ast.Block)
+		f := runtime.NewFunc("", []string{"it"}, false, body)
+		rv.Arg = &ast.ExprFunc{Value: f}
+	} else if e := ctx.GetLambdaExpr(); e != nil {
+		pos := getPos(v, ctx)
+		body := &ast.Block{
+			Pos: pos,
+			Stmts: []ast.Stmt{
+				&ast.StmtReturn{
+					Pos:   pos,
+					Value: e.Accept(v).(ast.Expr),
+				},
+			},
+		}
 		f := runtime.NewFunc("", []string{"it"}, false, body)
 		rv.Arg = &ast.ExprFunc{Value: f}
 	}
