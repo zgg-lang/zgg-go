@@ -159,7 +159,7 @@ arguments
 
 funcArgument
     : ('...'? simpleArg=expr | codeBlock | '{' lambdaExpr=expr '}')
-    | IDENTIFIER ':' expr
+    | IDENTIFIER ':' simpleArg=expr
     ;
 
 assignExpr

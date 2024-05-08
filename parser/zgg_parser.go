@@ -8094,7 +8094,10 @@ func (p *ZggParser) FuncArgument() (localctx IFuncArgumentContext) {
 		}
 		{
 			p.SetState(527)
-			p.expr(0)
+
+			var _x = p.expr(0)
+
+			localctx.(*FuncArgumentContext).simpleArg = _x
 		}
 
 	}
