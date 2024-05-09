@@ -171,18 +171,7 @@ func Args(v ...Value) func() []Value {
 	return func() []Value { return v }
 }
 
-var builtinFuncMethods = map[string]ValueCallable{
-	"bind": NewNativeFunction("bind", func(c *Context, this Value, addArgs []Value) Value {
-		f := c.MustCallable(this)
-		return NewNativeFunction("", func(c *Context, this Value, args []Value) Value {
-			callArgs := make([]Value, len(args)+len(addArgs))
-			copy(callArgs, args)
-			copy(callArgs[len(args):], addArgs)
-			c.Invoke(f, this, Args(callArgs...))
-			return c.RetVal
-		})
-	}),
-}
+var builtinFuncMethods = map[string]ValueCallable{}
 
 func init() {
 	addMembersAndStatics(TypeFunc, builtinFuncMethods)
