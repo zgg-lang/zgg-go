@@ -437,6 +437,10 @@ type ExprBitOr struct {
 
 func (expr *ExprBitOr) Eval(c *runtime.Context) {
 	expr.procCanOverride(c, "bitOr", func(left, right runtime.Value) runtime.Value {
+		if callable, is := c.GetCallable(right); is {
+			c.Invoke(callable, nil, runtime.Args(left))
+			return c.RetVal
+		}
 		return runtime.NewInt(c.MustInt(left) | c.MustInt(right))
 	})
 }
