@@ -63,9 +63,6 @@ func (v *ParseVisitor) VisitBlock(ctx *BlockContext) interface{} {
 	for _, s := range ctx.AllStmt() {
 		stmt := s.Accept(v).(ast.Stmt)
 		r.Stmts = append(r.Stmts, stmt)
-		// if assign, ok := stmt.(*ast.ExprLocalAssign); ok {
-		// 	r.LocalNames = append(r.LocalNames, assign.Names...)
-		// }
 	}
 	return r
 }
@@ -77,6 +74,7 @@ func (v *ParseVisitor) VisitExprCall(ctx *ExprCallContext) interface{} {
 		Optional:  ctx.OPTIONAL_CALL() != nil,
 		Callee:    ctx.Expr().Accept(v).(ast.Expr),
 		Arguments: args,
+		IsBind:    ast.IsBindList(args),
 	}
 }
 

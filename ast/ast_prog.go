@@ -463,7 +463,7 @@ type StmtDefer struct {
 func (s *StmtDefer) Eval(c *runtime.Context) {
 	s.Call.Callee.Eval(c)
 	callee := c.MustCallable(c.RetVal)
-	args := s.Call.GetArgs(c, callee)
+	args := s.Call.GetArgs(c, callee, nil)
 	c.AddDefer(callee, args, s.Call.Optional)
 }
 
@@ -475,7 +475,7 @@ type StmtBlockDefer struct {
 func (s *StmtBlockDefer) Eval(c *runtime.Context) {
 	s.Call.Callee.Eval(c)
 	callee := c.MustCallable(c.RetVal)
-	args := s.Call.GetArgs(c, callee)
+	args := s.Call.GetArgs(c, callee, nil)
 	c.AddBlockDefer(callee, args, s.Call.Optional)
 }
 

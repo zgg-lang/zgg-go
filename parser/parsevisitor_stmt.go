@@ -164,6 +164,7 @@ func (v *ParseVisitor) VisitCallStmt(ctx *CallStmtContext) interface{} {
 		Optional:  ctx.OPTIONAL_CALL() != nil,
 		Callee:    ctx.Expr().Accept(v).(ast.Expr),
 		Arguments: args,
+		IsBind:    ast.IsBindList(args),
 	}
 	if ctx.OPTIONAL_ELSE() != nil {
 		rv = &ast.StmtFallback{
@@ -290,6 +291,7 @@ func (v *ParseVisitor) VisitStmtDefer(ctx *StmtDeferContext) interface{} {
 		Optional:  ctx.OPTIONAL_CALL() != nil,
 		Callee:    ctx.Expr().Accept(v).(ast.Expr),
 		Arguments: args,
+		IsBind:    ast.IsBindList(args),
 	}
 	if ctx.DEFER() != nil {
 		return &ast.StmtDefer{

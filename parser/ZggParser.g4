@@ -160,6 +160,7 @@ arguments
 funcArgument
     : ('...'? simpleArg=expr | codeBlock | '{' lambdaExpr=expr '}')
     | IDENTIFIER ':' simpleArg=expr
+	| placeholder='%' holeIndex=(INT_ZERO | INT_DEC )?
     ;
 
 assignExpr

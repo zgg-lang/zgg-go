@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 
+	"github.com/samber/lo"
 	"github.com/zgg-lang/zgg-go/runtime"
 )
 
@@ -10,6 +11,13 @@ type CallArgument struct {
 	Keyword      string
 	Arg          Expr
 	ShouldExpand bool
+	HoleIndex    int
+}
+
+func IsBindList(args []CallArgument) bool {
+	return lo.ContainsBy(args, func(a CallArgument) bool {
+		return a.Arg == nil
+	})
 }
 
 type ExprCall struct {
@@ -17,9 +25,10 @@ type ExprCall struct {
 	Optional  bool
 	Callee    Expr
 	Arguments []CallArgument
+	IsBind    bool
 }
 
-func (expr *ExprCall) GetArgs(c *runtime.Context, callable runtime.ValueCallable) []runtime.Value {
+func (expr *ExprCall) GetArgs(c *runtime.Context, callable runtime.ValueCallable, bindedArgs []runtime.Value) []runtime.Value {
 	args := make([]runtime.Value, 0, len(expr.Arguments))
 	argNames := callable.GetArgNames(c)
 	argPos := make(map[string]int, len(argNames))
@@ -27,8 +36,21 @@ func (expr *ExprCall) GetArgs(c *runtime.Context, callable runtime.ValueCallable
 		argPos[n] = i
 	}
 	for _, arg := range expr.Arguments {
-		arg.Arg.Eval(c)
-		argVal := c.RetVal
+		var argVal runtime.Value
+		if arg.Arg == nil {
+			holeIndex := arg.HoleIndex
+			if holeIndex < 0 {
+				holeIndex += len(bindedArgs)
+			}
+			if holeIndex >= 0 && holeIndex < len(bindedArgs) {
+				argVal = bindedArgs[holeIndex]
+			} else {
+				c.RaiseRuntimeError("placeholder value not given")
+			}
+		} else {
+			arg.Arg.Eval(c)
+			argVal = c.RetVal
+		}
 		if arg.ShouldExpand {
 			switch moreArgs := argVal.(type) {
 			case runtime.ValueArray:
@@ -61,12 +83,10 @@ func (expr *ExprCall) GetArgs(c *runtime.Context, callable runtime.ValueCallable
 	return args
 }
 
-func (expr *ExprCall) Eval(c *runtime.Context) {
-	expr.Callee.Eval(c)
-	calleeVal := c.RetVal
+func (expr *ExprCall) evalInvoke(c *runtime.Context, calleeVal runtime.Value, bindedArgs ...runtime.Value) runtime.Value {
 	switch callee := calleeVal.(type) {
 	case runtime.ValueCallable:
-		c.Invoke(callee, callee.GetOwner(), func() []runtime.Value { return expr.GetArgs(c, callee) })
+		c.Invoke(callee, callee.GetOwner(), func() []runtime.Value { return expr.GetArgs(c, callee, bindedArgs) })
 	default:
 		if expr.Optional {
 			c.RetVal = runtime.Undefined()
@@ -74,6 +94,19 @@ func (expr *ExprCall) Eval(c *runtime.Context) {
 			c.RaiseRuntimeError(fmt.Sprintf("%s is not callable", calleeVal.Type().Name))
 		}
 	}
+	return c.RetVal
+}
+
+func (expr *ExprCall) Eval(c *runtime.Context) {
+	expr.Callee.Eval(c)
+	calleeVal := c.RetVal
+	if expr.IsBind {
+		c.RetVal = runtime.NewNativeFunction("", func(c *runtime.Context, this runtime.Value, args []runtime.Value) runtime.Value {
+			return expr.evalInvoke(c, calleeVal, args...)
+		})
+		return
+	}
+	expr.evalInvoke(c, calleeVal)
 }
 
 type ExprShortImport struct {

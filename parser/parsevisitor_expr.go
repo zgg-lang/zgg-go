@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/zgg-lang/zgg-go/ast"
@@ -39,6 +40,14 @@ func (v *ParseVisitor) VisitFuncArgument(ctx *FuncArgumentContext) interface{} {
 		}
 		f := runtime.NewFunc("", []string{"it"}, false, body)
 		rv.Arg = &ast.ExprFunc{Value: f}
+	} else if ctx.GetPlaceholder() != nil {
+		if his := ctx.GetHoleIndex(); his != nil {
+			holeIndex, err := strconv.Atoi(his.GetText())
+			if err != nil {
+				panic("hole index is not an integer")
+			}
+			rv.HoleIndex = holeIndex
+		}
 	}
 	if id := ctx.IDENTIFIER(); id != nil {
 		rv.Keyword = id.GetText()
@@ -296,18 +305,3 @@ func (v *ParseVisitor) VisitExprAssertError(ctx *ExprAssertErrorContext) interfa
 		Expr: ctx.Expr().Accept(v).(ast.Expr),
 	}
 }
-
-//func (v *ParseVisitor) VisitExprAt(ctx *ExprAtContext) interface{} {
-//	args := []ast.CallArgument{
-//		{Arg: ctx.Expr().Accept(v).(ast.Expr)},
-//	}
-//	if a := ctx.Arguments(); a != nil {
-//		args = append(args, a.Accept(v).([]ast.CallArgument)...)
-//	}
-//	return &ast.ExprCall{
-//		Pos:       getPos(v, ctx),
-//		Optional:  false,
-//		Callee:    &ast.ExprIdentifier{Name: ctx.IDENTIFIER().GetText()},
-//		Arguments: args,
-//	}
-//}
