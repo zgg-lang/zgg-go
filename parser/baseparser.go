@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/antlr/antlr4/runtime/Go/antlr"
+import "github.com/antlr4-go/antlr/v4"
 
 type ZggBaseParser struct {
 	*antlr.BaseParser

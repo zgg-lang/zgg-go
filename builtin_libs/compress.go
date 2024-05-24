@@ -75,6 +75,7 @@ func (compressZlib) Compress(data []byte, c *Context, opt ValueObject) ([]byte, 
 }
 
 func (compressZlib) Decompress(data []byte, c *Context, opt ValueObject) ([]byte, error) {
+	println(len(data))
 	r, err := zlib.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err

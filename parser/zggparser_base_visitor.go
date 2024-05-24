@@ -1,8 +1,8 @@
-// Code generated from parser/ZggParser.g4 by ANTLR 4.8. DO NOT EDIT.
+// Code generated from parser/ZggParser.g4 by ANTLR 4.13.1. DO NOT EDIT.
 
 package parser // ZggParser
 
-import "github.com/antlr/antlr4/runtime/Go/antlr"
+import "github.com/antlr4-go/antlr/v4"
 
 type BaseZggParserVisitor struct {
 	*antlr.BaseParseTreeVisitor

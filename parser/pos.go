@@ -5,7 +5,7 @@ import (
 
 	"github.com/zgg-lang/zgg-go/ast"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 func getPos(v *ParseVisitor, c antlr.ParserRuleContext) ast.Pos {

@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
-	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20211213210530-5d6a78255383
+	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
 	github.com/beevik/etree v1.2.0
 	github.com/chzyer/readline v1.5.0
 	github.com/fogleman/gg v1.3.0
@@ -31,6 +31,8 @@ require (
 
 require (
 	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/antlr/antlr4 v4.11.1+incompatible // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -46,7 +48,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

@@ -20,7 +20,7 @@ import (
 
 	"github.com/zgg-lang/zgg-go/runtime"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 type varRec struct {
