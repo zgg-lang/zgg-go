@@ -31,7 +31,7 @@ darwinarm64:
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 $(GOBUILD) $(FLAGS) -o bin/darwin_arm64/zgg cmd/*.go
 
 parser: lexer
-	java -jar tools/antlr-4.8-complete.jar -Dlanguage=Go -no-listener -visitor parser/Zgg*.g4
+	antlr4 -Dlanguage=Go -no-listener -visitor parser/Zgg*.g4
 
 lexer:
 	python3 scripts/makelexer.py
