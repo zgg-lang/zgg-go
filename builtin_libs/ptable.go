@@ -196,7 +196,7 @@ func initPTableClass() {
 			rowLines = append(rowLines, n)
 		}
 		var b strings.Builder
-		if !IsUndefined(colorConf) {
+		if colorConf != nil && !IsUndefined(colorConf) {
 			b.WriteString("\x1b[0m")
 		}
 		// head line
