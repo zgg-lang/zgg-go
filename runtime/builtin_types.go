@@ -32,7 +32,7 @@ var (
 	TypeFunc      = NewType(builtinTypeFunc, "Func")
 	TypeArray     = NewType(builtinTypeArray, "Array")
 	TypeObject    = NewType(builtinTypeObject, "Object")
-	TypeMap       = NewTypeWithCreator(builtinTypeObject, "Map", NewMapWithPairs)
+	TypeMap       = NewTypeWithCreator(builtinTypeMap, "Map", NewMapWithPairs)
 	TypeType      = NewType(builtinTypeType, "Type")
 	TypeGoValue   = NewType(builtinTypeGoValue, "GoValue")
 	TypeGoType    = NewType(builtinTypeGoType, "GoType")

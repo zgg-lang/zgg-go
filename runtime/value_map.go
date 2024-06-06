@@ -28,7 +28,7 @@ func NewMap() ValueMap {
 
 func NewMapWithPairs(c *Context, kvs []Value) Value {
 	n := len(kvs)
-	if n != 0 {
+	if n%2 != 0 {
 		c.RaiseRuntimeError("NewMap arguments number must be an even number")
 	}
 	rv := NewMap()
