@@ -120,8 +120,31 @@ func libTime(c *Context) ValueObject {
 			t:  t,
 			as: asType,
 		}
-		now := NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
-		return now
+		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+	}), nil)
+	lib.SetMember("today", NewNativeFunction("today", func(c *Context, this Value, args []Value) Value {
+		t := time.Now()
+		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		info := timeTimeInfo{
+			t:  t,
+		}
+		return  NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+	}), nil)
+	lib.SetMember("yesterday", NewNativeFunction("yesterday", func(c *Context, this Value, args []Value) Value {
+		t := time.Now().Add(-24*time.Hour)
+		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		info := timeTimeInfo{
+			t:  t,
+		}
+		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+	}), nil)
+	lib.SetMember("tomorrow", NewNativeFunction("tomorrow", func(c *Context, this Value, args []Value) Value {
+		t := time.Now().Add(24*time.Hour)
+		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		info := timeTimeInfo{
+			t:  t,
+		}
+		return  NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("fromUnix", NewNativeFunction("fromUnix", func(c *Context, this Value, args []Value) Value {
 		var ts ValueInt
@@ -601,6 +624,13 @@ func timeInittimeTimeClass() {
 				NewInt(int64(t.Second())),
 				NewStr(t.Location().String()),
 			)
+		}).
+		Method("monthBegin", func(c *Context, this ValueObject, args []Value) Value {
+			info := this.Reserved.(timeTimeInfo)
+			t := info.t
+			t = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
+			info = timeTimeInfo{t:  t, as: info.as}
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
 			var (
