@@ -30,6 +30,9 @@ func (v *ParseVisitor) VisitStmtFor(ctx *StmtForContext) interface{} {
 }
 
 func (v *ParseVisitor) VisitStmtForEach(ctx *StmtForEachContext) interface{} {
+	if ctx.GetInword().GetText() != "in" {
+		return nil
+	}
 	r := &ast.StmtForEach{
 		Pos:     getPos(v, ctx),
 		IdValue: ctx.GetIdValue().GetText(),

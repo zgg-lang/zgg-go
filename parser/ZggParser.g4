@@ -43,7 +43,7 @@ stmt
             ';'
             nextExpr=expr
             execBlock=codeBlock                 # stmtFor
-    | (label=IDENTIFIER ':')? FOR (idIndex=IDENTIFIER ',')? idValue=IDENTIFIER IN
+    | (label=IDENTIFIER ':')? FOR (idIndex=IDENTIFIER ',')? idValue=IDENTIFIER inword=IDENTIFIER
         begin=expr (('..'|'..<') end=expr)?
         execBlock=codeBlock                     # stmtForEach
     | (label=IDENTIFIER ':')? DO    execBlock=codeBlock
@@ -125,8 +125,8 @@ expr
     | expr '^' expr                                         	        # exprBitXor
     | expr comparator expr                                              # exprCompare
     | expr 'is' expr                                                    # exprIsType
-    | expr 'in' expr                                                    # exprInContainer
-    | expr 'in' expr ('..'|'..<') expr                                  # exprInRange
+    | expr inword=IDENTIFIER expr                                       # exprInContainer
+    | expr inword=IDENTIFIER expr ('..'|'..<') expr                     # exprInRange
     | expr '&&' expr                                        	        # exprLogicAnd
     | expr '||' expr                                        	        # exprLogicOr
     | 'when' L_CURLY
@@ -227,7 +227,7 @@ literal
     | L_CURLY (objItem (',' objItem)* ','?)? R_CURLY                                      # LiteralObject
     | '{'
           keyExpr=expr ':' valueExpr=expr
-          FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER IN
+          FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER inword=IDENTIFIER
           begin=expr ( ('..'|'..<') end=expr)?
           (
               IF filter=expr
@@ -236,7 +236,7 @@ literal
     | '[' (arrayItem (',' arrayItem)* ','? )? ']'                                 # LiteralArray
     | '['
           itemExpr=expr
-          FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER IN
+          FOR (indexer=IDENTIFIER ',')? value=IDENTIFIER inword=IDENTIFIER
           begin=expr ( ('..'|'..<') end=expr)?
           (
               IF filter=expr
