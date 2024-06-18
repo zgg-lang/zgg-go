@@ -91,9 +91,6 @@ func (v *ParseVisitor) VisitExprIsType(ctx *ExprIsTypeContext) interface{} {
 }
 
 func (v *ParseVisitor) VisitExprInContainer(ctx *ExprInContainerContext) interface{} {
-	if ctx.GetInword().GetText() != "in" {
-		return nil
-	}
 	return &ast.ExprInContainer{BinOp: ast.BinOp{
 		Left:  ctx.Expr(0).Accept(v).(ast.Expr),
 		Right: ctx.Expr(1).Accept(v).(ast.Expr),
@@ -101,9 +98,6 @@ func (v *ParseVisitor) VisitExprInContainer(ctx *ExprInContainerContext) interfa
 }
 
 func (v *ParseVisitor) VisitExprInRange(ctx *ExprInRangeContext) interface{} {
-	if ctx.GetInword().GetText() != "in" {
-		return nil
-	}
 	return &ast.ExprInRange{
 		Val:        ctx.Expr(0).Accept(v).(ast.Expr),
 		Begin:      ctx.Expr(1).Accept(v).(ast.Expr),

@@ -4,6 +4,7 @@ lexer grammar DefaultMode;
 TRUE        : 'true';
 FALSE       : 'false';
 FOR         : 'for';
+IN          : 'in';
 IF          : 'if';
 WHILE       : 'while';
 DO          : 'do';
