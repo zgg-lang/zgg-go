@@ -30,7 +30,7 @@ func (v *ParseVisitor) VisitStmtFor(ctx *StmtForContext) interface{} {
 }
 
 func (v *ParseVisitor) VisitStmtForEach(ctx *StmtForEachContext) interface{} {
-	if !tokenExpected(ctx, ctx.GetInword(), "in") {
+	if ctx.GetInword().GetText() != "in" {
 		return nil
 	}
 	r := &ast.StmtForEach{

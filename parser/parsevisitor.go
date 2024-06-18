@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -480,27 +479,4 @@ func SimpleImport(c *runtime.Context, name string, code string, importType strin
 		}
 	}
 	return
-}
-
-type ctxCanGetParser interface {
-	GetParser() antlr.Parser
-}
-
-func tokenExpected(ctx ctxCanGetParser, token antlr.Token, expecteds ...string) bool {
-	parser := ctx.GetParser()
-	tt := token.GetText()
-	for _, expected := range expecteds {
-		if tt == expected {
-			return true
-		}
-	}
-	ex := antlr.NewInputMisMatchException(parser)
-	var msg string
-	if len(expecteds) == 1 {
-		msg = fmt.Sprintf("unexpected token %s, wants %s", tt, expecteds[0])
-	} else {
-		msg = fmt.Sprintf("unexpected token %s, wants one of %s", tt, strings.Join(expecteds, "/"))
-	}
-	parser.NotifyErrorListeners(msg, token, ex)
-	return false
 }

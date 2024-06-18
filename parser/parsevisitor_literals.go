@@ -287,7 +287,7 @@ func (v *ParseVisitor) VisitArrayItem(ctx *ArrayItemContext) interface{} {
 }
 
 func (v *ParseVisitor) VisitArrayComprehension(ctx *ArrayComprehensionContext) interface{} {
-	if !tokenExpected(ctx, ctx.GetInword(), "in") {
+	if ctx.GetInword().GetText() != "in" {
 		return nil
 	}
 	rv := &ast.ArrayComprehension{
@@ -312,7 +312,7 @@ func (v *ParseVisitor) VisitArrayComprehension(ctx *ArrayComprehensionContext) i
 }
 
 func (v *ParseVisitor) VisitObjectComprehension(ctx *ObjectComprehensionContext) interface{} {
-	if !tokenExpected(ctx, ctx.GetInword(), "in") {
+	if ctx.GetInword().GetText() != "in" {
 		return nil
 	}
 	rv := &ast.ObjectComprehension{
