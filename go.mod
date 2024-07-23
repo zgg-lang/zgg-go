@@ -1,10 +1,12 @@
 module github.com/zgg-lang/zgg-go
 
-go 1.18
+go 1.22
+
+toolchain go1.22.5
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
-	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
+	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/beevik/etree v1.2.0
 	github.com/chzyer/readline v1.5.0
 	github.com/fogleman/gg v1.3.0
@@ -31,8 +33,6 @@ require (
 
 require (
 	github.com/andybalholm/cascadia v1.3.1 // indirect
-	github.com/antlr/antlr4 v4.11.1+incompatible // indirect
-	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect

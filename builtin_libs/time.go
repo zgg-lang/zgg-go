@@ -126,25 +126,25 @@ func libTime(c *Context) ValueObject {
 		t := time.Now()
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
-			t:  t,
+			t: t,
 		}
-		return  NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("yesterday", NewNativeFunction("yesterday", func(c *Context, this Value, args []Value) Value {
-		t := time.Now().Add(-24*time.Hour)
+		t := time.Now().Add(-24 * time.Hour)
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
-			t:  t,
+			t: t,
 		}
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("tomorrow", NewNativeFunction("tomorrow", func(c *Context, this Value, args []Value) Value {
-		t := time.Now().Add(24*time.Hour)
+		t := time.Now().Add(24 * time.Hour)
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
-			t:  t,
+			t: t,
 		}
-		return  NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("fromUnix", NewNativeFunction("fromUnix", func(c *Context, this Value, args []Value) Value {
 		var ts ValueInt
@@ -423,14 +423,10 @@ func timeInittimeTimeClass() {
 			return NewGoValue(t)
 		}).
 		Method("add", func(c *Context, this ValueObject, args []Value) Value {
-			var duration ValueStr
-			EnsureFuncParams(c, "Time.add", args, ArgRuleRequired("duration", TypeStr, &duration))
-			d, err := time.ParseDuration(duration.Value())
-			if err != nil {
-				c.RaiseRuntimeError("Invalid duration %s", duration.Value())
-			}
+			var dur timeDurationArg
+			EnsureFuncParams(c, "Time.add", args, dur.Rule(c, "duration"))
 			info := this.Reserved.(timeTimeInfo)
-			info.t = info.t.Add(d)
+			info.t = info.t.Add(dur.Get(c).Reserved.(time.Duration))
 			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
 		Method("addDays", func(c *Context, this ValueObject, args []Value) Value {
@@ -629,7 +625,7 @@ func timeInittimeTimeClass() {
 			info := this.Reserved.(timeTimeInfo)
 			t := info.t
 			t = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
-			info = timeTimeInfo{t:  t, as: info.as}
+			info = timeTimeInfo{t: t, as: info.as}
 			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
 		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
