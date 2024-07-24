@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"image/jpeg"
+	"image/png"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -22,19 +25,53 @@ func libDrawing(c *Context) ValueObject {
 	lib := NewObject()
 	lib.SetMember("Canvas", drawingCanvasClass, nil)
 	lib.SetMember("from", NewNativeFunction("from", func(c *Context, this Value, args []Value) Value {
-		var (
-			s  GoValue
-			gc *gg.Context
+		var gc *gg.Context
+		EnsureFuncParams(c, "fromImage", args,
+			NewOneOfHelper("srcImage").
+				On(TypeGoValue, func(arg Value) {
+					switch v := arg.ToGoValue(c).(type) {
+					case *image.RGBA:
+						gc = gg.NewContextForRGBA(v)
+					case image.Image:
+						gc = gg.NewContextForImage(v)
+					default:
+						c.RaiseRuntimeError("srcImage is invalid")
+					}
+				}).
+				On(TypeStr, func(v Value) {
+					name := v.ToString(c)
+					lname := strings.ToLower(name)
+					var rd io.Reader
+					if strings.HasPrefix(lname, "http://") || strings.HasPrefix(lname, "https://") {
+						resp, err := http.Get(name)
+						if err != nil {
+							c.RaiseRuntimeError("open srcImage %s error: %+v", name, err)
+						}
+						defer resp.Body.Close()
+						rd = resp.Body
+					} else {
+						f, err := os.Open(name)
+						if err != nil {
+							c.RaiseRuntimeError("open srcImage %s error: %+v", name, err)
+						}
+						defer f.Close()
+						rd = f
+					}
+					im, _, err := image.Decode(rd)
+					if err != nil {
+						c.RaiseRuntimeError("decode srcImage %s error: %+v", name, err)
+					}
+					gc = gg.NewContextForImage(im)
+				}).
+				On(TypeBytes, func(v Value) {
+					b := bytes.NewReader(v.(ValueBytes).Value())
+					im, _, err := image.Decode(b)
+					if err != nil {
+						c.RaiseRuntimeError("decode srcImage bytes error: %+v", err)
+					}
+					gc = gg.NewContextForImage(im)
+				}),
 		)
-		EnsureFuncParams(c, "fromImage", args, ArgRuleRequired("srcImage", TypeGoValue, &s))
-		switch v := s.ToGoValue(c).(type) {
-		case *image.RGBA:
-			gc = gg.NewContextForRGBA(v)
-		case image.Image:
-			gc = gg.NewContextForImage(v)
-		default:
-			c.RaiseRuntimeError("srcImage is invalid")
-		}
 		rv := NewObject(drawingCanvasClass)
 		rv.SetMember("__dc", NewGoValue(gc), c)
 		return rv
@@ -126,6 +163,65 @@ func drawingUseColor(c *Context, dc *gg.Context, cs ValueStr, f func()) {
 		}()
 	}
 	f()
+}
+
+type drawingSaveFunc = func(*Context, image.Image, io.Writer, ValueObject) error
+
+func drawingMakeSaveFunc(name string, saveFunc drawingSaveFunc) func(*Context, ValueObject, []Value) Value {
+	return func(c *Context, this ValueObject, args []Value) Value {
+		dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
+		if len(args) == 0 {
+			buf := bytes.NewBuffer(nil)
+			saveFunc(c, dc.Image(), buf, NewObject())
+			return NewBytes(buf.Bytes())
+		}
+		var (
+			filename ValueStr
+			writer   GoValue
+			selected int
+			option   ValueObject
+		)
+		EnsureFuncParams(c, "Canvas."+name, args,
+			ArgRuleOneOf("target",
+				[]ValueType{TypeStr, TypeGoValue},
+				[]interface{}{&filename, &writer},
+				&selected,
+				nil,
+				nil,
+			),
+			ArgRuleOptional("option", TypeObject, &option, NewObject()),
+		)
+		switch selected {
+		case 0:
+			f, err := os.Create(filename.Value())
+			if err != nil {
+				c.RaiseRuntimeError("Canvas.%s: save to %s error %+v", name, filename.Value, err)
+			}
+			defer f.Close()
+			if err := saveFunc(c, dc.Image(), f, option); err != nil {
+				c.RaiseRuntimeError("Canvas.%s: save to %s error %+v", name, filename.Value, err)
+			}
+		case 1:
+			if w, is := writer.ToGoValue(c).(io.Writer); !is {
+				c.RaiseRuntimeError("Canvas.%s: target is not an io.Writer", name)
+			} else if err := saveFunc(c, dc.Image(), w, option); err != nil {
+				c.RaiseRuntimeError("Canvas.%s: save to writer error %+v", name, err)
+			}
+		}
+		return this
+	}
+}
+
+func drawingSaveToPNG(_ *Context, im image.Image, w io.Writer, _ ValueObject) error {
+	return png.Encode(w, im)
+}
+
+func drawingSaveToJPEG(c *Context, im image.Image, w io.Writer, option ValueObject) error {
+	var opt jpeg.Options
+	if v, is := option.GetMember("quality", c).(ValueInt); is {
+		opt.Quality = v.AsInt()
+	}
+	return jpeg.Encode(w, im, &opt)
 }
 
 var (
@@ -396,39 +492,9 @@ var (
 			dc.Fill()
 			return this
 		}).
-		Method("save", func(c *Context, this ValueObject, args []Value) Value {
-			var (
-				filename ValueStr
-				writer   GoValue
-				selected int
-				defVal   ValueInt
-			)
-			EnsureFuncParams(c, "Canvas.save", args,
-				ArgRuleOneOf("target",
-					[]ValueType{TypeStr, TypeGoValue},
-					[]interface{}{&filename, &writer},
-					&selected,
-					&defVal,
-					NewInt(0),
-				),
-			)
-			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
-			switch selected {
-			case 0:
-				dc.SavePNG(filename.Value())
-			case 1:
-				if w, is := writer.ToGoValue(c).(io.Writer); !is {
-					c.RaiseRuntimeError("not an io.Writer")
-				} else {
-					dc.EncodePNG(w)
-				}
-			default:
-				buf := bytes.NewBuffer(nil)
-				dc.EncodePNG(buf)
-				return NewBytes(buf.Bytes())
-			}
-			return this
-		}).
+		Method("save", drawingMakeSaveFunc("save", drawingSaveToPNG)).
+		Method("png", drawingMakeSaveFunc("png", drawingSaveToPNG)).
+		Method("jpeg", drawingMakeSaveFunc("jpeg", drawingSaveToJPEG)).
 		Method("show", func(c *Context, this ValueObject, args []Value) Value {
 			var (
 				openCmd  string
@@ -458,6 +524,13 @@ var (
 				c.RaiseRuntimeError("run open commmand error %s", err)
 			}
 			return NewStr(f.Name())
+		}).
+		Method("size", func(c *Context, this ValueObject, args []Value) Value {
+			dc := this.GetMember("__dc", c).ToGoValue(c).(*gg.Context)
+			rv := NewObject()
+			rv.SetMember("width", NewInt(int64(dc.Width())), c)
+			rv.SetMember("height", NewInt(int64(dc.Height())), c)
+			return rv
 		}).
 		Build()
 )
