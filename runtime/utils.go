@@ -233,6 +233,66 @@ func EnsureFuncParams(c *Context, funcName string, args []Value, rules ...ArgRul
 	}
 }
 
+type oneOfHelper struct {
+	argName         string
+	types           []ValueType
+	callbacks       []func(Value)
+	defaultCallback func()
+}
+
+func NewOneOfHelper(name string) *oneOfHelper {
+	return &oneOfHelper{argName: name}
+}
+
+func (h *oneOfHelper) On(t ValueType, f func(Value)) *oneOfHelper {
+	h.types = append(h.types, t)
+	h.callbacks = append(h.callbacks, f)
+	return h
+}
+
+func (h *oneOfHelper) Default(f func()) *oneOfHelper {
+	h.defaultCallback = f
+	return h
+}
+
+func (h *oneOfHelper) name() string {
+	return h.argName
+}
+
+func (h *oneOfHelper) expectedTypeName() string {
+	var b strings.Builder
+	b.WriteString("(")
+	for i, e := range h.types {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(e.GetName())
+	}
+	b.WriteString(")")
+	return b.String()
+}
+
+func (h *oneOfHelper) allowed(c *Context, args []Value, i int) bool {
+	if len(h.types) < 1 || len(h.types) != len(h.callbacks) {
+		panic("ArgRuleOneOf: len(ExpectedTypes) must > 0 && len(ExpectedTypes) must == len(StoreTos)")
+	}
+	if i >= len(args) {
+		if h.defaultCallback != nil {
+			h.defaultCallback()
+			return true
+		}
+		return false
+	}
+	arg := args[i]
+	for j, expType := range h.types {
+		if argTypeMatched(c, arg, expType) {
+			h.callbacks[j](arg)
+			return true
+		}
+	}
+	return false
+}
+
 var (
 	pathIdField  = regexp.MustCompile(`^\.([a-zA-Z_\$][a-zA-Z\d_\$]*)`)
 	pathStrField = regexp.MustCompile(`^\.'(([^\\]|\\[uU][0-9a-fA-F]{4}|\\[xX][0-9a-fA-F]{2}|\\[^xXuU])*)'`)
