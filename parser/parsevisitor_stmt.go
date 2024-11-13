@@ -35,6 +35,9 @@ func (v *ParseVisitor) VisitStmtForEach(ctx *StmtForEachContext) interface{} {
 		IdValue: ctx.GetIdValue().GetText(),
 		Exec:    ctx.GetExecBlock().Accept(v).(*ast.Block),
 	}
+	if expr := ctx.GetCheck(); expr != nil {
+		r.CheckExpr = expr.Accept(v).(ast.Expr)
+	}
 	r.Exec.Type = ast.BlockTypeLoopTop
 	if id := ctx.GetIdIndex(); id != nil {
 		r.IdIndex = id.GetText()

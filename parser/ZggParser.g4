@@ -44,7 +44,7 @@ stmt
             nextExpr=expr
             execBlock=codeBlock                 # stmtFor
     | (label=IDENTIFIER ':')? FOR (idIndex=IDENTIFIER ',')? idValue=IDENTIFIER IN
-        begin=expr (('..'|'..<') end=expr)?
+        begin=expr (('..'|'..<') end=expr)?  (IF check=expr)?
         execBlock=codeBlock                     # stmtForEach
     | (label=IDENTIFIER ':')? DO    execBlock=codeBlock
         WHILE checkExpr=expr                    # stmtDoWhile

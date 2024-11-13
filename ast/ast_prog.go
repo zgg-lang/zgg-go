@@ -72,6 +72,16 @@ func execLoopBody(label string, block *Block, c *runtime.Context) bool {
 	return !c.Breaking && !c.Returned
 }
 
+func execLoopBodyWithCheck(label string, block *Block, check Expr, c *runtime.Context) bool {
+	if check != nil {
+		check.Eval(c)
+		if !c.RetVal.IsTrue() {
+			return true
+		}
+	}
+	return execLoopBody(label, block, c)
+}
+
 type StmtFor struct {
 	Pos
 	Label string
@@ -106,6 +116,7 @@ type StmtForEach struct {
 	RangeBegin        Expr
 	RangeEnd          Expr
 	RangeIncludingEnd bool
+	CheckExpr         Expr
 	Exec              *Block
 }
 
@@ -136,7 +147,7 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 			if id := s.IdIndex; id != "" {
 				c.ForceSetLocalValue(id, runtime.NewInt(int64(i)))
 			}
-			if !execLoopBody(s.Label, s.Exec, c) {
+			if !execLoopBodyWithCheck(s.Label, s.Exec, s.CheckExpr, c) {
 				break
 			}
 		}
@@ -151,7 +162,7 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 				if id := s.IdIndex; id != "" {
 					c.ForceSetLocalValue(id, runtime.NewStr(key))
 				}
-				if !execLoopBody(s.Label, s.Exec, c) {
+				if !execLoopBodyWithCheck(s.Label, s.Exec, s.CheckExpr, c) {
 					return false
 				}
 				return true
@@ -162,7 +173,7 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 				if id := s.IdIndex; id != "" {
 					c.ForceSetLocalValue(id, key)
 				}
-				if !execLoopBody(s.Label, s.Exec, c) {
+				if !execLoopBodyWithCheck(s.Label, s.Exec, s.CheckExpr, c) {
 					return false
 				}
 				return true
@@ -175,7 +186,7 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 				if s.IdIndex != "" {
 					c.ForceSetLocalValue(s.IdIndex, runtime.NewInt(int64(i)))
 				}
-				if !execLoopBody(s.Label, s.Exec, c) {
+				if !execLoopBodyWithCheck(s.Label, s.Exec, s.CheckExpr, c) {
 					break
 				}
 			}
@@ -188,7 +199,7 @@ func (s *StmtForEach) evalWithIterable(c *runtime.Context) {
 			if s.IdIndex != "" {
 				c.ForceSetLocalValue(s.IdIndex, value)
 			}
-			if !execLoopBody(s.Label, s.Exec, c) {
+			if !execLoopBodyWithCheck(s.Label, s.Exec, s.CheckExpr, c) {
 				break
 			}
 		}
@@ -226,7 +237,7 @@ func (s *StmtForEach) Eval(c *runtime.Context) {
 			if s.IdIndex != "" {
 				c.ForceSetLocalValue(s.IdIndex, runtime.NewInt(int64(i)))
 			}
-			if !execLoopBody(s.Label, s.Exec, c) {
+			if !execLoopBodyWithCheck(s.Label, s.Exec, s.CheckExpr, c) {
 				break
 			}
 		}
