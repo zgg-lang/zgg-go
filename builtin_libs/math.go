@@ -1,10 +1,16 @@
 package builtin_libs
 
 import (
+	"fmt"
 	"math"
+	"strings"
 
 	"github.com/samber/lo"
 	. "github.com/zgg-lang/zgg-go/runtime"
+)
+
+var (
+	mathVecClass ValueType
 )
 
 func libMath(*Context) ValueObject {
@@ -101,6 +107,7 @@ func libMath(*Context) ValueObject {
 			r.SetMember(name, NewFloat(vv), nil)
 		}
 	}
+	r.SetMember("Vec", mathVecClass, nil)
 	return r
 }
 
@@ -258,4 +265,63 @@ func mathGCD(c *Context, f string, args []Value) int64 {
 		r = mathGCD2(a, b)
 	}
 	return r
+}
+
+type mathVecInfo struct {
+	components []float64
+}
+
+func mathInitVecClass() ValueType {
+	initVec := func(components []float64, vec ValueObject) {
+		vec.Reserved = &mathVecInfo{
+			components: components,
+		}
+	}
+	checkBinArgs := func(c *Context, name string, this ValueObject, args []Value) (a, b []float64) {
+		var other ValueObject
+		EnsureFuncParams(c, "Vec."+name, args, ArgRuleRequired("other", mathVecClass, &other))
+		a = this.Reserved.(*mathVecInfo).components
+		b = other.Reserved.(*mathVecInfo).components
+		if len(a) != len(b) {
+			c.RaiseRuntimeError("Vec.%s: size not equal", name)
+		}
+		return
+	}
+	return NewClassBuilder("Vec").
+		Constructor(func(c *Context, this ValueObject, args []Value) {
+			c.AssertArgNum(len(args), 1, 99999, "Vec.__init__")
+			components := lo.Map(args, func(a Value, _ int) float64 {
+				return c.MustFloat(a)
+			})
+			initVec(components, this)
+		}).
+		Method("__str__", func(c *Context, this ValueObject, args []Value) Value {
+			var b strings.Builder
+			components := this.Reserved.(*mathVecInfo).components
+			b.WriteRune('(')
+			fmt.Fprint(&b, components[0])
+			for i := 1; i < len(components); i++ {
+				b.WriteString(", ")
+				fmt.Fprint(&b, components[i])
+			}
+			b.WriteRune(')')
+			return NewStr(b.String())
+		}).
+		Method("__add__", func(c *Context, this ValueObject, args []Value) Value {
+			a, b := checkBinArgs(c, "__add__", this, args)
+			result := NewObject(mathVecClass)
+			initVec(lo.Map(a, func(c1 float64, i int) float64 { return c1 + b[i] }), result)
+			return result
+		}).
+		Method("__sub__", func(c *Context, this ValueObject, args []Value) Value {
+			a, b := checkBinArgs(c, "__sub__", this, args)
+			result := NewObject(mathVecClass)
+			initVec(lo.Map(a, func(c1 float64, i int) float64 { return c1 - b[i] }), result)
+			return result
+		}).
+		Build()
+}
+
+func init() {
+	mathVecClass = mathInitVecClass()
 }
