@@ -151,6 +151,11 @@ func libTime(c *Context) ValueObject {
 		EnsureFuncParams(c, "time.fromUnix", args, ArgRuleRequired("unixTimestamp", TypeInt, &ts))
 		return NewObjectAndInit(timeTimeClass, c, NewInt(ts.Value()*1e9))
 	}, "timestamp"), nil)
+	lib.SetMember("fromUnixMs", NewNativeFunction("fromUnixMs", func(c *Context, this Value, args []Value) Value {
+		var ts ValueInt
+		EnsureFuncParams(c, "time.fromUnixMs", args, ArgRuleRequired("unixTimestamp", TypeInt, &ts))
+		return NewObjectAndInit(timeTimeClass, c, NewInt(ts.Value()*1e6))
+	}, "timestamp"), nil)
 	lib.SetMember("fromGoTime", NewNativeFunction("fromGoTime", func(c *Context, this Value, args []Value) Value {
 		var gt GoValue
 		EnsureFuncParams(c, "time.fromGoTime", args, ArgRuleRequired("time", TypeGoValue, &gt))
@@ -317,7 +322,7 @@ func timeInittimeTimeClass() {
 						default:
 							c.RaiseRuntimeError("Time.__init__: invalid time str %s", v.Value())
 						}
-						t, err := time.Parse(layout, v.Value())
+						t, err := time.ParseInLocation(layout, v.Value(), time.Local)
 						if err != nil {
 							c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 						}
@@ -332,7 +337,7 @@ func timeInittimeTimeClass() {
 						ArgRuleRequired("timeStr", TypeStr, &timeStr),
 						ArgRuleRequired("layout", TypeStr, &layout),
 					)
-					t, err := time.Parse(layout.Value(), timeStr.Value())
+					t, err := time.ParseInLocation(layout.Value(), timeStr.Value(), time.Local)
 					if err != nil {
 						c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 					}
@@ -399,6 +404,8 @@ func timeInittimeTimeClass() {
 			switch field.Value() {
 			case "unix":
 				return NewInt(t.Unix())
+			case "unixMs":
+				return NewInt(t.UnixMilli())
 			case "unixNano":
 				return NewInt(t.UnixNano())
 			case "year":
