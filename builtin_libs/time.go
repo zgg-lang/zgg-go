@@ -146,6 +146,62 @@ func libTime(c *Context) ValueObject {
 		}
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
+	lib.SetMember("parse", NewNativeFunction("parse", func(c *Context, this Value, args []Value) Value {
+		var (
+			s, layout ValueStr
+			t         time.Time
+			err       error
+			unit      string
+		)
+		EnsureFuncParams(c, "time.parse", args,
+			ArgRuleRequired("s", TypeStr, &s),
+			ArgRuleOptional("layout", TypeStr, &layout, NewStr("")),
+		)
+		sv := s.Value()
+		t, unit, err = timeParseTime(sv, layout.Value(), time.Local)
+		if err != nil {
+			c.RaiseRuntimeError("Parse time %s error: %+v", sv, err)
+		}
+		rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(t))
+		if unit != "" {
+			c.InvokeMethod(rv, "as", Args(NewStr(unit)))
+		}
+		return rv
+	}, "s", "layout"), nil)
+	lib.SetMember("parseIn", NewNativeFunction("parseIn", func(c *Context, this Value, args []Value) Value {
+		var (
+			s, layout ValueStr
+			loc       *time.Location
+			t         time.Time
+			err       error
+			unit      string
+		)
+		EnsureFuncParams(c, "time.parseIn", args,
+			NewOneOfHelper("tz").
+				On(TypeStr, func(v Value) {
+					name := v.ToString(c)
+					loc, err = time.LoadLocation(name)
+					if err != nil {
+						c.RaiseRuntimeError("load location \"%s\"error: %+v", name, err)
+					}
+				}).
+				On(TypeInt, func(v Value) {
+					loc = time.FixedZone("fixed", v.(ValueInt).AsInt()*3600)
+				}),
+			ArgRuleRequired("s", TypeStr, &s),
+			ArgRuleOptional("layout", TypeStr, &layout, NewStr("")),
+		)
+		sv := s.Value()
+		t, unit, err = timeParseTime(sv, layout.Value(), loc)
+		if err != nil {
+			c.RaiseRuntimeError("Parse time %s error: %+v", sv, err)
+		}
+		rv := NewObjectAndInit(timeTimeClass, c, NewGoValue(t))
+		if unit != "" {
+			c.InvokeMethod(rv, "as", Args(NewStr(unit)))
+		}
+		return rv
+	}, "s", "layout"), nil)
 	lib.SetMember("fromUnix", NewNativeFunction("fromUnix", func(c *Context, this Value, args []Value) Value {
 		var ts ValueInt
 		EnsureFuncParams(c, "time.fromUnix", args, ArgRuleRequired("unixTimestamp", TypeInt, &ts))
@@ -305,29 +361,10 @@ func timeInittimeTimeClass() {
 					}
 				case ValueStr:
 					{
-						var layout string
-						switch v.Len() {
-						case 8:
-							layout = "20060102"
-							as = "day"
-						case 10:
-							layout = "2006-01-02"
-							as = "day"
-						case 14:
-							layout = "20060102150405"
-							as = "second"
-						case 19:
-							layout = "2006-01-02 15:04:05"
-							as = "second"
-						default:
-							c.RaiseRuntimeError("Time.__init__: invalid time str %s", v.Value())
-						}
-						t, err := time.ParseInLocation(layout, v.Value(), time.Local)
-						if err != nil {
+						var err error
+						if _t, as, err = timeParseTime(v.Value(), "", time.Local); err != nil {
 							c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 						}
-						// ts = t.UnixNano()
-						_t = t
 					}
 				}
 			case 2:
@@ -650,7 +687,7 @@ func timeInittimeTimeClass() {
 			case "second":
 				return NewStr(t.Format("2006-01-02 15:04:05"))
 			}
-			return NewStr(t.Format("Time(2006-01-02 15:04:05.000-0700)"))
+			return NewStr(t.Format("2006-01-02 15:04:05.000-0700"))
 		}).
 		Method("__lt__", func(c *Context, this ValueObject, args []Value) Value {
 			t1 := this.Reserved.(timeTimeInfo).t
@@ -686,6 +723,64 @@ func timeInittimeTimeClass() {
 			return NewGoValue(this.Reserved.(timeTimeInfo).t)
 		}).
 		Build()
+}
+
+func timeParseTime(s, layout string, loc *time.Location) (t time.Time, unit string, err error) {
+	if layout == "" {
+		switch s {
+		case "zero":
+			return
+		case "now":
+			t = time.Now().In(loc)
+			return
+		case "today":
+			t = time.Now().In(loc)
+			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+			unit = "day"
+			return
+		case "yesterday":
+			t = time.Now().In(loc).Add(-24 * time.Hour)
+			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+			unit = "day"
+			return
+		case "tomorrow":
+			t = time.Now().In(loc).Add(24 * time.Hour)
+			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+			unit = "day"
+			return
+		}
+		switch len(s) {
+		case 6:
+			layout = "060102"
+			unit = "day"
+		case 8:
+			layout = "20060102"
+			unit = "day"
+		case 10:
+			layout = "2006-01-02"
+			unit = "day"
+		case 14:
+			layout = "20060102150405"
+			unit = "second"
+		case 19:
+			layout = "2006-01-02 15:04:05"
+			unit = "second"
+		case 19 + 3:
+			layout = "2006-01-02 15:04:05-07"
+			unit = "second"
+		case 19 + 5:
+			layout = "2006-01-02 15:04:05-0700"
+			unit = "second"
+		case 19 + 4:
+			layout = "2006-01-02 15:04:05.000"
+		case 19 + 4 + 3:
+			layout = "2006-01-02 15:04:05.000-07"
+		case 19 + 4 + 5:
+			layout = "2006-01-02 15:04:05.000-0700"
+		}
+	}
+	t, err = time.ParseInLocation(layout, s, loc)
+	return
 }
 
 func timeInitDurationClass() {
