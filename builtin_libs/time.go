@@ -3,6 +3,7 @@ package builtin_libs
 import (
 	"fmt"
 	"regexp"
+	"sync/atomic"
 	"time"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
@@ -17,6 +18,7 @@ var (
 		"minute": time.Minute,
 		"second": time.Second,
 	}
+	timeDefaultLocal atomic.Pointer[time.Location]
 )
 
 type timeTimeArg struct {
@@ -92,6 +94,7 @@ func (a *timeDurationArg) GetDuration(c *Context) time.Duration {
 
 func libTime(c *Context) ValueObject {
 	lib := NewObject()
+	timeDefaultLocal.Store(time.Local)
 	lib.SetMember("Time", timeTimeClass, nil)
 	lib.SetMember("__call__", timeTimeClass, nil)
 	lib.SetMember("Duration", timeDurationClass, nil)
@@ -102,7 +105,7 @@ func libTime(c *Context) ValueObject {
 		var timeType ValueStr
 		EnsureFuncParams(c, "now", args, ArgRuleOptional("timeType", TypeStr, &timeType, NewStr("")))
 		asType := timeType.Value()
-		t := time.Now()
+		t := time.Now().In(timeDefaultLocal.Load())
 		switch asType {
 		case "day":
 			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
@@ -123,7 +126,7 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("today", NewNativeFunction("today", func(c *Context, this Value, args []Value) Value {
-		t := time.Now()
+		t := time.Now().In(timeDefaultLocal.Load())
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
 			t: t,
@@ -131,7 +134,7 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("yesterday", NewNativeFunction("yesterday", func(c *Context, this Value, args []Value) Value {
-		t := time.Now().Add(-24 * time.Hour)
+		t := time.Now().In(timeDefaultLocal.Load()).Add(-24 * time.Hour)
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
 			t: t,
@@ -139,7 +142,7 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("tomorrow", NewNativeFunction("tomorrow", func(c *Context, this Value, args []Value) Value {
-		t := time.Now().Add(24 * time.Hour)
+		t := time.Now().In(timeDefaultLocal.Load()).Add(24 * time.Hour)
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
 			t: t,
@@ -158,7 +161,7 @@ func libTime(c *Context) ValueObject {
 			ArgRuleOptional("layout", TypeStr, &layout, NewStr("")),
 		)
 		sv := s.Value()
-		t, unit, err = timeParseTime(sv, layout.Value(), time.Local)
+		t, unit, err = timeParseTime(sv, layout.Value(), timeDefaultLocal.Load())
 		if err != nil {
 			c.RaiseRuntimeError("Parse time %s error: %+v", sv, err)
 		}
@@ -180,8 +183,9 @@ func libTime(c *Context) ValueObject {
 			NewOneOfHelper("tz").
 				On(TypeStr, func(v Value) {
 					name := v.ToString(c)
-					loc, err = time.LoadLocation(name)
-					if err != nil {
+					if name == "local" {
+						loc = time.Local
+					} else if loc, err = time.LoadLocation(name); err != nil {
 						c.RaiseRuntimeError("load location \"%s\"error: %+v", name, err)
 					}
 				}).
@@ -231,6 +235,24 @@ func libTime(c *Context) ValueObject {
 		EnsureFuncParams(c, "since", args, from.Rule("from"))
 		du := time.Since(from.GetTime(c))
 		return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
+	}), nil)
+	lib.SetMember("setDefaultTimezone", NewNativeFunction("setDefaultTimezone", func(c *Context, this Value, args []Value) Value {
+		EnsureFuncParams(c, "tz", args, NewOneOfHelper("tz").
+			On(TypeInt, func(v Value) {
+				offset := v.(ValueInt).AsInt() * 3600
+				timeDefaultLocal.Store(time.FixedZone("fixed", offset))
+			}).
+			On(TypeStr, func(v Value) {
+				name := v.ToString(c)
+				if name == "local" {
+					timeDefaultLocal.Store(time.Local)
+				} else if tz, err := time.LoadLocation(name); err != nil {
+					c.RaiseRuntimeError("unknown location %s", name)
+				} else {
+					timeDefaultLocal.Store(tz)
+				}
+			}))
+		return Undefined()
 	}), nil)
 	oneDay := NewObjectAndInit(timeDurationClass, c, NewGoValue(24*time.Hour))
 	_iter := func(c *Context, args []Value, canCallback bool) (begin, end, step ValueObject, callback ValueCallable) {
@@ -309,7 +331,7 @@ func libTime(c *Context) ValueObject {
 			ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)),
 		)
 		info := timeTimeInfo{
-			t:  time.Now(),
+			t:  time.Now().In(timeDefaultLocal.Load()),
 			as: as.Value(),
 		}
 		if o := offset.AsInt(); o != 0 {
@@ -343,12 +365,12 @@ func timeInittimeTimeClass() {
 			var as string
 			switch len(args) {
 			case 0:
-				_t = time.Now()
+				_t = time.Now().In(timeDefaultLocal.Load())
 			case 1:
 				switch v := args[0].(type) {
 				case ValueInt:
 					ts := v.Value()
-					_t = time.Unix(ts/1e9, ts%1e9)
+					_t = time.Unix(ts/1e9, ts%1e9).In(timeDefaultLocal.Load())
 				case GoValue:
 					switch gv := v.ToGoValue(c).(type) {
 					case time.Time:
@@ -362,7 +384,7 @@ func timeInittimeTimeClass() {
 				case ValueStr:
 					{
 						var err error
-						if _t, as, err = timeParseTime(v.Value(), "", time.Local); err != nil {
+						if _t, as, err = timeParseTime(v.Value(), "", timeDefaultLocal.Load()); err != nil {
 							c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 						}
 					}
@@ -374,7 +396,7 @@ func timeInittimeTimeClass() {
 						ArgRuleRequired("timeStr", TypeStr, &timeStr),
 						ArgRuleRequired("layout", TypeStr, &layout),
 					)
-					t, err := time.ParseInLocation(layout.Value(), timeStr.Value(), time.Local)
+					t, err := time.ParseInLocation(layout.Value(), timeStr.Value(), timeDefaultLocal.Load())
 					if err != nil {
 						c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 					}
@@ -388,7 +410,7 @@ func timeInittimeTimeClass() {
 						ArgRuleRequired("month", TypeInt, &month),
 						ArgRuleRequired("day", TypeInt, &day),
 					)
-					_t = time.Date(year.AsInt(), time.Month(month.AsInt()), day.AsInt(), 0, 0, 0, 0, time.Local)
+					_t = time.Date(year.AsInt(), time.Month(month.AsInt()), day.AsInt(), 0, 0, 0, 0, timeDefaultLocal.Load())
 				}
 			case 6:
 				{
@@ -409,7 +431,7 @@ func timeInittimeTimeClass() {
 						minute.AsInt(),
 						second.AsInt(),
 						0,
-						time.Local,
+						timeDefaultLocal.Load(),
 					)
 				}
 			default:
@@ -534,8 +556,9 @@ func timeInittimeTimeClass() {
 				loc = time.FixedZone(fmt.Sprintf("UTC%+d", offset), offset*3600)
 			case 1:
 				var err error
-				loc, err = time.LoadLocation(locName.Value())
-				if err != nil {
+				if name := locName.Value(); name == "local" {
+					loc = time.Local
+				} else if loc, err = time.LoadLocation(name); err != nil {
 					c.RaiseRuntimeError("load location %s error %+v", locName.Value(), err)
 				}
 			default:
@@ -588,11 +611,13 @@ func timeInittimeTimeClass() {
 				return s
 			})
 			if tz := timezone.Value(); tz != "" {
-				loc, err := time.LoadLocation(tz)
-				if err != nil {
+				if tz == "local" {
+					t = t.In(time.Local)
+				} else if loc, err := time.LoadLocation(tz); err != nil {
 					c.RaiseRuntimeError("Invalid timezone %s", tz)
+				} else {
+					t = t.In(loc)
 				}
-				t = t.In(loc)
 			}
 			return NewStr(t.Format(layoutStr))
 		}).
