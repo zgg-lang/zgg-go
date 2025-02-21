@@ -381,7 +381,7 @@ func (c *Context) ValuesPow(left, right Value) Value {
 			c.RetVal = NewFloat(math.Pow(val1.Value(), float64(val2.Value())))
 			return c.RetVal
 		case ValueFloat:
-			c.RetVal = NewFloat(float64(val1.Value()) - val2.Value())
+			c.RetVal = NewFloat(math.Pow(val1.Value(), val2.Value()))
 			return c.RetVal
 		}
 	default:
