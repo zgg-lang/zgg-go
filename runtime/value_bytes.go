@@ -177,6 +177,10 @@ var builtinBytesMethods = map[string]ValueCallable{
 		thisBytes := thisArg.(ValueBytes)
 		return NewStr(hex.EncodeToString(thisBytes.v))
 	}),
+	"dumpHex": NewNativeFunction("bytes.dumpHex", func(c *Context, thisArg Value, args []Value) Value {
+		thisBytes := thisArg.(ValueBytes)
+		return NewStr(hex.Dump(thisBytes.v))
+	}),
 	"base64": NewNativeFunction("bytes.base64", func(c *Context, thisArg Value, args []Value) Value {
 		thisBytes := thisArg.(ValueBytes)
 		return NewStr(base64.StdEncoding.EncodeToString(thisBytes.v))
