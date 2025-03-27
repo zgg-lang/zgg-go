@@ -1,6 +1,7 @@
 package builtin_libs
 
 import (
+	"io"
 	"net"
 	"time"
 
@@ -8,14 +9,16 @@ import (
 )
 
 var (
-	tcpConnClass  ValueType
-	tcpNoDeadline ValueObject
+	tcpConnClass     ValueType
+	tcpListenerClass ValueType
+	tcpNoDeadline    ValueObject
 )
 
 func libTcp(c *Context) ValueObject {
 	lib := NewObject()
 	tcpNoDeadline = NewObjectAndInit(timeDurationClass, c, NewGoValue(time.Duration(-1)))
 	tcpInitConnClass()
+	tcpInitListenerClass()
 	lib.SetMember("connect", NewNativeFunction("connect", func(c *Context, _ Value, args []Value) Value {
 		var (
 			remoteAddr   ValueStr
@@ -41,6 +44,8 @@ func libTcp(c *Context) ValueObject {
 		}
 		return nil
 	}), nil)
+	lib.SetMember("TcpListener", tcpListenerClass, nil)
+	lib.SetMember("listen", tcpListenerClass, nil)
 	lib.SetMember("serve", NewNativeFunction("serve", func(c *Context, _ Value, args []Value) Value {
 		var (
 			argAddr    ValueStr
@@ -77,6 +82,9 @@ func libTcp(c *Context) ValueObject {
 type (
 	tcpConnReserved struct {
 		conn *net.TCPConn
+	}
+	tcpListenerReserved struct {
+		listener *net.TCPListener
 	}
 )
 
@@ -151,12 +159,54 @@ func tcpInitConnClass() {
 			}
 			n, err := conn.Read(buf)
 			if err != nil {
-				if e, is := err.(net.Error); is && e.Timeout() {
+				if err == io.EOF {
+					return Nil()
+				} else if e, is := err.(net.Error); is && e.Timeout() {
 					return NewBytes(buf[:0])
 				}
 				c.RaiseRuntimeError("TcpConn.recv: recv error %+v", err)
 			}
 			return NewBytes(buf[:n])
 		}, "maxRecv", "waitDuration").
+		Build()
+}
+
+func tcpInitListenerClass() {
+	tcpListenerClass = NewClassBuilder("TcpListener").
+		Constructor(func(c *Context, this ValueObject, args []Value) {
+			var addr ValueStr
+			EnsureFuncParams(c, "TcpListener.__init__", args, ArgRuleRequired("addr", TypeStr, &addr))
+			if laddr, err := net.ResolveTCPAddr("tcp", addr.Value()); err != nil {
+				c.RaiseRuntimeError("Resolve addr %s error %+v", addr.Value(), err)
+			} else if l, err := net.ListenTCP("tcp", laddr); err != nil {
+				c.RaiseRuntimeError("Create listener for addr %s error %+v", addr.Value(), err)
+			} else {
+				this.Reserved = &tcpListenerReserved{listener: l}
+			}
+		}).
+		Method("close", func(c *Context, this ValueObject, _ []Value) Value {
+			this.Reserved.(*tcpListenerReserved).listener.Close()
+			return Undefined()
+		}).
+		Method("accept", func(c *Context, this ValueObject, _ []Value) Value {
+			conn, err := this.Reserved.(*tcpListenerReserved).listener.AcceptTCP()
+			if err != nil {
+				c.RaiseRuntimeError("accept error %+v", err)
+			}
+			return NewObjectAndInit(tcpConnClass, c, NewGoValue(conn))
+		}).
+		Method("acceptLoop", func(c *Context, this ValueObject, args []Value) Value {
+			var handler ValueCallable
+			EnsureFuncParams(c, "TcpListener.acceptLoop", args, ArgRuleRequired("handler", TypeCallable, &handler))
+			for {
+				conn, err := this.Reserved.(*tcpListenerReserved).listener.AcceptTCP()
+				if err != nil {
+					c.RaiseRuntimeError("accept error %+v", err)
+				}
+				cv := NewObjectAndInit(tcpConnClass, c, NewGoValue(conn))
+				c.Invoke(handler, nil, Args(cv))
+			}
+			return Undefined()
+		}).
 		Build()
 }
