@@ -433,7 +433,7 @@ var builtinStrMethods = map[string]ValueCallable{
 	}),
 	"width": NewNativeFunction("str.width", func(c *Context, thisArg Value, args []Value) Value {
 		str := c.MustStr(thisArg)
-		return NewInt(int64(runewidth.StringWidth(str)))
+		return NewInt(int64(StrWidth(str)))
 	}),
 	"isBlank": NewNativeFunction("str.isBlank", func(c *Context, thisArg Value, args []Value) Value {
 		str := c.MustStr(thisArg)
@@ -443,6 +443,18 @@ var builtinStrMethods = map[string]ValueCallable{
 		str := c.MustStr(thisArg)
 		return NewBool(strings.TrimSpace(str) != "")
 	}),
+}
+
+func StrWidth(s string) (w int) {
+	for _, ch := range s {
+		switch ch {
+		case '·':
+			w++
+		default:
+			w += runewidth.RuneWidth(ch)
+		}
+	}
+	return
 }
 
 var (

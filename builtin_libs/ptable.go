@@ -13,8 +13,6 @@ import (
 
 	"github.com/samber/lo"
 	. "github.com/zgg-lang/zgg-go/runtime"
-
-	runewidth "github.com/mattn/go-runewidth"
 )
 
 var (
@@ -159,7 +157,7 @@ func initPTableClass() {
 		colMaxWidths := make([]int, len(_meta.headers))
 		// init max widths
 		for i, header := range _meta.headers {
-			colMaxWidths[i] = runewidth.StringWidth(header)
+			colMaxWidths[i] = StrWidth(header)
 		}
 		rowLines := make([]int, 0, len(_rows))
 		for i, row := range _rows {
@@ -182,7 +180,7 @@ func initPTableClass() {
 				}
 				widths := make([]int, ln)
 				for k, line := range lines {
-					w := runewidth.StringWidth(line)
+					w := StrWidth(line)
 					widths[k] = w
 					if j >= len(colMaxWidths) {
 						colMaxWidths = append(colMaxWidths, w)
@@ -222,7 +220,7 @@ func initPTableClass() {
 						header = _meta.headers[j]
 					}
 					b.WriteString(header)
-					b.WriteString(strings.Repeat(" ", w-runewidth.StringWidth(header)))
+					b.WriteString(strings.Repeat(" ", w-StrWidth(header)))
 				}
 				b.WriteString(tchars.dataRight)
 				b.WriteString("\n")
@@ -247,7 +245,7 @@ func initPTableClass() {
 						header = _meta.headers[j]
 					}
 					b.WriteString(header)
-					b.WriteString(strings.Repeat(" ", w-runewidth.StringWidth(header)))
+					b.WriteString(strings.Repeat(" ", w-StrWidth(header)))
 				}
 				b.WriteString(" |\n|")
 				for j, w := range colMaxWidths {
