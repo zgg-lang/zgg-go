@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -31,7 +30,7 @@ func runRepl(isDebug bool) {
 }
 
 func runFile(name string, inFile io.Reader, stdout, stderr io.Writer, dir string, args []string, isDebug bool) {
-	srcBytes, err := ioutil.ReadAll(inFile)
+	srcBytes, err := io.ReadAll(inFile)
 	if err != nil {
 		panic(err)
 	}
