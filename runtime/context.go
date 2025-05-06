@@ -211,8 +211,7 @@ func (c *Context) FindValue(name string) (Value, bool) {
 	if name == "_" {
 		return nil, false
 	}
-	v := c.curFrame.findValue(name)
-	if v != nil {
+	if v := c.curFrame.findValue(name); v != nil {
 		return v, true
 	}
 	builtin, builtinFound := c.builtins.Load(name)
@@ -222,6 +221,12 @@ func (c *Context) FindValue(name string) (Value, bool) {
 	switch name {
 	case "local":
 		return c.local, true
+	}
+	if ifu, is := c.GetCallable(c.curFrame.findValue("__ifUndefined__")); is {
+		c.Invoke(ifu, nil, Args(NewStr(name)))
+		if rv := c.RetVal; !IsUndefined(rv) {
+			return rv, true
+		}
 	}
 	return nil, false
 }
