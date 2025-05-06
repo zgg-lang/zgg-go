@@ -26,93 +26,93 @@
     }
     var input = '', inputCursor = 0, inputHistory = [], historyIndex = 0
     const MOVE_LEFT = '\x1B[D', MOVE_RIGHT = '\x1B[C'
-    // term.onKey(e => {
-    //     const de = e.domEvent
-    //         , printable = !de.altKey && !de.altGraphKey && !de.ctrlKey && !de.metaKey
-    //     if (e.domEvent.keyCode === 13) {
-    //         term.write('\r\n')
-    //         if (input == '$clear') {
-    //             term.reset()
-    //             term.prompt()
-    //         } else {
-    //             session.send(JSON.stringify({
-    //                 type: 'INPUT',
-    //                 content: input,
-    //             }))
-    //         }
-    //         inputHistory.push(input)
-    //         if (inputHistory.length > 100) {
-    //             inputHistory = inputHistory.slice(inputHistory.length - 100)
-    //         }
-    //         historyIndex = inputHistory.length
-    //         input = ''
-    //         inputCursor = 0
-    //     } else if (e.domEvent.keyCode === 37) { // Arrow Left
-    //         if (inputCursor > 0) {
-    //             inputCursor--
-    //             term.write(e.key)
-    //         }
-    //     } else if (e.domEvent.keyCode === 39) { // Arrow Right
-    //         if (inputCursor < input.length) {
-    //             inputCursor++
-    //             term.write(e.key)
-    //         }
-    //     } else if (e.domEvent.keyCode === 38) { // Arrow Up
-    //         if (historyIndex > 0) {
-    //             historyIndex--
-    //             var newInput = inputHistory[historyIndex]
-    //             for (var i = 0; i < input.length; i++) {
-    //                 term.write('\b \b')
-    //             }
-    //             input = newInput
-    //             term.write(input)
-    //             inputCursor = input.length
-    //         }
-    //     } else if (e.domEvent.keyCode === 40) { // Arrow Down
-    //         if (historyIndex < inputHistory.length - 1) {
-    //             historyIndex++
-    //             var newInput = inputHistory[historyIndex]
-    //             for (var i = 0; i < input.length; i++) {
-    //                 term.write('\b \b')
-    //             }
-    //             input = newInput
-    //             term.write(input)
-    //             inputCursor = input.length
-    //         }
-    //     } else if (e.domEvent.keyCode === 8) { // back 删除的情况
-    //         if (term._core.buffer.x > 5) {
-    //             term.write('\b \b')
-    //             input = input.substr(0, input.length - 1)
-    //         }
-    //     } else if (printable) {
-    //         const toWrite = e.key + input.substr(inputCursor)
-    //         if (inputCursor == input.length) {
-    //             input += e.key
-    //         } else {
-    //             input = input.substr(0, inputCursor) + e.key + input.substr(inputCursor)
-    //         }
-    //         inputCursor++
-    //         term.write(toWrite)
-    //         for (let i = 1; i < toWrite.length; i++) {
-    //             term.write(MOVE_LEFT)
-    //         }
-    //     } else if (de.ctrlKey) {
-    //         switch (de.keyCode) {
-    //         case 65: // Ctrl + A, Move to line begin
-    //             while (inputCursor > 0) {
-    //                 inputCursor--
-    //                 term.write(MOVE_LEFT)
-    //             }
-    //             break
-    //         case 69: // Ctrl + E, Move to line end
-    //             while (inputCursor < input.length) {
-    //                 inputCursor++
-    //                 term.write(MOVE_RIGHT)
-    //             }
-    //             break
-    //         }
-    //     }
-    // })
+    term.onKey(e => {
+        const de = e.domEvent
+            , printable = !de.altKey && !de.altGraphKey && !de.ctrlKey && !de.metaKey
+        if (e.domEvent.keyCode === 13) {
+            term.write('\r\n')
+            if (input == '$clear') {
+                term.reset()
+                term.prompt()
+            } else {
+                session.send(JSON.stringify({
+                    type: 'INPUT',
+                    content: input,
+                }))
+            }
+            inputHistory.push(input)
+            if (inputHistory.length > 100) {
+                inputHistory = inputHistory.slice(inputHistory.length - 100)
+            }
+            historyIndex = inputHistory.length
+            input = ''
+            inputCursor = 0
+        } else if (e.domEvent.keyCode === 37) { // Arrow Left
+            if (inputCursor > 0) {
+                inputCursor--
+                term.write(e.key)
+            }
+        } else if (e.domEvent.keyCode === 39) { // Arrow Right
+            if (inputCursor < input.length) {
+                inputCursor++
+                term.write(e.key)
+            }
+        } else if (e.domEvent.keyCode === 38) { // Arrow Up
+            if (historyIndex > 0) {
+                historyIndex--
+                var newInput = inputHistory[historyIndex]
+                for (var i = 0; i < input.length; i++) {
+                    term.write('\b \b')
+                }
+                input = newInput
+                term.write(input)
+                inputCursor = input.length
+            }
+        } else if (e.domEvent.keyCode === 40) { // Arrow Down
+            if (historyIndex < inputHistory.length - 1) {
+                historyIndex++
+                var newInput = inputHistory[historyIndex]
+                for (var i = 0; i < input.length; i++) {
+                    term.write('\b \b')
+                }
+                input = newInput
+                term.write(input)
+                inputCursor = input.length
+            }
+        } else if (e.domEvent.keyCode === 8) { // back 删除的情况
+            if (term._core.buffer.x > 5) {
+                term.write('\b \b')
+                input = input.substr(0, input.length - 1)
+            }
+        } else if (printable) {
+            const toWrite = e.key + input.substr(inputCursor)
+            if (inputCursor == input.length) {
+                input += e.key
+            } else {
+                input = input.substr(0, inputCursor) + e.key + input.substr(inputCursor)
+            }
+            inputCursor++
+            term.write(toWrite)
+            for (let i = 1; i < toWrite.length; i++) {
+                term.write(MOVE_LEFT)
+            }
+        } else if (de.ctrlKey) {
+            switch (de.keyCode) {
+            case 65: // Ctrl + A, Move to line begin
+                while (inputCursor > 0) {
+                    inputCursor--
+                    term.write(MOVE_LEFT)
+                }
+                break
+            case 69: // Ctrl + E, Move to line end
+                while (inputCursor < input.length) {
+                    inputCursor++
+                    term.write(MOVE_RIGHT)
+                }
+                break
+            }
+        }
+    })
     console.log(term.onData)
     term.onData(key => {  // 粘贴的情况
         console.log('onData', key)
@@ -149,12 +149,12 @@
                     term.prompt(true)
                     break
                 case 'EXCEPTION':
-                    var output = '\033[31m' + data.content.replace(/\n/g, '\r\n') + '\033[0m'
+                    var output = '\x1b[31m' + data.content.replace(/\n/g, '\r\n') + '\x1b[0m'
                     term.write(output)
                     term.prompt()
                     break
                 case 'RETURN':
-                    var output = '\033[36m' + data.content.replace(/\n/g, '\r\n') + '\033[0m'
+                    var output = '\x1b[36m' + data.content.replace(/\n/g, '\r\n') + '\x1b[0m'
                     term.write(output)
                     term.prompt()
                     break
