@@ -93,10 +93,29 @@ func init() {
 			return jsonToValue(j, c)
 		}).
 		Method("__bitOr__", func(c *Context, this ValueObject, args []Value) Value {
-			other := c.MustObject(args[0])
-			cmds := append([]*exec.Cmd{}, this.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)...)
-			cmds = append(cmds, other.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)...)
-			return NewObjectAndInit(shCommand, c, NewGoValue(cmds))
+			if other, is := args[0].(ValueObject); is {
+				cmds := []*exec.Cmd{}
+				cmds = append(cmds, this.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)...)
+				cmds = append(cmds, other.GetMember("__cmds", c).ToGoValue(c).([]*exec.Cmd)...)
+				return NewObjectAndInit(shCommand, c, NewGoValue(cmds))
+			}
+			if other, is := c.GetCallable(args[0]); is {
+				c.Invoke(other, nil, Args(this))
+				return c.RetVal
+			}
+			c.RaiseRuntimeError("invalid right value type")
+			return nil
+		}).
+		Method("__getAttr__", func(c *Context, this ValueObject, args []Value) Value {
+			switch args[0].ToString(c) {
+			case "s":
+				c.InvokeMethod(this, "text", NoArgs)
+			case "l":
+				c.InvokeMethod(this, "lines", NoArgs)
+			case "j":
+				c.InvokeMethod(this, "json", NoArgs)
+			}
+			return c.RetVal
 		}).
 		Build()
 	shModuleClass = NewClassBuilder("sh").
