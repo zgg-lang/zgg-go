@@ -4,6 +4,10 @@ import (
 	"github.com/zgg-lang/zgg-go/runtime"
 )
 
+type IsLiteral interface {
+	ConstValue() any
+}
+
 type ExprInt struct {
 	Value runtime.ValueInt
 }
@@ -12,12 +16,20 @@ func (n *ExprInt) Eval(c *runtime.Context) {
 	c.RetVal = n.Value
 }
 
+func (n *ExprInt) ConstValue() any {
+	return n.Value.Value()
+}
+
 type ExprStr struct {
 	Value runtime.ValueStr
 }
 
 func (n *ExprStr) Eval(c *runtime.Context) {
 	c.RetVal = n.Value
+}
+
+func (n *ExprStr) ConstValue() any {
+	return n.Value.Value()
 }
 
 type ExprToStr struct {
@@ -40,12 +52,20 @@ func (n *ExprFloat) Eval(c *runtime.Context) {
 	c.RetVal = n.Value
 }
 
+func (n *ExprFloat) ConstValue() any {
+	return n.Value.Value()
+}
+
 type ExprBool struct {
 	Value runtime.ValueBool
 }
 
 func (n *ExprBool) Eval(c *runtime.Context) {
 	c.RetVal = n.Value
+}
+
+func (n *ExprBool) ConstValue() any {
+	return n.Value.Value()
 }
 
 type ExprNil struct {
