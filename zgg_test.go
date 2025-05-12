@@ -97,3 +97,21 @@ func BenchmarkRunWithPool(b *testing.B) {
 		RunCode(prog, Var{"a", Val{i}})
 	}
 }
+
+func BenchmarkCalcWithPrecalc(b *testing.B) {
+	parser.CanCalcInCompileTime = true
+	code, _ := NewRunner().CompileExpr("1+2+3*3-3**234.2")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Eval(code)
+	}
+}
+
+func BenchmarkCalcWithoutPrecalc(b *testing.B) {
+	parser.CanCalcInCompileTime = false
+	code, _ := NewRunner().CompileExpr("1+2+3*3-3**234.2")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Eval(code)
+	}
+}
