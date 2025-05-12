@@ -316,7 +316,7 @@ func libTime(c *Context) ValueObject {
 		)
 		t0 := time.Now()
 		defer func() {
-			rv = NewInt(time.Now().UnixNano() - t0.UnixNano())
+			rv = NewObjectAndInit(timeDurationClass, c, NewGoValue(time.Since(t0)))
 		}()
 		c.Invoke(callable, nil, NoArgs)
 		return
