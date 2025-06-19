@@ -4,6 +4,6 @@ import (
 	"fmt"
 )
 
-func (ConsoleReplContext) write(msg string) {
-	fmt.Println(msg)
+func (c *ConsoleReplContext) write(msg string) {
+	fmt.Fprintln(c.readline.Stdout(), msg)
 }

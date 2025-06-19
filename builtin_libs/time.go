@@ -804,6 +804,9 @@ func timeParseTime(s, layout string, loc *time.Location) (t time.Time, unit stri
 			layout = "2006-01-02 15:04:05.000-0700"
 		}
 	}
+	if loc == nil {
+		loc = timeDefaultLocal.Load()
+	}
 	t, err = time.ParseInLocation(layout, s, loc)
 	return
 }

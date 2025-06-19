@@ -107,6 +107,36 @@ func libDb(*Context) ValueObject {
 	return lib
 }
 
+type timeNullTime struct {
+	Valid bool
+	Time  time.Time
+}
+
+func (t *timeNullTime) Scan(src any) error {
+	switch s := src.(type) {
+	case string:
+		if v, _, e := timeParseTime(s, "", nil); e != nil {
+			return e
+		} else {
+			t.Time = v
+			t.Valid = true
+		}
+	case []byte:
+		if v, _, e := timeParseTime(string(s), "", nil); e != nil {
+			return e
+		} else {
+			t.Time = v
+			t.Valid = true
+		}
+	case time.Time:
+		t.Time = s
+		t.Valid = true
+	default:
+		t.Valid = false
+	}
+	return nil
+}
+
 func dbScanRowsMakeFields(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, cols []string) []interface{} {
 	var err error
 	if colTypes == nil {
@@ -139,12 +169,14 @@ func dbScanRowsMakeFields(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType
 					st = reflect.TypeOf((*string)(nil)).Elem()
 				} else {
 					st = reflect.TypeOf((*string)(nil)).Elem()
-					//fmt.Printf("unknown colType.DatabaseTypeName() '%s'(%+v)\n", dtn, ct)
-					//c.RaiseRuntimeError("unknown colType.DatabaseTypeName() '%s'(%+v)", dtn, ct)
 				}
 			}
 		}
 		fields[i] = reflect.New(st).Interface()
+		if _, is := fields[i].(*sql.NullTime); is {
+			fields[i] = new(timeNullTime)
+		}
+		//fmt.Printf(">>> DATETIME FIELD: i %d\n------ col %s\n------ ct %#v\n------ st %s\n------ ft %s\n", i, cols[i], ct, st, reflect.TypeOf(fields[i]))
 	}
 	return fields
 }
@@ -200,7 +232,14 @@ func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, c
 			set = true
 		case *sql.NullTime:
 			if fv.Valid {
-				item.PushBack(NewObjectAndInit(timeTimeClass, c, NewInt(fv.Time.UnixNano())))
+				item.PushBack(NewObjectAndInit(timeTimeClass, c, NewGoValue(fv.Time)))
+			} else {
+				item.PushBack(Nil())
+			}
+			set = true
+		case *timeNullTime:
+			if fv.Valid {
+				item.PushBack(NewObjectAndInit(timeTimeClass, c, NewGoValue(fv.Time)))
 			} else {
 				item.PushBack(Nil())
 			}
@@ -289,6 +328,13 @@ func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, 
 		case *sql.NullTime:
 			if fv.Valid {
 				item.SetMember(colName, NewObjectAndInit(timeTimeClass, c, NewInt(fv.Time.UnixNano())), c)
+			} else {
+				item.SetMember(colName, Nil(), c)
+			}
+			set = true
+		case *timeNullTime:
+			if fv.Valid {
+				item.SetMember(colName, NewObjectAndInit(timeTimeClass, c, NewGoValue(fv.Time)), c)
 			} else {
 				item.SetMember(colName, Nil(), c)
 			}
