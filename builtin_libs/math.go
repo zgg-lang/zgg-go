@@ -59,7 +59,7 @@ func libMath(*Context) ValueObject {
 		var an, ar ValueInt
 		EnsureFuncParams(c, "P", args, ArgRuleRequired("n", TypeInt, &an), ArgRuleRequired("r", TypeInt, &ar))
 		n, r := an.AsInt(), ar.AsInt()
-		if r <= 0 || n <= r {
+		if r < 0 || n < r {
 			c.RaiseRuntimeError("invalid arguments! n %d r %d", n, r)
 		}
 		rv := 1
@@ -73,7 +73,7 @@ func libMath(*Context) ValueObject {
 		var an, ar ValueInt
 		EnsureFuncParams(c, "C", args, ArgRuleRequired("n", TypeInt, &an), ArgRuleRequired("r", TypeInt, &ar))
 		n, r := an.AsInt(), ar.AsInt()
-		if r <= 0 || n <= r {
+		if r < 0 || n < r {
 			c.RaiseRuntimeError("invalid arguments! n %d r %d", n, r)
 		}
 		if r+r < n {
