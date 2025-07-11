@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/joho/godotenv"
+	"github.com/samber/lo"
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
@@ -28,6 +30,10 @@ func libSys(c *Context) ValueObject {
 			lib.SetMember("runEnv", jsonToValue(m, c), c)
 		}
 	}
+	lib.SetMember("loadEnv", NewNativeFunction("sys.loadEnv", func(c *Context, this Value, args []Value) Value {
+		godotenv.Load(lo.Map(args, func(a Value, _ int) string { return a.ToString(c) })...)
+		return Undefined()
+	}), nil)
 	lib.SetMember("env", NewNativeFunction("sys.env", func(c *Context, this Value, args []Value) Value {
 		switch len(args) {
 		case 0:
