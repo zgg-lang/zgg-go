@@ -7,7 +7,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -40,23 +39,13 @@ func libDrawing(c *Context) ValueObject {
 				}).
 				On(TypeStr, func(v Value) {
 					name := v.ToString(c)
-					lname := strings.ToLower(name)
 					var rd io.Reader
-					if strings.HasPrefix(lname, "http://") || strings.HasPrefix(lname, "https://") {
-						resp, err := http.Get(name)
-						if err != nil {
-							c.RaiseRuntimeError("open srcImage %s error: %+v", name, err)
-						}
-						defer resp.Body.Close()
-						rd = resp.Body
-					} else {
-						f, err := os.Open(name)
-						if err != nil {
-							c.RaiseRuntimeError("open srcImage %s error: %+v", name, err)
-						}
-						defer f.Close()
-						rd = f
+					f, err := os.Open(name)
+					if err != nil {
+						c.RaiseRuntimeError("open srcImage %s error: %+v", name, err)
 					}
+					defer f.Close()
+					rd = f
 					im, _, err := image.Decode(rd)
 					if err != nil {
 						c.RaiseRuntimeError("decode srcImage %s error: %+v", name, err)
