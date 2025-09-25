@@ -1,8 +1,8 @@
 package builtin_libs
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -47,6 +47,7 @@ func libHttp(*Context) ValueObject {
 	lib.SetMember("postForm", httpPostForm, nil)
 	lib.SetMember("postMultipartForm", httpPostMultipartForm, nil)
 	lib.SetMember("postJson", httpPostJson, nil)
+	// lib.SetMember("head", httpHead, nil)
 	lib.SetMember("Request", httpRequestClass, nil)
 	lib.SetMember("WebsocketClient", websocketClientClass, nil)
 	lib.SetMember("connectWebsocket", NewNativeFunction("connectWebsocket", func(c *Context, this Value, args []Value) Value {
@@ -162,7 +163,7 @@ func libHttp(*Context) ValueObject {
 	return lib
 }
 
-func _httpGet(c *Context, fn string, args []Value, procBody func(io.Reader) error) {
+func _httpGet(c *Context, fn string, args []Value, proc func(*http.Response) error) {
 	var (
 		url     ValueStr
 		headers ValueObject
@@ -184,15 +185,23 @@ func _httpGet(c *Context, fn string, args []Value, procBody func(io.Reader) erro
 		c.RaiseRuntimeError("http.%s: do request error %+v", fn, err)
 	}
 	defer rsp.Body.Close()
-	if err := procBody(rsp.Body); err != nil {
+	if err := proc(rsp); err != nil {
 		c.RaiseRuntimeError("http.%s: process response error %+v", fn, err)
 	}
 }
 
+// var httpHead = NewNativeFunction("http.head", func(c *Context, thisArg Value, args []Value) Value {
+// 	_httpGet(c, "head", args, func(rsp *http.Response) (err error) {
+// 		io.Copy(io.Discard, rsp.Body)
+// 		return
+// 	})
+// 	return NewBytes(bb.Bytes())
+// }, "url", "headers")
+
 var httpGet = NewNativeFunction("http.get", func(c *Context, thisArg Value, args []Value) Value {
 	var bb bytes.Buffer
-	_httpGet(c, "get", args, func(rd io.Reader) (err error) {
-		_, err = io.Copy(&bb, rd)
+	_httpGet(c, "get", args, func(rsp *http.Response) (err error) {
+		_, err = io.Copy(&bb, rsp.Body)
 		return
 	})
 	return NewBytes(bb.Bytes())
@@ -200,8 +209,8 @@ var httpGet = NewNativeFunction("http.get", func(c *Context, thisArg Value, args
 
 var httpGetText = NewNativeFunction("http.getText", func(c *Context, thisArg Value, args []Value) Value {
 	var sb strings.Builder
-	_httpGet(c, "getText", args, func(rd io.Reader) (err error) {
-		_, err = io.Copy(&sb, rd)
+	_httpGet(c, "getText", args, func(rsp *http.Response) (err error) {
+		_, err = io.Copy(&sb, rsp.Body)
 		return
 	})
 	return NewStr(sb.String())
@@ -209,8 +218,8 @@ var httpGetText = NewNativeFunction("http.getText", func(c *Context, thisArg Val
 
 var httpGetLines = NewNativeFunction("http.getLines", func(c *Context, thisArg Value, args []Value) Value {
 	rv := NewArray()
-	_httpGet(c, "getLines", args, func(rd io.Reader) error {
-		brd := bufio.NewReader(rd)
+	_httpGet(c, "getLines", args, func(rsp *http.Response) error {
+		brd := bufio.NewReader(rsp.Body)
 		for {
 			s, err := brd.ReadString('\n')
 			if n := len(s); n > 0 && s[n-1] == '\n' {
@@ -232,8 +241,8 @@ var httpGetLines = NewNativeFunction("http.getLines", func(c *Context, thisArg V
 
 var httpGetJson = NewNativeFunction("getJson", func(c *Context, thisArg Value, args []Value) Value {
 	var j interface{}
-	_httpGet(c, "getJson", args, func(rd io.Reader) error {
-		return json.NewDecoder(rd).Decode(&j)
+	_httpGet(c, "getJson", args, func(rsp *http.Response) error {
+		return json.NewDecoder(rsp.Body).Decode(&j)
 	})
 	return jsonToValue(j, c)
 }, "url", "headers")
