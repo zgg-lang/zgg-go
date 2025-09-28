@@ -52,7 +52,7 @@ INT_DEC     : [1-9] DECDIGIT*;
 INT_HEX     : '0' [xX] HEXDIGIT+;
 INT_OCT     : '0' OCTDIGIT+;
 INT_BIN     : '0' [bB] BINDIGIT+;
-BIGNUM      : ('0' | INT_DEC) ('.' DECDIGIT+)? ('L' | 'l');
+BIGNUM      : ('0' | INT_DEC) ('.' DECDIGIT+)? 'L';
 FLOAT       : ('0' | INT_DEC) '.' DECDIGIT+;
 ENUM        : ('0' | INT_DEC) ('.' DECDIGIT+)? 'e' ('+' | '-')? ('0' | INT_DEC);
 fragment ESCCHAR
