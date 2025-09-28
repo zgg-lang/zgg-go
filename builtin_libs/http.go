@@ -99,11 +99,12 @@ func libHttp(*Context) ValueObject {
 		addr := c.MustStr(args[0], "http.serve(addr, handleFunc): addr")
 		handleFunc := c.MustCallable(args[1], "http.serve(addr, handleFunc): function")
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			newC := c.Clone()
+			newC := c.CloneWithContext(r.Context())
 			w.Header().Set("server", "zgg simple server")
 			rv := NewGoValue(r)
 			wv := NewGoValue(w)
 			ctx := NewObjectAndInit(httpRequestContextClass, newC, wv, rv)
+			defer newC.Recover()
 			newC.Invoke(handleFunc, nil, Args(ctx))
 		})
 		if strings.HasPrefix(addr, httpUnixPrefix) {
@@ -172,7 +173,7 @@ func _httpGet(c *Context, fn string, args []Value, proc func(*http.Response) err
 		ArgRuleRequired("url", TypeStr, &url),
 		ArgRuleOptional("headers", TypeObject, &headers, NewObject()),
 	)
-	request, err := http.NewRequest("GET", url.Value(), nil)
+	request, err := http.NewRequestWithContext(c.Ctx, "GET", url.Value(), nil)
 	if err != nil {
 		c.RaiseRuntimeError("http.%s: make request error %+v", fn, err)
 	}
@@ -264,7 +265,7 @@ var httpPostForm = NewNativeFunction("postForm", func(c *Context, this Value, ar
 		return true
 	})
 	bodyReader := strings.NewReader(form.Encode())
-	request, err := http.NewRequest("POST", postUrl, bodyReader)
+	request, err := http.NewRequestWithContext(c.Ctx, "POST", postUrl, bodyReader)
 	if err != nil {
 		c.RaiseRuntimeError("http.postForm: make request error %s", err)
 		return nil
@@ -354,7 +355,7 @@ var httpPostMultipartForm = NewNativeFunction("postMultipartForm", func(c *Conte
 		ArgRuleOptional("headers", TypeObject, &headers, NewObject()),
 	)
 	formBs, contentType := httpGetMultipartForm(c, form)
-	request, err := http.NewRequest("POST", url.Value(), bytes.NewReader(formBs))
+	request, err := http.NewRequestWithContext(c.Ctx, "POST", url.Value(), bytes.NewReader(formBs))
 	if err != nil {
 		c.RaiseRuntimeError("postMultipartForm url %s new request error %s", url.Value(), err)
 	}
@@ -384,7 +385,7 @@ var httpPostJson = NewNativeFunction("postJson", func(c *Context, this Value, ar
 		return nil
 	}
 	bodyReader := bytes.NewReader(contentBytes)
-	request, err := http.NewRequest("POST", postUrl, bodyReader)
+	request, err := http.NewRequestWithContext(c.Ctx, "POST", postUrl, bodyReader)
 	if err != nil {
 		c.RaiseRuntimeError("http.postJson: make request error %s", err)
 		return nil
@@ -403,7 +404,7 @@ var httpPostJson = NewNativeFunction("postJson", func(c *Context, this Value, ar
 		return nil
 	}
 	defer resp.Body.Close()
-	rspContent, err := ioutil.ReadAll(resp.Body)
+	rspContent, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.RaiseRuntimeError("http.postJson: read response error %s", err)
 		return nil
@@ -451,11 +452,12 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 		path := c.MustStr(args[0], "http.server.route(path, handleFunc): path")
 		handleFunc := c.MustCallable(args[1], "http.server.route(path, handleFunc): function")
 		svr.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-			newC := c.Clone()
+			newC := c.CloneWithContext(r.Context())
 			w.Header().Set("server", serverName)
 			rv := NewGoValue(r)
 			wv := NewGoValue(w)
 			ctx := NewObjectAndInit(httpRequestContextClass, newC, wv, rv)
+			defer newC.Recover()
 			newC.Invoke(handleFunc, nil, Args(ctx))
 			if callable, ok := newC.GetCallable(ctx.GetMember("close", c)); ok {
 				c.Invoke(callable, ctx, NoArgs)
@@ -479,9 +481,10 @@ var httpCreateServer = NewNativeFunction("createServer", func(c *Context, thisAr
 				return
 			}
 			defer conn.Close()
-			newC := c.Clone()
+			newC := c.CloneWithContext(r.Context())
 			w.Header().Set("server", serverName)
 			ctx := NewObjectAndInit(websocketContextClass, newC, NewGoValue(conn), NewGoValue(w), NewGoValue(r))
+			defer newC.Recover()
 			newC.Invoke(handleFunc, nil, Args(ctx))
 		})
 		return thisArg
@@ -897,7 +900,7 @@ func initHttpRequestContextClass() ValueType {
 			if reqBody != nil {
 				defer reqBody.Close()
 			}
-			request, err := http.NewRequest(r.Method, targetUrl, reqBody)
+			request, err := http.NewRequestWithContext(c.Ctx, r.Method, targetUrl, reqBody)
 			if err != nil {
 				c.RaiseRuntimeError("make forward request error: %s", err)
 			}
@@ -1155,7 +1158,7 @@ func initHttpRequestClass() ValueType {
 			}
 			method := c.MustStr(this.GetMember("method", c))
 			url := c.MustStr(this.GetMember("url", c))
-			req, err := http.NewRequest(strings.ToUpper(method), url, reqBody)
+			req, err := http.NewRequestWithContext(c.Ctx, strings.ToUpper(method), url, reqBody)
 			if err != nil {
 				c.RaiseRuntimeError("Request.build: make request error %s", err)
 			}

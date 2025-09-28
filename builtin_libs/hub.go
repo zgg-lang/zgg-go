@@ -40,7 +40,7 @@ func libHub(c *Context) ValueObject {
 		if err != nil {
 			c.RaiseRuntimeError("SignPKCS1v15 error %v", err)
 		}
-		req, err := http.NewRequest("POST", url.Value(), bytes.NewReader(codeBs))
+		req, err := http.NewRequestWithContext(c.Ctx, "POST", url.Value(), bytes.NewReader(codeBs))
 		if err != nil {
 			c.RaiseRuntimeError("Make request to hub error %v", err)
 		}

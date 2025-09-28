@@ -1,44 +1,48 @@
 package builtin_libs
 
 import (
+	"context"
 	"sync"
 	"time"
 
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
-func libConcurrent(*Context) ValueObject {
+func concurrentStartFunc(c *Context, parentCtx context.Context, this Value, args []Value) Value {
+	if len(args) < 1 {
+		c.RaiseRuntimeError("concurrent.start: requires at least 1 argument")
+		return nil
+	}
+	callee, isCallable := c.GetCallable(args[0])
+	if !isCallable {
+		c.RaiseRuntimeError("concurrent.start: argument 0 must callable")
+		return nil
+	}
+	c.StartThread(parentCtx, callee, nil, args[1:])
+	return c.RetVal
+}
+
+func libConcurrent(c *Context) ValueObject {
 	lib := NewObject()
 	lib.SetMember("start", NewNativeFunction("start", func(c *Context, this Value, args []Value) Value {
-		if len(args) < 1 {
-			c.RaiseRuntimeError("concurrent.start: requires at least 1 argument")
-			return nil
-		}
-		callee, isCallable := c.GetCallable(args[0])
-		if !isCallable {
-			c.RaiseRuntimeError("concurrent.start: argument 0 must callable")
-			return nil
-		}
-		c.StartThread(callee, nil, args[1:])
-		return c.RetVal
+		return concurrentStartFunc(c, context.Background(), this, args)
+	}), nil)
+	lib.SetMember("startChild", NewNativeFunction("start", func(c *Context, this Value, args []Value) Value {
+		return concurrentStartFunc(c, c.Ctx, this, args)
 	}), nil)
 	lib.SetMember("all", NewNativeFunction("all", func(c *Context, this Value, args []Value) Value {
 		rv := make([]Value, len(args))
+		awaits := make([]func() Value, len(args))
 		for i, arg := range args {
 			callee, isCallable := c.GetCallable(arg)
 			if !isCallable {
 				c.RaiseRuntimeError("concurrent.all: argument %d must callable", i)
 				return nil
 			}
-			c.StartThread(callee, nil, []Value{})
-			rv[i] = c.RetVal
+			awaits[i] = c.StartThread(c.Ctx, callee, nil, []Value{})
 		}
-		for i, t := range rv {
-			await, ok := c.GetCallable(t.GetMember("await", c))
-			if ok {
-				c.Invoke(await, nil, NoArgs)
-				rv[i] = c.RetVal
-			}
+		for i, await := range awaits {
+			rv[i] = await()
 		}
 		return NewArrayByValues(rv...)
 	}), nil)
@@ -46,16 +50,14 @@ func libConcurrent(*Context) ValueObject {
 		objMutex := NewClassBuilder("Mutex").
 			Constructor(func(c *Context, this ValueObject, args []Value) {
 				lock := new(sync.Mutex)
-				this.SetMember("__lock", NewGoValue(lock), c)
+				this.Reserved = lock
 			}).
 			Method("lock", func(c *Context, this ValueObject, args []Value) Value {
-				lockVal := this.GetMember("__lock", c)
-				lockVal.ToGoValue(c).(*sync.Mutex).Lock()
+				this.Reserved.(*sync.Mutex).Lock()
 				return Undefined()
 			}).
 			Method("unlock", func(c *Context, this ValueObject, args []Value) Value {
-				lockVal := this.GetMember("__lock", c)
-				lockVal.ToGoValue(c).(*sync.Mutex).Unlock()
+				this.Reserved.(*sync.Mutex).Unlock()
 				return Undefined()
 			}).
 			Method("run", func(c *Context, this ValueObject, args []Value) Value {
@@ -69,7 +71,7 @@ func libConcurrent(*Context) ValueObject {
 					c.RaiseRuntimeError("run: requires 1 argument(s)")
 					return nil
 				}
-				lockVal := this.GetMember("__lock", c).ToGoValue(c).(*sync.Mutex)
+				lockVal := this.Reserved.(*sync.Mutex)
 				lockVal.Lock()
 				defer lockVal.Unlock()
 				c.Invoke(args[0], nil, NoArgs)
@@ -80,6 +82,7 @@ func libConcurrent(*Context) ValueObject {
 		lib.SetMember("Mutex", objMutex, nil)
 	}
 	{
+		noTimeout := NewObjectAndInit(timeDurationClass, c, NewGoValue(time.Duration(-1)))
 		objChan := NewClassBuilder("Chan").
 			Constructor(func(c *Context, this ValueObject, args []Value) {
 				var n ValueInt
@@ -87,27 +90,27 @@ func libConcurrent(*Context) ValueObject {
 					ArgRuleOptional("n", TypeInt, &n, NewInt(1)),
 				)
 				ch := make(chan Value, n.AsInt())
-				this.SetMember("__ch", NewGoValue(&ch), c)
+				this.Reserved = ch
 			}).
 			Method("send", func(c *Context, this ValueObject, args []Value) Value {
-				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan Value)
-				(*ch) <- args[0]
+				ch := this.Reserved.(chan Value)
+				ch <- args[0]
 				return Undefined()
 			}).
 			Method("recv", func(c *Context, this ValueObject, args []Value) Value {
-				var n ValueFloat
+				var n timeDurationArg
 				EnsureFuncParams(c, "Chan.recv", args,
-					ArgRuleOptional("timeout", TypeFloat, &n, NewFloat(-1)),
+					n.Rule(c, "timeout", noTimeout),
 				)
-				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan Value)
-				timeout := n.Value()
+				ch := this.Reserved.(chan Value)
+				timeout := n.GetDuration(c)
 				if timeout < 0 {
-					return <-*ch
+					return <-ch
 				}
 				select {
-				case <-time.After(time.Duration(timeout) * time.Second):
+				case <-time.After(timeout):
 					return Undefined()
-				case v := <-*ch:
+				case v := <-ch:
 					return v
 				}
 			}).
@@ -127,39 +130,46 @@ func libConcurrent(*Context) ValueObject {
 						c.RaiseRuntimeError("Limiter.__init__(maxConcurrent): maxConcurrent must > 0")
 					}
 				}
-				ch := make(chan bool, max)
-				this.SetMember("__ch", NewGoValue(&ch), c)
+				info := &concurrentLimiterInfo{
+					ch: make(chan struct{}, max),
+				}
+				this.Reserved = info
 			}).
 			Method("run", func(c *Context, this ValueObject, args []Value) Value {
-				switch len(args) {
-				case 1:
-					if !c.IsCallable(args[0]) {
-						c.RaiseRuntimeError("run: first argument must callable")
-						return nil
-					}
-				default:
+				if len(args) < 1 {
 					c.RaiseRuntimeError("run: requires 1 argument(s)")
 					return nil
 				}
-				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan bool)
-				*ch <- true
-				joinFunc := c.StartThread(args[0], nil, []Value{})
+				if !c.IsCallable(args[0]) {
+					c.RaiseRuntimeError("run: first argument must callable")
+					return nil
+				}
+				info := this.Reserved.(*concurrentLimiterInfo)
+				info.ch <- struct{}{}
+				info.wg.Add(1)
+				joinFunc := c.StartThread(c.Ctx, args[0], nil, args[1:])
 				rv := c.RetVal
 				go func() {
+					defer func() {
+						defer c.Recover()
+						info.wg.Done()
+						<-info.ch
+					}()
 					joinFunc()
-					<-*ch
 				}()
 				return rv
 			}).
 			Method("wait", func(c *Context, this ValueObject, args []Value) Value {
-				ch := this.GetMember("__ch", c).ToGoValue(c).(*chan bool)
-				for len(*ch) > 0 {
-					time.Sleep(10 * time.Millisecond)
-				}
+				this.Reserved.(*concurrentLimiterInfo).wg.Wait()
 				return Undefined()
 			}).
 			Build()
 		lib.SetMember("Limiter", objLimiter, nil)
 	}
 	return lib
+}
+
+type concurrentLimiterInfo struct {
+	ch chan struct{}
+	wg sync.WaitGroup
 }

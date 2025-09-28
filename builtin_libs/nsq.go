@@ -94,6 +94,7 @@ var (
 			consumer.SetLogger(nsqDefaultLogger, nsq.LogLevelMax)
 			consumer.AddHandler(nsq.HandlerFunc(func(msg *nsq.Message) error {
 				newC := c.Clone()
+				defer newC.Recover()
 				newC.Invoke(callback, nil, Args(
 					NewBytes(msg.Body),
 					NewGoValue(msg),

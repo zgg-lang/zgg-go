@@ -156,7 +156,7 @@ func (t *valueType) Invoke(c *Context, this Value, args []Value) {
 	} else {
 		rv := NewObject(t)
 		if initFn := t.getInitFunc(c); initFn != nil {
-			c.Invoke(initFn, rv, func() []Value { return args })
+			c.Invoke(initFn, rv, Args(args...))
 		}
 		c.RetVal = rv
 	}

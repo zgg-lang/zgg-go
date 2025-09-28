@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,7 +27,7 @@ var (
 )
 
 func runRepl(isDebug bool) {
-	repl.ReplLoop(repl.NewConsoleReplContext(isDebug, true), !isDebug)
+	repl.ReplLoop(repl.NewConsoleReplContext(isDebug, true, context.Background()), !isDebug)
 }
 
 func runFile(name string, inFile io.Reader, stdout, stderr io.Writer, dir string, args []string, isDebug bool) {
@@ -47,7 +48,7 @@ func runFile(name string, inFile io.Reader, stdout, stderr io.Writer, dir string
 	} else if t == nil {
 		fmt.Println("parse codes fail")
 	} else {
-		c := runtime.NewContext(true, isDebug, os.Getenv("CAN_EVAL") != "")
+		c := runtime.NewContext(true, isDebug, os.Getenv("CAN_EVAL") != "", context.Background())
 		c.Path = dir
 		c.IsDebug = isDebug
 		c.Args = args

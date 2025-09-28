@@ -573,7 +573,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			for i := range queryArgs {
 				queryArgs[i] = args[i+1].ToGoValue(c)
 			}
-			rows, err := db.ToGoValue(c).(*sql.DB).Query(querySql.Value(), queryArgs...)
+			rows, err := db.ToGoValue(c).(*sql.DB).QueryContext(c.Ctx, querySql.Value(), queryArgs...)
 			if err != nil {
 				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
@@ -583,7 +583,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 		Method("tables", func(c *Context, this ValueObject, args []Value) Value {
 			db := this.GetMember("_db", c)
 			dialect := this.GetMember("_dialect", c).ToGoValue(c).(dbDialect)
-			rows, err := db.ToGoValue(c).(*sql.DB).Query(dialect.ShowTablesSQL())
+			rows, err := db.ToGoValue(c).(*sql.DB).QueryContext(c.Ctx, dialect.ShowTablesSQL())
 			if err != nil {
 				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
@@ -603,7 +603,7 @@ func initDatabaseClass(queryResultClass ValueType) ValueType {
 			for i := range execArgs {
 				execArgs[i] = args[i+1].ToGoValue(c)
 			}
-			res, err := db.ToGoValue(c).(*sql.DB).Exec(execSql.Value(), execArgs...)
+			res, err := db.ToGoValue(c).(*sql.DB).ExecContext(c.Ctx, execSql.Value(), execArgs...)
 			if err != nil {
 				c.RaiseRuntimeError("Database.execute execute fail %s", err)
 				return nil
@@ -674,7 +674,7 @@ func initDatabaseSessionClass() ValueType {
 				{
 					tx = session
 					spId := fmt.Sprintf("_zggdb_sp_%d", atomic.AddInt64(&globalSpId, 1))
-					_, err = tx.Exec(fmt.Sprintf("SAVEPOINT %s", spId))
+					_, err = tx.ExecContext(c.Ctx, fmt.Sprintf("SAVEPOINT %s", spId))
 					if err != nil {
 						c.RaiseRuntimeError("Session.__init__: begin transaction error %s", err)
 					}
@@ -713,7 +713,7 @@ func initDatabaseSessionClass() ValueType {
 			for i := range queryArgs {
 				queryArgs[i] = args[i+1].ToGoValue(c)
 			}
-			rows, err := tx.Query(querySql.Value(), queryArgs...)
+			rows, err := tx.QueryContext(c.Ctx, querySql.Value(), queryArgs...)
 			if err != nil {
 				c.RaiseRuntimeError("Database.query query fail %s", err)
 				return nil
@@ -732,7 +732,7 @@ func initDatabaseSessionClass() ValueType {
 			for i := range execArgs {
 				execArgs[i] = args[i+1].ToGoValue(c)
 			}
-			res, err := tx.Exec(execSql.Value(), execArgs...)
+			res, err := tx.ExecContext(c.Ctx, execSql.Value(), execArgs...)
 			if err != nil {
 				c.RaiseRuntimeError("Session.execute execute fail %s", err)
 				return nil
@@ -755,7 +755,7 @@ func initDatabaseSessionClass() ValueType {
 		Method("commit", func(c *Context, this ValueObject, args []Value) Value {
 			tx := this.GetMember("_tx", c).ToGoValue(c).(*sql.Tx)
 			if spId, ok := this.GetMember("__spId", c).(ValueStr); ok {
-				if _, err := tx.Exec(fmt.Sprintf("RELEASE SAVEPOINT %s", spId.Value())); err != nil {
+				if _, err := tx.ExecContext(c.Ctx, fmt.Sprintf("RELEASE SAVEPOINT %s", spId.Value())); err != nil {
 					c.RaiseRuntimeError("Session.commit: %s", err)
 					return nil
 				}
@@ -770,7 +770,7 @@ func initDatabaseSessionClass() ValueType {
 		Method("rollback", func(c *Context, this ValueObject, args []Value) Value {
 			tx := this.GetMember("_tx", c).ToGoValue(c).(*sql.Tx)
 			if spId, ok := this.GetMember("__spId", c).(ValueStr); ok {
-				if _, err := tx.Exec(fmt.Sprintf("ROLLBACK TO %s", spId.Value())); err != nil {
+				if _, err := tx.ExecContext(c.Ctx, fmt.Sprintf("ROLLBACK TO %s", spId.Value())); err != nil {
 					c.RaiseRuntimeError("Session.rollback: %s", err)
 					return nil
 				}

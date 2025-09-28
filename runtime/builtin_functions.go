@@ -640,7 +640,7 @@ var builtinFunctions = map[string]ValueCallable{
 		switch len(args) {
 		case 2:
 			if sandbox, ok := args[1].(ValueObject); ok {
-				evalCtx = NewContext(false, c.IsDebug, c.CanEval)
+				evalCtx = NewContext(false, c.IsDebug, c.CanEval, c.Ctx)
 				evalCtx.ImportFunc = c.ImportFunc
 				evalCtx.Stdin = c.Stdin
 				evalCtx.Stdout = c.Stdout

@@ -1,6 +1,7 @@
 package zgg
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -31,8 +32,8 @@ type (
 	ImportFunc func(*runtime.Context, string, string, string, bool) (runtime.Value, int64, bool)
 )
 
-func NewRunner() *Runner {
-	context := runtime.NewContext(true, false, false)
+func NewRunner(ctx context.Context) *Runner {
+	context := runtime.NewContext(true, false, false, ctx)
 	context.ImportFunc = parser.SimpleImport
 	return &Runner{
 		context: context,
@@ -160,7 +161,7 @@ func (r *Runner) Eval(expr interface{}) (interface{}, error) {
 
 var runnerPool = sync.Pool{
 	New: func() interface{} {
-		return NewRunner()
+		return NewRunner(context.Background())
 	},
 }
 

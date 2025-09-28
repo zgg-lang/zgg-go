@@ -1,6 +1,7 @@
 package ws_repl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -18,8 +19,8 @@ type WebsocketReplContext struct {
 	wlock sync.Mutex
 }
 
-func New(isMain, isDebug, canEval bool, conn *websocket.Conn) *WebsocketReplContext {
-	c := runtime.NewContext(isMain, isDebug, canEval)
+func New(isMain, isDebug, canEval bool, conn *websocket.Conn, ctx context.Context) *WebsocketReplContext {
+	c := runtime.NewContext(isMain, isDebug, canEval, ctx)
 	c.ImportFunc = parser.SimpleImport
 	r := &WebsocketReplContext{
 		c:    c,

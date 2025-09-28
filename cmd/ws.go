@@ -129,7 +129,7 @@ func runWebsocket(isDebug bool, args []string) {
 		}()
 		log(INFO, "new connection from %s", clientAddr)
 		replContext := &CommonWSReplContext{
-			WebsocketReplContext: ws_repl.New(true, isDebug, true, conn),
+			WebsocketReplContext: ws_repl.New(true, isDebug, true, conn, r.Context()),
 			initScript:           initPath,
 		}
 		repl.ReplLoop(replContext, !isDebug)

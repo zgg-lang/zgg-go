@@ -57,7 +57,7 @@ func libRedis(*Context) ValueObject {
 				}
 			}
 		}
-		conn, err := redis.Dial("tcp", redisAddr.Value(), opts...)
+		conn, err := redis.DialContext(c.Ctx, "tcp", redisAddr.Value(), opts...)
 		if err != nil {
 			c.RaiseRuntimeError("redis.open error: %s", err)
 			return nil

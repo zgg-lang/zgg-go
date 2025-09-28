@@ -252,6 +252,10 @@ var builtinObjMethods = map[string]ValueCallable{
 		})
 		return constUndefined
 	}),
+	"reserved": NewNativeFunction("object.reserved", func(c *Context, this Value, args []Value) Value {
+		o := c.MustObject(this)
+		return NewGoValue(o.Reserved)
+	}),
 	"printReserved": NewNativeFunction("object.printReserved", func(c *Context, this Value, args []Value) Value {
 		o := c.MustObject(this)
 		fmt.Printf("%#v\n", o.Reserved)

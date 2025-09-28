@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -9,7 +10,6 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,11 +22,11 @@ func reqHub(c *cli.Context) error {
 		keyPath = c.String("key")
 		hubURL  = c.Args().First()
 	)
-	code, err := ioutil.ReadAll(os.Stdin)
+	code, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return err
 	}
-	keyBs, err := ioutil.ReadFile(keyPath)
+	keyBs, err := os.ReadFile(keyPath)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func reqHub(c *cli.Context) error {
 		return err
 	}
 	signature := hex.EncodeToString(sign)
-	req, err := http.NewRequest("POST", hubURL, bytes.NewReader(code))
+	req, err := http.NewRequestWithContext(context.Background(), "POST", hubURL, bytes.NewReader(code))
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -113,6 +114,7 @@ type Context struct {
 	ExportValue     ValueObject
 	ImportFunc      func(*Context, string, string, string, bool) (Value, int64, bool)
 	CanEval         bool
+	Ctx             context.Context
 
 	lock          sync.Mutex
 	main          bool
@@ -138,9 +140,9 @@ func GetImportPaths() []string {
 	return importPaths
 }
 
-func NewContext(isMain bool, isDebug, canEval bool) *Context {
+func NewContext(isMain bool, isDebug, canEval bool, ctx context.Context) *Context {
 	f := newContextFrame(nil)
-	ctx := &Context{
+	c := &Context{
 		RetVal:          Undefined(),
 		main:            isMain,
 		IsDebug:         isDebug,
@@ -159,16 +161,25 @@ func NewContext(isMain bool, isDebug, canEval bool) *Context {
 		builtins:        new(sync.Map),
 		local:           NewObject(),
 		CanEval:         canEval,
+		Ctx:             ctx,
 	}
-	ctx.modules = new(sync.Map)
-	ctx.Stdin = os.Stdin
-	ctx.Stdout = os.Stdout
-	ctx.Stderr = os.Stderr
+	c.modules = new(sync.Map)
+	c.Stdin = os.Stdin
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
 	for name, value := range builtins {
-		ctx.builtins.Store(name, value)
+		c.builtins.Store(name, value)
 	}
-	ctx.builtins.Store("isMain", NewBool(isMain))
-	return ctx
+	c.builtins.Store("isMain", NewBool(isMain))
+	return c
+}
+
+func (c *Context) AbortIfCancelled() {
+	select {
+	case <-c.Ctx.Done():
+		c.RaiseRuntimeError("Cancelled")
+	default:
+	}
 }
 
 func (c *Context) Reset(resetVars ...bool) {
@@ -262,19 +273,19 @@ func (c *Context) ForceSetLocalValue(name string, value Value) {
 }
 
 func (c *Context) PushStack() {
+	c.AbortIfCancelled()
 	nextFrame := newContextFrame(c.curFrame)
-	// fmt.Println("PushStack", c.curFrame.level, nextFrame.level)
 	c.curFrame = nextFrame
 }
 
 func (c *Context) PushFuncStack(funcName string) {
+	c.AbortIfCancelled()
 	nextFrame := newContextFrame(c.curFrame)
 	if funcName != "" {
 		nextFrame.funcName = funcName
 		nextFrame.funcLevel = c.curFrame.funcLevel + 1
 		c.funcRootFrame = nextFrame
 	}
-	// fmt.Println("PushFuncStack", c.curFrame.level, nextFrame.level)
 	c.curFrame = nextFrame
 }
 
@@ -523,17 +534,10 @@ func (c *Context) EnsureNotReadonly() {
 }
 
 func (c *Context) Invoke(calleeVal Value, this Value, getArgs func() []Value) bool {
+	c.AbortIfCancelled()
 	switch callee := calleeVal.(type) {
 	case ValueCallable:
 		callee.Invoke(c, this, getArgs())
-		return true
-	case ValueType:
-		newObj := NewObject(callee)
-		initMember := newObj.GetMember("__init__", c)
-		if initFunc, isCallable := c.GetCallable(initMember); isCallable {
-			c.Invoke(initFunc, newObj, getArgs)
-		}
-		c.RetVal = newObj
 		return true
 	}
 	return false
@@ -546,9 +550,13 @@ func (c *Context) InvokeMethod(this Value, method string, getArgs func() []Value
 }
 
 func (c *Context) Clone() *Context {
+	return c.CloneWithContext(c.Ctx)
+}
+
+func (c *Context) CloneWithContext(ctx context.Context) *Context {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	newContext := NewContext(false, c.IsDebug, c.CanEval)
+	newContext := NewContext(false, c.IsDebug, c.CanEval, ctx)
 	newContext.Args = c.Args
 	newContext.debugLogger = c.debugLogger
 	newContext.ImportFunc = c.ImportFunc
@@ -575,16 +583,19 @@ func (c *Context) Recover() {
 	}
 }
 
-func (c *Context) StartThread(callee Value, this Value, args []Value) func() Value {
-	newContext := c.Clone()
+func (c *Context) StartThread(parentCtx context.Context, callee Value, this Value, args []Value) func() Value {
+	var (
+		nctx, cancelFunc = context.WithCancel(parentCtx)
+		newContext       = c.CloneWithContext(nctx)
+	)
 	done := make(chan Value, 1)
 	go func() {
 		defer func() {
-			defer newContext.Recover()
 			done <- newContext.RetVal
 			close(done)
 		}()
-		newContext.Invoke(callee, this, func() []Value { return args })
+		defer newContext.Recover()
+		newContext.Invoke(callee, this, Args(args...))
 	}()
 	ret := NewObject()
 	var rv Value
@@ -603,6 +614,13 @@ func (c *Context) StartThread(callee Value, this Value, args []Value) func() Val
 	}), c)
 	ret.SetMember("await", NewNativeFunction("await", func(c *Context, this Value, args []Value) Value {
 		return joinFunc()
+	}), c)
+	ret.SetMember("cancel", NewNativeFunction("cancel", func(c *Context, this Value, args []Value) Value {
+		cancelFunc()
+		return constUndefined
+	}), c)
+	ret.SetMember("detech", NewNativeFunction("detech", func(c *Context, this Value, args []Value) Value {
+		return constUndefined
 	}), c)
 	c.RetVal = ret
 	return joinFunc

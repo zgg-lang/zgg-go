@@ -1,6 +1,7 @@
 package repl
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -19,7 +20,7 @@ type ConsoleReplContext struct {
 	shouldRecover bool
 }
 
-func NewConsoleReplContext(isDebug, canEval bool) *ConsoleReplContext {
+func NewConsoleReplContext(isDebug, canEval bool, ctx context.Context) *ConsoleReplContext {
 	ac := readline.NewPrefixCompleter(
 		readline.PcItem("func"),
 		readline.PcItem("class"),
@@ -33,7 +34,7 @@ func NewConsoleReplContext(isDebug, canEval bool) *ConsoleReplContext {
 		HistoryFile:  "/tmp/zgg_history",
 		AutoComplete: ac,
 	})
-	c := runtime.NewContext(true, isDebug, canEval)
+	c := runtime.NewContext(true, isDebug, canEval, ctx)
 	c.ImportFunc = parser.SimpleImport
 	c.AutoImport()
 	return &ConsoleReplContext{

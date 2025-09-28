@@ -42,6 +42,7 @@ func (m *Block) Eval(c *runtime.Context) {
 	defer c.PopStack()
 	for _, e := range m.Stmts {
 		c.SetPosition(e.Position())
+		c.AbortIfCancelled()
 		e.Eval(c)
 		if c.Breaking || c.Continuing || c.Returned {
 			break
