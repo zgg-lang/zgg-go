@@ -178,6 +178,8 @@ func mustGetArgInt(c *Context, name string, args []Value, n int) int {
 	return -1
 }
 
+const strDigits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 var builtinFunctions = map[string]ValueCallable{
 	"println": &ValueBuiltinFunction{
 		name: "println",
@@ -244,15 +246,44 @@ var builtinFunctions = map[string]ValueCallable{
 						if !isInt {
 							c.RaiseRuntimeError("int: base must be an integer")
 						}
-						base := baseVal.AsInt()
-						if base < 2 || base > 36 {
-							c.RaiseRuntimeError("int: base must between 2 and 36")
+						base := baseVal.Value()
+						if base < 2 || base > 62 {
+							c.RaiseRuntimeError("int: base must between 2 and 62")
+						} else if base <= 36 {
+							vi, err = strconv.ParseInt(vs, int(base), 64)
+						} else {
+							vi = 0
+							neg := false
+							if len(vs) > 0 {
+								p := 0
+								if vs[0] == '-' {
+									neg = true
+									p++
+								} else if vs[0] == '+' {
+									p++
+								}
+								for i := p; i < len(vs); i++ {
+									c := vs[i]
+									if c >= '0' && c <= '9' {
+										vi = vi*base + int64(c-'0')
+									} else if c >= 'a' && c <= 'z' {
+										vi = vi*base + int64(c-'a'+10)
+									} else if c >= 'A' && c <= 'Z' {
+										vi = vi*base + int64(c-'A'+36)
+									} else {
+										vi = 0
+										break
+									}
+								}
+								if neg {
+									vi = -vi
+								}
+							}
 						}
-						vi, err = strconv.ParseInt(vs, base, 64)
 					} else {
 						if strings.HasPrefix(vs, "0x") || strings.HasPrefix(vs, "0X") {
 							vi, err = strconv.ParseInt(vs[2:], 16, 64)
-						} else if strings.HasPrefix(vs, "0b") || strings.HasPrefix(vs, "0b") {
+						} else if strings.HasPrefix(vs, "0b") || strings.HasPrefix(vs, "0B") {
 							vi, err = strconv.ParseInt(vs[2:], 2, 64)
 						} else if len(vs) > 1 && strings.HasPrefix(vs, "0") {
 							vi, err = strconv.ParseInt(vs[1:], 8, 64)
@@ -309,10 +340,31 @@ var builtinFunctions = map[string]ValueCallable{
 				if vi, valueIsInt := args[0].(ValueInt); valueIsInt {
 					if base, baseIsInt := args[1].(ValueInt); baseIsInt {
 						b := base.AsInt()
-						if b < 2 || b > 36 {
-							c.RaiseRuntimeError("str: base must between 2 and 36")
+						if b < 2 || b > 62 {
+							c.RaiseRuntimeError("str: base must between 2 and 62")
+						} else if b <= 36 {
+							return NewStr(strconv.FormatInt(vi.Value(), b))
+						} else {
+							var (
+								val = vi.AsInt()
+								neg = val < 0
+								res [64]byte
+								p   = len(res)
+							)
+							if neg {
+								val = -val
+							}
+							for val > 0 {
+								p--
+								res[p] = strDigits[val%b]
+								val /= b
+							}
+							if neg {
+								p--
+								res[p] = '-'
+							}
+							return NewStr(string(res[p:]))
 						}
-						return NewStr(strconv.FormatInt(vi.Value(), b))
 					} else {
 						c.RaiseRuntimeError("str: base must an integer")
 					}
