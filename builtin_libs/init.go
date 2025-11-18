@@ -31,6 +31,7 @@ var (
 		"fsnotify":   LibInfo{name: "fsnotify", getter: libFsnotify},
 		"go":         LibInfo{name: "go", getter: libGo},
 		"graph":      LibInfo{name: "graph", getter: libGraph},
+		"hash":       LibInfo{name: "hash", getter: libHash},
 		"http":       LibInfo{name: "http", getter: libHttp},
 		"ip2region":  LibInfo{name: "ip2region", getter: libIp2region},
 		"json":       LibInfo{name: "json", getter: libJson},
