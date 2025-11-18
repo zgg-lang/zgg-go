@@ -697,7 +697,7 @@ func initHttpRequestContextClass() ValueType {
 			var (
 				name ValueStr
 			)
-			EnsureFuncParams(c, className+".setCookie", args,
+			EnsureFuncParams(c, className+".cookie", args,
 				ArgRuleRequired("name", TypeStr, &name),
 			)
 			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
