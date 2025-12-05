@@ -18,11 +18,11 @@ func FromGoValue(v reflect.Value, c *Context) Value {
 	if !v.IsValid() || (CanBeNil(v) && v.IsNil()) {
 		return constNil
 	}
-	vi := v.Interface()
+	// vi := v.Interface()
 	vt := v.Type()
 	if vt.Kind() == reflect.Interface {
 		v = v.Elem()
-		vi = v.Interface()
+		// vi = v.Interface()
 		vt = v.Type()
 	}
 	switch vt.Kind() {
@@ -40,9 +40,9 @@ func FromGoValue(v reflect.Value, c *Context) Value {
 		if vt.Elem().Kind() == reflect.Uint8 {
 			var bs []byte
 			if vt.Kind() == reflect.Slice {
-				bs = vi.([]byte)
+				bs = v.Convert(reflect.TypeOf(([]byte)(nil))).Interface().([]byte)
 			} else {
-				bs = v.Slice(0, v.Len()).Interface().([]byte)
+				bs = v.Slice(0, v.Len()).Convert(reflect.TypeOf(([]byte)(nil))).Interface().([]byte)
 			}
 			return NewBytes(bs)
 		} else {
