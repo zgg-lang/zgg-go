@@ -349,6 +349,11 @@ func libTime(c *Context) ValueObject {
 		vt := vo.Reserved.(timeTimeInfo).t
 		return reflect.ValueOf(vt), nil
 	})
+	RegisterZggToGoCaster(reflect.TypeOf(time.Duration(0)), timeDurationClass.TypeId, func(c *Context, v Value) (reflect.Value, error) {
+		vo := c.MustObject(v)
+		vt := vo.Reserved.(time.Duration)
+		return reflect.ValueOf(vt), nil
+	})
 	return lib
 }
 

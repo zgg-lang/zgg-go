@@ -278,4 +278,11 @@ func init() {
 		}
 		return reflect.ValueOf(t), nil
 	})
+	RegisterZggToGoCaster(reflect.TypeOf(time.Duration(0)), TypeStr.TypeId, func(c *Context, v Value) (reflect.Value, error) {
+		t, err := time.ParseDuration(v.ToString(c))
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		return reflect.ValueOf(t), nil
+	})
 }
