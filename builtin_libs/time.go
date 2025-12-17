@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-	"sync/atomic"
 	"time"
 
+	"github.com/zgg-lang/zgg-go/internal/utils"
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
@@ -19,7 +19,6 @@ var (
 		"minute": time.Minute,
 		"second": time.Second,
 	}
-	timeDefaultLocal atomic.Pointer[time.Location]
 )
 
 type timeTimeArg struct {
@@ -95,7 +94,6 @@ func (a *timeDurationArg) GetDuration(c *Context) time.Duration {
 
 func libTime(c *Context) ValueObject {
 	lib := NewObject()
-	timeDefaultLocal.Store(time.Local)
 	lib.SetMember("Time", timeTimeClass, nil)
 	lib.SetMember("__call__", timeTimeClass, nil)
 	lib.SetMember("Duration", timeDurationClass, nil)
@@ -106,7 +104,7 @@ func libTime(c *Context) ValueObject {
 		var timeType ValueStr
 		EnsureFuncParams(c, "now", args, ArgRuleOptional("timeType", TypeStr, &timeType, NewStr("")))
 		asType := timeType.Value()
-		t := time.Now().In(timeDefaultLocal.Load())
+		t := time.Now().In(utils.GetDefaultTimeLocal())
 		switch asType {
 		case "day":
 			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
@@ -127,7 +125,7 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("today", NewNativeFunction("today", func(c *Context, this Value, args []Value) Value {
-		t := time.Now().In(timeDefaultLocal.Load())
+		t := time.Now().In(utils.GetDefaultTimeLocal())
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
 			t: t,
@@ -135,7 +133,7 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("yesterday", NewNativeFunction("yesterday", func(c *Context, this Value, args []Value) Value {
-		t := time.Now().In(timeDefaultLocal.Load()).Add(-24 * time.Hour)
+		t := time.Now().In(utils.GetDefaultTimeLocal()).Add(-24 * time.Hour)
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
 			t: t,
@@ -143,7 +141,7 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 	lib.SetMember("tomorrow", NewNativeFunction("tomorrow", func(c *Context, this Value, args []Value) Value {
-		t := time.Now().In(timeDefaultLocal.Load()).Add(24 * time.Hour)
+		t := time.Now().In(utils.GetDefaultTimeLocal()).Add(24 * time.Hour)
 		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 		info := timeTimeInfo{
 			t: t,
@@ -162,7 +160,7 @@ func libTime(c *Context) ValueObject {
 			ArgRuleOptional("layout", TypeStr, &layout, NewStr("")),
 		)
 		sv := s.Value()
-		t, unit, err = timeParseTime(sv, layout.Value(), timeDefaultLocal.Load())
+		t, unit, err = utils.ParseTime(sv, layout.Value(), nil)
 		if err != nil {
 			c.RaiseRuntimeError("Parse time %s error: %+v", sv, err)
 		}
@@ -185,7 +183,7 @@ func libTime(c *Context) ValueObject {
 				On(TypeStr, func(v Value) {
 					name := v.ToString(c)
 					if name == "local" {
-						loc = time.Local
+						loc = utils.GetDefaultTimeLocal()
 					} else if loc, err = time.LoadLocation(name); err != nil {
 						c.RaiseRuntimeError("load location \"%s\"error: %+v", name, err)
 					}
@@ -197,7 +195,7 @@ func libTime(c *Context) ValueObject {
 			ArgRuleOptional("layout", TypeStr, &layout, NewStr("")),
 		)
 		sv := s.Value()
-		t, unit, err = timeParseTime(sv, layout.Value(), loc)
+		t, unit, err = utils.ParseTime(sv, layout.Value(), loc)
 		if err != nil {
 			c.RaiseRuntimeError("Parse time %s error: %+v", sv, err)
 		}
@@ -241,16 +239,16 @@ func libTime(c *Context) ValueObject {
 		EnsureFuncParams(c, "tz", args, NewOneOfHelper("tz").
 			On(TypeInt, func(v Value) {
 				offset := v.(ValueInt).AsInt() * 3600
-				timeDefaultLocal.Store(time.FixedZone("fixed", offset))
+				utils.SetDefaultTimeLocal(time.FixedZone("fixed", offset))
 			}).
 			On(TypeStr, func(v Value) {
 				name := v.ToString(c)
 				if name == "local" {
-					timeDefaultLocal.Store(time.Local)
+					utils.SetDefaultTimeLocal(time.Local)
 				} else if tz, err := time.LoadLocation(name); err != nil {
 					c.RaiseRuntimeError("unknown location %s", name)
 				} else {
-					timeDefaultLocal.Store(tz)
+					utils.SetDefaultTimeLocal(tz)
 				}
 			}))
 		return Undefined()
@@ -332,7 +330,7 @@ func libTime(c *Context) ValueObject {
 			ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)),
 		)
 		info := timeTimeInfo{
-			t:  time.Now().In(timeDefaultLocal.Load()),
+			t:  time.Now().In(utils.GetDefaultTimeLocal()),
 			as: as.Value(),
 		}
 		if o := offset.AsInt(); o != 0 {
@@ -346,11 +344,6 @@ func libTime(c *Context) ValueObject {
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
 
-	RegisterZggToGoCaster(reflect.TypeOf(time.Time{}), TypeStr.TypeId, func(c *Context, v Value) (reflect.Value, error) {
-		vo := NewObjectAndInit(timeTimeClass, c, v)
-		vt := vo.Reserved.(timeTimeInfo).t
-		return reflect.ValueOf(vt), nil
-	})
 	RegisterZggToGoCaster(reflect.TypeOf(time.Time{}), timeTimeClass.TypeId, func(c *Context, v Value) (reflect.Value, error) {
 		vo := c.MustObject(v)
 		vt := vo.Reserved.(timeTimeInfo).t
@@ -377,12 +370,12 @@ func timeInittimeTimeClass() {
 			var as string
 			switch len(args) {
 			case 0:
-				_t = time.Now().In(timeDefaultLocal.Load())
+				_t = time.Now().In(utils.GetDefaultTimeLocal())
 			case 1:
 				switch v := args[0].(type) {
 				case ValueInt:
 					ts := v.Value()
-					_t = time.Unix(ts/1e9, ts%1e9).In(timeDefaultLocal.Load())
+					_t = time.Unix(ts/1e9, ts%1e9).In(utils.GetDefaultTimeLocal())
 				case GoValue:
 					switch gv := v.ToGoValue(c).(type) {
 					case time.Time:
@@ -396,7 +389,7 @@ func timeInittimeTimeClass() {
 				case ValueStr:
 					{
 						var err error
-						if _t, as, err = timeParseTime(v.Value(), "", timeDefaultLocal.Load()); err != nil {
+						if _t, as, err = utils.ParseTime(v.Value(), "", utils.GetDefaultTimeLocal()); err != nil {
 							c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 						}
 					}
@@ -408,7 +401,7 @@ func timeInittimeTimeClass() {
 						ArgRuleRequired("timeStr", TypeStr, &timeStr),
 						ArgRuleRequired("layout", TypeStr, &layout),
 					)
-					t, err := time.ParseInLocation(layout.Value(), timeStr.Value(), timeDefaultLocal.Load())
+					t, err := time.ParseInLocation(layout.Value(), timeStr.Value(), utils.GetDefaultTimeLocal())
 					if err != nil {
 						c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 					}
@@ -422,7 +415,7 @@ func timeInittimeTimeClass() {
 						ArgRuleRequired("month", TypeInt, &month),
 						ArgRuleRequired("day", TypeInt, &day),
 					)
-					_t = time.Date(year.AsInt(), time.Month(month.AsInt()), day.AsInt(), 0, 0, 0, 0, timeDefaultLocal.Load())
+					_t = time.Date(year.AsInt(), time.Month(month.AsInt()), day.AsInt(), 0, 0, 0, 0, utils.GetDefaultTimeLocal())
 				}
 			case 6:
 				{
@@ -443,7 +436,7 @@ func timeInittimeTimeClass() {
 						minute.AsInt(),
 						second.AsInt(),
 						0,
-						timeDefaultLocal.Load(),
+						utils.GetDefaultTimeLocal(),
 					)
 				}
 			default:
@@ -569,7 +562,7 @@ func timeInittimeTimeClass() {
 			case 1:
 				var err error
 				if name := locName.Value(); name == "local" {
-					loc = time.Local
+					loc = utils.GetDefaultTimeLocal()
 				} else if loc, err = time.LoadLocation(name); err != nil {
 					c.RaiseRuntimeError("load location %s error %+v", locName.Value(), err)
 				}
@@ -624,7 +617,7 @@ func timeInittimeTimeClass() {
 			})
 			if tz := timezone.Value(); tz != "" {
 				if tz == "local" {
-					t = t.In(time.Local)
+					t = t.In(utils.GetDefaultTimeLocal())
 				} else if loc, err := time.LoadLocation(tz); err != nil {
 					c.RaiseRuntimeError("Invalid timezone %s", tz)
 				} else {
@@ -760,67 +753,6 @@ func timeInittimeTimeClass() {
 			return NewGoValue(this.Reserved.(timeTimeInfo).t)
 		}).
 		Build()
-}
-
-func timeParseTime(s, layout string, loc *time.Location) (t time.Time, unit string, err error) {
-	if layout == "" {
-		switch s {
-		case "zero":
-			return
-		case "now":
-			t = time.Now().In(loc)
-			return
-		case "today":
-			t = time.Now().In(loc)
-			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
-			unit = "day"
-			return
-		case "yesterday":
-			t = time.Now().In(loc).Add(-24 * time.Hour)
-			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
-			unit = "day"
-			return
-		case "tomorrow":
-			t = time.Now().In(loc).Add(24 * time.Hour)
-			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
-			unit = "day"
-			return
-		}
-		switch len(s) {
-		case 6:
-			layout = "060102"
-			unit = "day"
-		case 8:
-			layout = "20060102"
-			unit = "day"
-		case 10:
-			layout = "2006-01-02"
-			unit = "day"
-		case 14:
-			layout = "20060102150405"
-			unit = "second"
-		case 19:
-			layout = "2006-01-02 15:04:05"
-			unit = "second"
-		case 19 + 3:
-			layout = "2006-01-02 15:04:05-07"
-			unit = "second"
-		case 19 + 5:
-			layout = "2006-01-02 15:04:05-0700"
-			unit = "second"
-		case 19 + 4:
-			layout = "2006-01-02 15:04:05.000"
-		case 19 + 4 + 3:
-			layout = "2006-01-02 15:04:05.000-07"
-		case 19 + 4 + 5:
-			layout = "2006-01-02 15:04:05.000-0700"
-		}
-	}
-	if loc == nil {
-		loc = timeDefaultLocal.Load()
-	}
-	t, err = time.ParseInLocation(layout, s, loc)
-	return
 }
 
 func timeInitDurationClass() {

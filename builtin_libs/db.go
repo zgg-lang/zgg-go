@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/zgg-lang/zgg-go/internal/utils"
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
@@ -115,14 +116,14 @@ type timeNullTime struct {
 func (t *timeNullTime) Scan(src any) error {
 	switch s := src.(type) {
 	case string:
-		if v, _, e := timeParseTime(s, "", nil); e != nil {
+		if v, _, e := utils.ParseTime(s, "", nil); e != nil {
 			return e
 		} else {
 			t.Time = v
 			t.Valid = true
 		}
 	case []byte:
-		if v, _, e := timeParseTime(string(s), "", nil); e != nil {
+		if v, _, e := utils.ParseTime(string(s), "", nil); e != nil {
 			return e
 		} else {
 			t.Time = v

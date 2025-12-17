@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
+
+	"github.com/zgg-lang/zgg-go/internal/utils"
 )
 
 func CanBeNil(v reflect.Value) bool {
@@ -265,4 +268,14 @@ func WrapGoFunction(f interface{}) *ValueBuiltinFunction {
 		},
 	}
 	return rv
+}
+
+func init() {
+	RegisterZggToGoCaster(reflect.TypeOf(time.Time{}), TypeStr.TypeId, func(c *Context, v Value) (reflect.Value, error) {
+		t, _, err := utils.ParseTime(v.ToString(c), "", nil)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		return reflect.ValueOf(t), nil
+	})
 }
