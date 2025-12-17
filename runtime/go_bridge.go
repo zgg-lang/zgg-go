@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 func CanBeNil(v reflect.Value) bool {
@@ -79,6 +80,34 @@ func FromGoValue(v reflect.Value, c *Context) Value {
 	return NewReflectedGoValue(v)
 }
 
+type z2gCaster = func(*Context, Value) (reflect.Value, error)
+
+var (
+	z2gCastLock sync.RWMutex
+	z2gCastMap  = make(map[reflect.Type]map[int]z2gCaster)
+)
+
+func RegisterZggToGoCaster(goTyp reflect.Type, zggTypeId int, f z2gCaster) {
+	z2gCastLock.Lock()
+	defer z2gCastLock.Unlock()
+	m := z2gCastMap[goTyp]
+	if m == nil {
+		m = make(map[int]z2gCaster)
+		z2gCastMap[goTyp] = m
+	}
+	m[zggTypeId] = f
+}
+
+func loadZggToGoCaster(goTyp reflect.Type, zggTypeId int) z2gCaster {
+	z2gCastLock.RLock()
+	defer z2gCastLock.RUnlock()
+	if m := z2gCastMap[goTyp]; m == nil {
+		return nil
+	} else {
+		return m[zggTypeId]
+	}
+}
+
 func toGoValue(c *Context, v Value, goVal reflect.Value) {
 	if Nullish(v) {
 		switch goVal.Kind() {
@@ -95,6 +124,13 @@ func toGoValue(c *Context, v Value, goVal reflect.Value) {
 	goTyp := goVal.Type()
 	if v.GoType() == goTyp {
 		goVal.Set(reflect.ValueOf(v.ToGoValue(c)))
+		return
+	} else if f := loadZggToGoCaster(goTyp, v.Type().TypeId); f != nil {
+		if gv, err := f(c, v); err != nil {
+			c.RaiseRuntimeError("Convert failed! error %+v", err)
+		} else {
+			goVal.Set(gv)
+		}
 		return
 	}
 	switch goTyp.Kind() {

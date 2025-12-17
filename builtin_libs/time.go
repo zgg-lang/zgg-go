@@ -2,6 +2,7 @@ package builtin_libs
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"sync/atomic"
 	"time"
@@ -344,6 +345,17 @@ func libTime(c *Context) ValueObject {
 		}
 		return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 	}), nil)
+
+	RegisterZggToGoCaster(reflect.TypeOf(time.Time{}), TypeStr.TypeId, func(c *Context, v Value) (reflect.Value, error) {
+		vo := NewObjectAndInit(timeTimeClass, c, v)
+		vt := vo.Reserved.(timeTimeInfo).t
+		return reflect.ValueOf(vt), nil
+	})
+	RegisterZggToGoCaster(reflect.TypeOf(time.Time{}), timeTimeClass.TypeId, func(c *Context, v Value) (reflect.Value, error) {
+		vo := c.MustObject(v)
+		vt := vo.Reserved.(timeTimeInfo).t
+		return reflect.ValueOf(vt), nil
+	})
 	return lib
 }
 
