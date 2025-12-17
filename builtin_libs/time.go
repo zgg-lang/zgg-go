@@ -394,7 +394,7 @@ func timeInittimeTimeClass() {
 				case ValueStr:
 					{
 						var err error
-						if _t, as, err = utils.ParseTime(v.Value(), "", utils.GetDefaultTimeLocal()); err != nil {
+						if _t, as, err = utils.ParseTime(v.Value(), "", nil); err != nil {
 							c.RaiseRuntimeError("Time.__init__: parse time error %s", err)
 						}
 					}
