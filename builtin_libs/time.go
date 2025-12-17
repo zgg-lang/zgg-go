@@ -645,12 +645,28 @@ func timeInittimeTimeClass() {
 				}
 				newInfo.t = t.Add(diff.Reserved.(time.Duration))
 				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
+			case GoValue:
+				switch dv := diff.ToGoValue(c).(type) {
+				case time.Duration:
+					newInfo.t = t.Add(dv)
+				default:
+					c.RaiseRuntimeError("invalid duration class")
+				}
+				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			case ValueInt:
 				d := diff.AsInt()
 				if du := timeAsTypeUnitDuration[info.as]; du == 0 {
 					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 				} else {
 					newInfo.t = t.Add(du * time.Duration(d))
+				}
+				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
+			case ValueFloat:
+				d := diff.Value()
+				if du := timeAsTypeUnitDuration[info.as]; du == 0 {
+					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+				} else {
+					newInfo.t = t.Add(time.Duration(float64(du) * d))
 				}
 				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			}
@@ -677,12 +693,28 @@ func timeInittimeTimeClass() {
 				default:
 					c.RaiseRuntimeError("invalid duration class")
 				}
+			case GoValue:
+				switch dv := diff.ToGoValue(c).(type) {
+				case time.Duration:
+					newInfo.t = t.Add(-dv)
+				default:
+					c.RaiseRuntimeError("invalid duration class")
+				}
+				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			case ValueInt:
 				d := -diff.AsInt()
 				if du := timeAsTypeUnitDuration[info.as]; du == 0 {
 					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
 				} else {
 					newInfo.t = t.Add(du * time.Duration(d))
+				}
+				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
+			case ValueFloat:
+				d := -diff.Value()
+				if du := timeAsTypeUnitDuration[info.as]; du == 0 {
+					c.RaiseRuntimeError("Time object cannot get __next__ without specialized time type")
+				} else {
+					newInfo.t = t.Add(time.Duration(float64(du) * d))
 				}
 				return NewObjectAndInit(timeTimeClass, c, NewGoValue(newInfo))
 			}
