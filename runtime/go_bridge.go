@@ -29,6 +29,13 @@ func FromGoValue(v reflect.Value, c *Context) Value {
 		// vi = v.Interface()
 		vt = v.Type()
 	}
+	if caster := loadGoToZggCaster(vt); caster != nil {
+		if rv, err := caster(c, v); err != nil {
+			c.RaiseRuntimeError("cast go value to zgg error! %+v", err)
+		} else {
+			return rv
+		}
+	}
 	switch vt.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return NewInt(v.Int())
@@ -84,15 +91,17 @@ func FromGoValue(v reflect.Value, c *Context) Value {
 }
 
 type z2gCaster = func(*Context, Value) (reflect.Value, error)
+type g2zCaster = func(*Context, reflect.Value) (Value, error)
 
 var (
-	z2gCastLock sync.RWMutex
-	z2gCastMap  = make(map[reflect.Type]map[int]z2gCaster)
+	castLock   sync.RWMutex
+	z2gCastMap = make(map[reflect.Type]map[int]z2gCaster)
+	g2zCastMap = make(map[reflect.Type]g2zCaster)
 )
 
 func RegisterZggToGoCaster(goTyp reflect.Type, zggTypeId int, f z2gCaster) {
-	z2gCastLock.Lock()
-	defer z2gCastLock.Unlock()
+	castLock.Lock()
+	defer castLock.Unlock()
 	m := z2gCastMap[goTyp]
 	if m == nil {
 		m = make(map[int]z2gCaster)
@@ -101,14 +110,26 @@ func RegisterZggToGoCaster(goTyp reflect.Type, zggTypeId int, f z2gCaster) {
 	m[zggTypeId] = f
 }
 
+func RegisterGoToZggCaster(goTyp reflect.Type, f g2zCaster) {
+	castLock.Lock()
+	defer castLock.Unlock()
+	g2zCastMap[goTyp] = f
+}
+
 func loadZggToGoCaster(goTyp reflect.Type, zggTypeId int) z2gCaster {
-	z2gCastLock.RLock()
-	defer z2gCastLock.RUnlock()
+	castLock.RLock()
+	defer castLock.RUnlock()
 	if m := z2gCastMap[goTyp]; m == nil {
 		return nil
 	} else {
 		return m[zggTypeId]
 	}
+}
+
+func loadGoToZggCaster(goTyp reflect.Type) g2zCaster {
+	castLock.RLock()
+	defer castLock.RUnlock()
+	return g2zCastMap[goTyp]
 }
 
 func toGoValue(c *Context, v Value, goVal reflect.Value) {
@@ -284,5 +305,15 @@ func init() {
 			return reflect.Value{}, err
 		}
 		return reflect.ValueOf(t), nil
+	})
+	convertToLibClass := func(c *Context, gv reflect.Value, lib, className string) (Value, error) {
+		mod := c.ImportModule(lib, false, ImportTypeScript).(ValueObject)
+		return NewObjectAndInit(Unbound(mod.GetMember(className, c)).(ValueType), c, NewReflectedGoValue(gv)), nil
+	}
+	RegisterGoToZggCaster(reflect.TypeOf(time.Time{}), func(c *Context, gv reflect.Value) (Value, error) {
+		return convertToLibClass(c, gv, "time", "Time")
+	})
+	RegisterGoToZggCaster(reflect.TypeOf(time.Duration(0)), func(c *Context, gv reflect.Value) (Value, error) {
+		return convertToLibClass(c, gv, "time", "Duration")
 	})
 }
