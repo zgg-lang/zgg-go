@@ -733,9 +733,14 @@ func timeInittimeTimeClass() {
 			)
 		}).
 		Method("monthBegin", func(c *Context, this ValueObject, args []Value) Value {
+			var monthOffset ValueInt
+			EnsureFuncParams(c, "monthBegin", args, ArgRuleOptional("monthOffset", TypeInt, &monthOffset, NewInt(0)))
 			info := this.Reserved.(timeTimeInfo)
 			t := info.t
 			t = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
+			if o := monthOffset.AsInt(); o != 0 {
+				t = t.AddDate(0, o, 0)
+			}
 			info = timeTimeInfo{t: t, as: info.as}
 			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).

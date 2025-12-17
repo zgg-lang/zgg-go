@@ -8,6 +8,9 @@ import (
 var timeDefaultLocal atomic.Pointer[time.Location]
 
 func ParseTime(s, layout string, loc *time.Location) (t time.Time, unit string, err error) {
+	if loc == nil {
+		loc = timeDefaultLocal.Load()
+	}
 	if layout == "" {
 		switch s {
 		case "zero":
@@ -28,6 +31,11 @@ func ParseTime(s, layout string, loc *time.Location) (t time.Time, unit string, 
 		case "tomorrow":
 			t = time.Now().In(loc).Add(24 * time.Hour)
 			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+			unit = "day"
+			return
+		case "monthBegin", "monthbegin", "month begin", "month-begin":
+			t = time.Now().In(loc)
+			t = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, loc)
 			unit = "day"
 			return
 		}
@@ -60,9 +68,6 @@ func ParseTime(s, layout string, loc *time.Location) (t time.Time, unit string, 
 		case 19 + 4 + 5:
 			layout = "2006-01-02 15:04:05.000-0700"
 		}
-	}
-	if loc == nil {
-		loc = timeDefaultLocal.Load()
 	}
 	t, err = time.ParseInLocation(layout, s, loc)
 	return
