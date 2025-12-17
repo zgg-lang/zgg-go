@@ -732,14 +732,49 @@ func timeInittimeTimeClass() {
 				NewStr(t.Location().String()),
 			)
 		}).
+		Method("dayBegin", func(c *Context, this ValueObject, args []Value) Value {
+			var offset ValueInt
+			EnsureFuncParams(c, "dayBegin", args, ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)))
+			info := this.Reserved.(timeTimeInfo)
+			t := info.t
+			if o := offset.AsInt(); o != 0 {
+				t = t.AddDate(0, 0, o)
+			}
+			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+			info = timeTimeInfo{t: t, as: info.as}
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+		}).
+		Method("weekBegin", func(c *Context, this ValueObject, args []Value) Value {
+			var offset ValueInt
+			EnsureFuncParams(c, "weekBegin", args, ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)))
+			info := this.Reserved.(timeTimeInfo)
+			t := info.t
+			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+			o := offset.AsInt() * 7
+			t = t.AddDate(0, 0, o - int(t.Weekday()))
+			info = timeTimeInfo{t: t, as: info.as}
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+		}).
 		Method("monthBegin", func(c *Context, this ValueObject, args []Value) Value {
-			var monthOffset ValueInt
-			EnsureFuncParams(c, "monthBegin", args, ArgRuleOptional("monthOffset", TypeInt, &monthOffset, NewInt(0)))
+			var offset ValueInt
+			EnsureFuncParams(c, "monthBegin", args, ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)))
 			info := this.Reserved.(timeTimeInfo)
 			t := info.t
 			t = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
-			if o := monthOffset.AsInt(); o != 0 {
+			if o := offset.AsInt(); o != 0 {
 				t = t.AddDate(0, o, 0)
+			}
+			info = timeTimeInfo{t: t, as: info.as}
+			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
+		}).
+		Method("yearBegin", func(c *Context, this ValueObject, args []Value) Value {
+			var offset ValueInt
+			EnsureFuncParams(c, "yearBegin", args, ArgRuleOptional("offset", TypeInt, &offset, NewInt(0)))
+			info := this.Reserved.(timeTimeInfo)
+			t := info.t
+			t = time.Date(t.Year(), 1, 1, 0, 0, 0, 0, t.Location())
+			if o := offset.AsInt(); o != 0 {
+				t = t.AddDate(o, 0, 0)
 			}
 			info = timeTimeInfo{t: t, as: info.as}
 			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
