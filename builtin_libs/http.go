@@ -1113,9 +1113,10 @@ func initHttpRequestClass() ValueType {
 			return this
 		}, "config").
 		Method("timeout", func(c *Context, this ValueObject, args []Value) Value {
-			var timeout ValueFloat
-			EnsureFuncParams(c, "Request.timeout", args, ArgRuleRequired("timeout", TypeFloat, &timeout))
-			this.SetMember("__timeout", timeout, c)
+			var timeout timeDurationArg
+			EnsureFuncParams(c, "Request.timeout", args, timeout.Rule(c, "timeout"))
+			// ArgRuleRequired("timeout", TypeFloat, &timeout))
+			this.SetMember("__timeout", NewGoValue(timeout.GetDuration(c)), c)
 			return this
 		}, "timeout").
 		Method("useClient", func(c *Context, this ValueObject, args []Value) Value {
@@ -1256,11 +1257,12 @@ func initHttpRequestClass() ValueType {
 						c.RaiseRuntimeError("set tls config error: %+v", err)
 					}
 				}
-				if timeout, ok := this.GetMember("__timeout", c).(ValueFloat); ok {
+				if timeout, ok := this.GetMember("__timeout", c).(GoValue); ok {
 					if httpClient == nil {
 						httpClient = &http.Client{}
 					}
-					httpClient.Timeout = time.Duration(timeout.Value() * float64(time.Second))
+					httpClient.Timeout = timeout.ToGoValue(c).(time.Duration)
+					// time.Duration(timeout.Value() * float64(time.Second))
 				}
 				if httpClient == nil {
 					httpClient = http.DefaultClient
