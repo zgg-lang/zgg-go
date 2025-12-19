@@ -161,6 +161,9 @@ var builtinIntMethods = map[string]ValueCallable{
 		return NewInt(c.MustInt(this) + 1)
 	}),
 	// duration methods
+	"ms": NewNativeFunction("ms", func(c *Context, this Value, args []Value) Value {
+		return intToDuration(c, this, time.Millisecond)
+	}),
 	"seconds": NewNativeFunction("seconds", func(c *Context, this Value, args []Value) Value {
 		return intToDuration(c, this, time.Second)
 	}),

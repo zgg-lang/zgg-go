@@ -751,7 +751,7 @@ func timeInittimeTimeClass() {
 			t := info.t
 			t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 			o := offset.AsInt() * 7
-			t = t.AddDate(0, 0, o - int(t.Weekday()))
+			t = t.AddDate(0, 0, o-int(t.Weekday()))
 			info = timeTimeInfo{t: t, as: info.as}
 			return NewObjectAndInit(timeTimeClass, c, NewGoValue(info))
 		}).
@@ -962,6 +962,10 @@ func timeInitDurationClass() {
 				du := time.Duration(float64(d1) / t)
 				return NewObjectAndInit(timeDurationClass, c, NewGoValue(du))
 			}
+		}).
+		Method("__neg__", func(c *Context, this ValueObject, args []Value) Value {
+			d := this.Reserved.(time.Duration)
+			return NewObjectAndInit(timeDurationClass, c, NewGoValue(-d))
 		}).
 		Build()
 }

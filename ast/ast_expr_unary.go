@@ -12,7 +12,12 @@ type ExprNegative struct {
 
 func (e *ExprNegative) Eval(c *runtime.Context) {
 	e.Expr.Eval(c)
-	switch v := ensureZgg(c.RetVal, c).(type) {
+	ov := c.RetVal
+	if fn, is := c.GetCallable(ov.GetMember("__neg__", c)); is {
+		c.Invoke(fn, ov, runtime.NoArgs)
+		return
+	}
+	switch v := ensureZgg(ov, c).(type) {
 	case runtime.ValueInt:
 		c.RetVal = runtime.NewInt(-v.Value())
 		return

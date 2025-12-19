@@ -633,7 +633,7 @@ func (t GoType) GetMember(name string, c *Context) Value {
 	case "slice":
 		return NewGoType(reflect.SliceOf(t.typ))
 	case "ptr":
-		return NewGoType(reflect.PtrTo(t.typ))
+		return NewGoType(reflect.PointerTo(t.typ))
 	}
 	return getExtMember(t, name, c)
 }

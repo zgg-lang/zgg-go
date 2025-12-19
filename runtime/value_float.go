@@ -95,6 +95,9 @@ var builtinFloatMethods = map[string]ValueCallable{
 		return NewInt(int64(math.Round(c.MustFloat(this))))
 	}),
 	// duration methods
+	"ms": NewNativeFunction("ms", func(c *Context, this Value, args []Value) Value {
+		return floatToDuration(c, this, time.Millisecond)
+	}),
 	"seconds": NewNativeFunction("seconds", func(c *Context, this Value, args []Value) Value {
 		return floatToDuration(c, this, time.Second)
 	}),
