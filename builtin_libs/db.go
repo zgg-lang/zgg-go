@@ -249,11 +249,16 @@ func dbScanRowsToArray(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, c
 			switch colTypes[i].DatabaseTypeName() {
 			case "DECIMAL":
 				{
-					v, err := strconv.ParseFloat(string(*fv), 64)
-					if err != nil {
-						c.RaiseRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
+					s := string(*fv)
+					if nullable, _ := colTypes[i].Nullable(); nullable && s == "" {
+						item.PushBack(Nil())
+					} else {
+						v, err := strconv.ParseFloat(s, 64)
+						if err != nil {
+							c.RaiseRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
+						}
+						item.PushBack(NewFloat(v))
 					}
-					item.PushBack(NewFloat(v))
 					set = true
 				}
 			case "BLOB":
@@ -344,11 +349,16 @@ func dbScanRowsToObject(c *Context, rows *sql.Rows, colTypes []*sql.ColumnType, 
 			switch colTypes[i].DatabaseTypeName() {
 			case "DECIMAL":
 				{
-					v, err := strconv.ParseFloat(string(*fv), 64)
-					if err != nil {
-						c.RaiseRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
+					s := string(*fv)
+					if nullable, _ := colTypes[i].Nullable(); nullable && s == "" {
+						item.SetMember(colName, Nil(), c)
+					} else {
+						v, err := strconv.ParseFloat(s, 64)
+						if err != nil {
+							c.RaiseRuntimeError("parse db DECIMAL value %s err %s", string(*fv), err)
+						}
+						item.SetMember(colName, NewFloat(v), c)
 					}
-					item.SetMember(colName, NewFloat(v), c)
 					set = true
 				}
 			case "BLOB":
