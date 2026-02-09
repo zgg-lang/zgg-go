@@ -114,6 +114,19 @@ func updateZgg() int {
 	return 0
 }
 
+func runBuiltinModule(moduleName string, isDebug bool, args []string) {
+	if _, found := builtin_libs.StdLibMap[moduleName]; !found {
+		fmt.Fprintln(os.Stderr, "module "+moduleName+" not found")
+		return
+	}
+	c := runtime.NewContext(true, isDebug, os.Getenv("CAN_EVAL") != "", context.Background())
+	c.Path = "."
+	c.IsDebug = isDebug
+	c.Args = args
+	c.ImportFunc = parser.SimpleImport
+	builtin_libs.FindLibEx(c, moduleName, true)
+}
+
 func main() {
 	isDebug := os.Getenv("DEBUG") != ""
 	if isDebug {
@@ -142,10 +155,7 @@ func main() {
 				moduleName := os.Args[2]
 				filename := parser.GetModulePath(nil, moduleName)
 				if filename == "" {
-					if _, found := builtin_libs.StdLibMap[moduleName]; !found {
-						return
-					}
-
+					runBuiltinModule(moduleName, isDebug, os.Args[3:])
 				} else if f, err := os.Open(filename); err == nil {
 					defer f.Close()
 					runFile(filename, f, os.Stdout, os.Stderr, filepath.Dir(filename), os.Args[3:], isDebug)
