@@ -7,15 +7,16 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -161,6 +162,28 @@ func libHttp(*Context) ValueObject {
 		}
 		return Undefined()
 	}, "dir", "url"), nil)
+	lib.SetMember("__main__", NewNativeFunction("__main__", func(c *Context, this Value, args []Value) Value {
+		var addr, dir, urlPrefix string
+		fset := flag.NewFlagSet("zgg-http-fileserver", flag.ExitOnError)
+		fset.StringVar(&dir, "dir", ".", "本地文件目录")
+		fset.StringVar(&urlPrefix, "url", "/", "文件服务URL前缀")
+		fset.Parse(c.Args)
+		addr = flag.Arg(0)
+		if addr == "" {
+			addr = ":8080"
+		} else if matched, _ := regexp.Match(`^\d+$`, []byte(addr)); matched {
+			addr = "127.0.0.1:" + addr
+		}
+		if matched, _ := regexp.Match(`^:\d+$`, []byte(addr)); matched {
+			if ips, _ := getLocalIPs(); len(ips) > 0 {
+				fmt.Fprintf(c.Stdout, "-- Loopback IP: http://127.0.0.1%s%s\n", addr, urlPrefix)
+				fmt.Fprintf(c.Stdout, "-- Intranet IP: http://%s%s%s\n", ips[0], addr, urlPrefix)
+			}
+		}
+		fmt.Fprintf(c.Stdout, "zgg http fileserver is starting on %s\n", addr)
+		c.Invoke(lib.GetMember("serveFS", c), nil, Args(NewStr(addr), NewStr(dir), NewStr(urlPrefix)))
+		return Undefined()
+	}), nil)
 	return lib
 }
 
@@ -284,7 +307,7 @@ var httpPostForm = NewNativeFunction("postForm", func(c *Context, this Value, ar
 		return nil
 	}
 	defer resp.Body.Close()
-	content, err := ioutil.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.RaiseRuntimeError("http.postForm: read response error %s", err)
 		return nil
@@ -553,7 +576,7 @@ func initHttpRequestContextClass() ValueType {
 		}).
 		Method("getBody", func(c *Context, this ValueObject, args []Value) Value {
 			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
-			body, err := ioutil.ReadAll(r.Body)
+			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				c.RaiseRuntimeError("%s.getData error %s", className, err)
 				return nil
@@ -686,7 +709,7 @@ func initHttpRequestContextClass() ValueType {
 		}).
 		Method("getBodyStr", func(c *Context, this ValueObject, args []Value) Value {
 			r := this.GetMember("_r", c).ToGoValue(c).(*http.Request)
-			body, err := ioutil.ReadAll(r.Body)
+			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				c.RaiseRuntimeError("%s.getData error %s", className, err)
 				return nil
@@ -1187,7 +1210,7 @@ func initHttpRequestClass() ValueType {
 					}
 					if caFile != "" {
 						caCertPool := x509.NewCertPool()
-						if caCert, err := ioutil.ReadFile(caFile); err != nil {
+						if caCert, err := os.ReadFile(caFile); err != nil {
 							c.RaiseRuntimeError("http.Request.call: load ca cert error: %s", err)
 						} else {
 							caCertPool.AppendCertsFromPEM(caCert)
@@ -1306,7 +1329,7 @@ func initHttpResponseClass() ValueType {
 		}).
 		Method("bytes", func(c *Context, this ValueObject, args []Value) Value {
 			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			if err != nil {
 				c.RaiseRuntimeError("http.Response.bytes: read body error %s", err)
 			}
@@ -1362,7 +1385,7 @@ func initHttpResponseClass() ValueType {
 		}, "chunkSize").
 		Method("text", func(c *Context, this ValueObject, args []Value) Value {
 			resp := this.GetMember("__resp", c).ToGoValue(c).(*http.Response)
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			if err != nil {
 				c.RaiseRuntimeError("http.Response.text: read body error %s", err)
 			}
@@ -1399,7 +1422,7 @@ func initHttpFormFileClass() ValueType {
 				c.RaiseRuntimeError("FormFile.bytes: open file error %s", err)
 			}
 			defer file.Close()
-			fileBs, err := ioutil.ReadAll(file)
+			fileBs, err := io.ReadAll(file)
 			if err != nil {
 				c.RaiseRuntimeError("FormFile.bytes: read file error %s", err)
 			}
@@ -1520,4 +1543,43 @@ func init() {
 	httpRequestClass = initHttpRequestClass()
 	httpResponseClass = initHttpResponseClass()
 	httpFormFileClass = initHttpFormFileClass()
+}
+
+func getLocalIPs() ([]string, error) {
+	var ips []string
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, iface := range interfaces {
+		// 跳过回环接口和未启用的接口
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+
+			// 跳过IPv6地址（如果需要IPv6，可以去掉这个判断）
+			if ip == nil || ip.IsLoopback() || ip.To4() == nil {
+				continue
+			}
+
+			ips = append(ips, ip.String())
+		}
+	}
+	return ips, nil
 }
