@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"hash"
 	"hash/crc32"
+	"hash/crc64"
 	"hash/fnv"
 	"io"
 	"strings"
@@ -21,12 +22,14 @@ func libHash(*Context) ValueObject {
 	lib.SetMember("sha1", hashMakeHashFunc("sha1", sha1.New), nil)
 	lib.SetMember("sha256", hashMakeHashFunc("sha256", sha256.New), nil)
 
-	lib.SetMember("crc32", hashMakeHashFunc("crc32", crc32.NewIEEE), nil)
+	lib.SetMember("crc32", hashMakeHash32Func("crc32", crc32.NewIEEE), nil)
+	lib.SetMember("crc64iso", hashMakeHash64Func("crc64iso", hashCrc64isoNew), nil)
+	lib.SetMember("crc64ecma", hashMakeHash64Func("crc64ecma", hashCrc64ecmaNew), nil)
 
-	lib.SetMember("fnv32", hashMakeHashFunc("fnv32", fnv.New32), nil)
-	lib.SetMember("fnv32a", hashMakeHashFunc("fnv32a", fnv.New32a), nil)
-	lib.SetMember("fnv64", hashMakeHashFunc("fnv64", fnv.New64), nil)
-	lib.SetMember("fnv64a", hashMakeHashFunc("fnv64a", fnv.New64a), nil)
+	lib.SetMember("fnv32", hashMakeHash32Func("fnv32", fnv.New32), nil)
+	lib.SetMember("fnv32a", hashMakeHash32Func("fnv32a", fnv.New32a), nil)
+	lib.SetMember("fnv64", hashMakeHash64Func("fnv64", fnv.New64), nil)
+	lib.SetMember("fnv64a", hashMakeHash64Func("fnv64a", fnv.New64a), nil)
 	lib.SetMember("fnv128", hashMakeHashFunc("fnv128", fnv.New128), nil)
 	lib.SetMember("fnv128a", hashMakeHashFunc("fnv128a", fnv.New128a), nil)
 	{
@@ -39,7 +42,15 @@ func libHash(*Context) ValueObject {
 	return lib
 }
 
-func hashMakeHashFunc[T hash.Hash](name string, getHash func() T) *ValueBuiltinFunction {
+func hashCrc64ecmaNew() hash.Hash64 {
+	return crc64.New(crc64.MakeTable(crc64.ECMA))
+}
+
+func hashCrc64isoNew() hash.Hash64 {
+	return crc64.New(crc64.MakeTable(crc64.ISO))
+}
+
+func hashInnerMakeHashFunc[T hash.Hash](name string, getHash func() T, getResult func(T) Value) *ValueBuiltinFunction {
 	return NewNativeFunction(name, func(c *Context, this Value, args []Value) Value {
 		var rd io.Reader
 		EnsureFuncParams(c, "hash."+name, args, NewOneOfHelper("value").
@@ -58,8 +69,20 @@ func hashMakeHashFunc[T hash.Hash](name string, getHash func() T) *ValueBuiltinF
 			}))
 		h := getHash()
 		io.Copy(h, rd)
-		return NewBytes(h.Sum(nil))
+		return getResult(h)
 	}, "value")
+}
+
+func hashMakeHashFunc(name string, getHash func() hash.Hash) *ValueBuiltinFunction {
+	return hashInnerMakeHashFunc(name, getHash, func(h hash.Hash) Value { return NewBytes(h.Sum(nil)) })
+}
+
+func hashMakeHash32Func(name string, getHash func() hash.Hash32) *ValueBuiltinFunction {
+	return hashInnerMakeHashFunc(name, getHash, func(h hash.Hash32) Value { return NewInt(int64(h.Sum32())) })
+}
+
+func hashMakeHash64Func(name string, getHash func() hash.Hash64) *ValueBuiltinFunction {
+	return hashInnerMakeHashFunc(name, getHash, func(h hash.Hash64) Value { return NewInt(int64(h.Sum64())) })
 }
 
 func hashMakeHmacFunc(name string, getHash func() hash.Hash) *ValueBuiltinFunction {
