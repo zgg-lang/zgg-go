@@ -6,10 +6,16 @@ import (
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
-type LibInfo struct {
-	name   string
-	getter func(*Context) ValueObject
-}
+type (
+	libItem struct {
+		lib  ValueObject
+		main ValueCallable
+	}
+	LibInfo struct {
+		name   string
+		getter func(*Context) ValueObject
+	}
+)
 
 var (
 	findLock  sync.Mutex
@@ -57,7 +63,9 @@ var (
 	}
 )
 
-func getLib(c *Context, name string, getter func(*Context) ValueObject) ValueObject {
+const builtinLibsMainMemberName = "__main__"
+
+func getLib(c *Context, name string, getter func(*Context) ValueObject, runMain bool) ValueObject {
 	findLock.Lock()
 	defer findLock.Unlock()
 	lib, found := libs[name]
@@ -65,14 +73,25 @@ func getLib(c *Context, name string, getter func(*Context) ValueObject) ValueObj
 		return lib
 	}
 	lib = getter(c)
+	if main, is := Unbound(lib.GetMember(builtinLibsMainMemberName, c)).(*ValueBuiltinFunction); is {
+		lib.SetMember(builtinLibsMainMemberName, nil, c)
+		if runMain {
+			c.Invoke(main, nil, NoArgs)
+		}
+	}
 	libs[name] = lib
 	return lib
 }
 
 func FindLib(c *Context, name string) (ValueObject, bool) {
+	return FindLibEx(c, name, false)
+}
+
+func FindLibEx(c *Context, name string, runMain bool) (ValueObject, bool) {
 	info, found := StdLibMap[name]
 	if !found {
 		return NewObject(), false
 	}
-	return getLib(c, name, info.getter), true
+	lib := getLib(c, name, info.getter, runMain)
+	return lib, true
 }
