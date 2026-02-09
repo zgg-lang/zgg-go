@@ -91,18 +91,23 @@ func (v *valueObject) GetIndex(index int, c *Context) Value {
 }
 
 func (v *valueObject) SetMember(name string, value Value, c *Context) {
-	_, isUndefined := value.(ValueUndefined)
+	var shouldDel bool
+	if value == nil {
+		shouldDel = true
+	} else {
+		_, shouldDel = value.(ValueUndefined)
+	}
 	v.sizeLock.Lock()
 	defer v.sizeLock.Unlock()
 	if _, found := v.m.Load(name); found {
-		if isUndefined {
+		if shouldDel {
 			v.size--
 			v.m.Delete(name)
 		} else {
 			v.m.Store(name, value)
 		}
 	} else {
-		if !isUndefined {
+		if !shouldDel {
 			v.size++
 			v.m.Store(name, value)
 		}
