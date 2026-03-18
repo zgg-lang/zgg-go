@@ -1,5 +1,7 @@
 package runtime
 
+import "sync"
+
 const (
 	builtinTypeUndefined = iota
 	builtinTypeNil
@@ -65,4 +67,30 @@ func init() {
 	for _, t := range types {
 		builtinTypes[t.Name] = t
 	}
+}
+
+var (
+	typeArrayOfMap = make(map[int]ValueType)
+	typeArrayOfRW  sync.RWMutex
+)
+
+func TypeArrayOf(t ValueType) ValueType {
+	if t == nil {
+		return TypeArray
+	}
+	typeArrayOfRW.RLock()
+	t2 := typeArrayOfMap[t.TypeId]
+	typeArrayOfRW.RUnlock()
+	if t2 != nil {
+		return t2
+	}
+	typeArrayOfRW.Lock()
+	defer typeArrayOfRW.Unlock()
+	if t2 = typeArrayOfMap[t.TypeId]; t2 != nil {
+		return t2
+	}
+	t2 = NewType(NextTypeId(), "ArrayOf:"+t.Name)
+	t2.Bases = []ValueType{t}
+	typeArrayOfMap[t.TypeId] = t2
+	return t2
 }

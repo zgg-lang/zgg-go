@@ -18,11 +18,16 @@ func Nullish(v Value) bool {
 	return false
 }
 
-type ArgRule interface {
-	name() string
-	expectedTypeName() string
-	allowed(*Context, []Value, int) bool
-}
+type (
+	ArgRule interface {
+		name() string
+		expectedTypeName() string
+		allowed(*Context, []Value, int) bool
+	}
+	TypePredicate interface {
+		IsType(Value) bool
+	}
+)
 
 func argTypeMatched(c *Context, arg Value, typ ValueType) bool {
 	if typ == TypeAny {
@@ -32,6 +37,19 @@ func argTypeMatched(c *Context, arg Value, typ ValueType) bool {
 		return c.IsCallable(arg)
 	}
 	if _, is := arg.(ValueInt); is && typ == TypeFloat {
+		return true
+	}
+	if strings.HasPrefix(typ.Name, "ArrayOf:") {
+		arr, is := arg.(ValueArray)
+		if !is {
+			return false
+		}
+		itemType := typ.Bases[0]
+		for _, item := range *arr.Values {
+			if !argTypeMatched(c, item, itemType) {
+				return false
+			}
+		}
 		return true
 	}
 	return arg.Type().IsSubOf(typ)
