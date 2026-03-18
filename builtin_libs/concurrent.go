@@ -2,9 +2,11 @@ package builtin_libs
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/samber/lo"
 	. "github.com/zgg-lang/zgg-go/runtime"
 )
 
@@ -43,6 +45,56 @@ func libConcurrent(c *Context) ValueObject {
 		}
 		for i, await := range awaits {
 			rv[i] = await()
+		}
+		return NewArrayByValues(rv...)
+	}), nil)
+	lib.SetMember("map", NewNativeFunction("map", func(c *Context, this Value, args []Value) Value {
+		var (
+			callablesArr  ValueArray
+			callees       []ValueCallable
+			maxConcurrent ValueInt
+		)
+		EnsureFuncParams(c, "concurrent.map", args,
+			ArgRuleRequired("callables", TypeArrayOf(TypeCallable), &callablesArr),
+			ArgRuleOptional("maxConcurrent", TypeInt, &maxConcurrent, NewInt(0)),
+		)
+		n := callablesArr.Len()
+		if n == 0 {
+			return NewArray()
+		}
+		callees = lo.Map(*callablesArr.Values, func(arg Value, i int) ValueCallable {
+			return c.MustCallable(arg, fmt.Sprintf("concurrent.map: element %d must be callable", i))
+		})
+		rv := make([]Value, n)
+		if maxConcurrent.AsInt() <= 0 {
+			awaits := make([]func() Value, n)
+			for i, callee := range callees {
+				awaits[i] = c.StartThread(c.Ctx, callee, nil, []Value{})
+			}
+			for i, await := range awaits {
+				rv[i] = await()
+			}
+		} else {
+			var wg sync.WaitGroup
+			var mu sync.Mutex
+			sem := make(chan struct{}, maxConcurrent.AsInt())
+			for i, callee := range callees {
+				sem <- struct{}{}
+				wg.Add(1)
+				joinFunc := c.StartThread(c.Ctx, callee, nil, []Value{})
+				go func(idx int, jf func() Value) {
+					defer func() {
+						defer c.Recover()
+						wg.Done()
+						<-sem
+					}()
+					result := jf()
+					mu.Lock()
+					rv[idx] = result
+					mu.Unlock()
+				}(i, joinFunc)
+			}
+			wg.Wait()
 		}
 		return NewArrayByValues(rv...)
 	}), nil)
