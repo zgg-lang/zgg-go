@@ -70,8 +70,10 @@ func init() {
 }
 
 var (
-	typeArrayOfMap = make(map[int]ValueType)
-	typeArrayOfRW  sync.RWMutex
+	typeArrayOfMap  = make(map[int]ValueType)
+	typeArrayOfRW   sync.RWMutex
+	typeObjectOfMap = make(map[int]ValueType)
+	typeObjectOfRW  sync.RWMutex
 )
 
 func TypeArrayOf(t ValueType) ValueType {
@@ -92,5 +94,26 @@ func TypeArrayOf(t ValueType) ValueType {
 	t2 = NewType(NextTypeId(), "ArrayOf:"+t.Name)
 	t2.Bases = []ValueType{t}
 	typeArrayOfMap[t.TypeId] = t2
+	return t2
+}
+
+func TypeObjectOf(t ValueType) ValueType {
+	if t == nil {
+		return TypeObject
+	}
+	typeObjectOfRW.RLock()
+	t2 := typeObjectOfMap[t.TypeId]
+	typeObjectOfRW.RUnlock()
+	if t2 != nil {
+		return t2
+	}
+	typeObjectOfRW.Lock()
+	defer typeObjectOfRW.Unlock()
+	if t2 = typeObjectOfMap[t.TypeId]; t2 != nil {
+		return t2
+	}
+	t2 = NewType(NextTypeId(), "ObjectOf:"+t.Name)
+	t2.Bases = []ValueType{t}
+	typeObjectOfMap[t.TypeId] = t2
 	return t2
 }

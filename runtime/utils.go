@@ -52,6 +52,22 @@ func argTypeMatched(c *Context, arg Value, typ ValueType) bool {
 		}
 		return true
 	}
+	if strings.HasPrefix(typ.Name, "ObjectOf:") {
+		obj, is := arg.(*valueObject)
+		if !is {
+			return false
+		}
+		itemType := typ.Bases[0]
+		matched := true
+		obj.Each(func(k string, item Value) bool {
+			if !argTypeMatched(c, item, itemType) {
+				matched = false
+				return false
+			}
+			return true
+		})
+		return matched
+	}
 	return arg.Type().IsSubOf(typ)
 }
 
