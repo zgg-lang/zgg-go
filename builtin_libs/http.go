@@ -168,7 +168,7 @@ func libHttp(*Context) ValueObject {
 		fset.StringVar(&dir, "dir", ".", "本地文件目录")
 		fset.StringVar(&urlPrefix, "url", "/", "文件服务URL前缀")
 		fset.Parse(c.Args)
-		addr = flag.Arg(0)
+		addr = fset.Arg(0)
 		if addr == "" {
 			addr = ":8080"
 		} else if matched, _ := regexp.Match(`^\d+$`, []byte(addr)); matched {
