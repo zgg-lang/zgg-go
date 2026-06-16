@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 
 	"github.com/urfave/cli"
 )
@@ -16,10 +16,10 @@ func genPair(c *cli.Context) error {
 	}
 	pub := priv.Public().(*rsa.PublicKey)
 	privName := c.Args().First()
-	if err := ioutil.WriteFile(privName, x509.MarshalPKCS1PrivateKey(priv), 0644); err != nil {
+	if err := os.WriteFile(privName, x509.MarshalPKCS1PrivateKey(priv), 0644); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(privName+".pub", x509.MarshalPKCS1PublicKey(pub), 0644); err != nil {
+	if err := os.WriteFile(privName+".pub", x509.MarshalPKCS1PublicKey(pub), 0644); err != nil {
 		return err
 	}
 	return nil
