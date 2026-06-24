@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"image/color"
 	"io"
 	"mime/multipart"
 	"net"
@@ -20,9 +21,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samber/lo"
+	"github.com/savioxavier/termlink"
 	. "github.com/zgg-lang/zgg-go/runtime"
 
 	"github.com/gorilla/websocket"
+	goqr "github.com/piglig/go-qr"
 )
 
 var (
@@ -172,13 +176,37 @@ func libHttp(*Context) ValueObject {
 		if addr == "" {
 			addr = ":8080"
 		} else if matched, _ := regexp.Match(`^\d+$`, []byte(addr)); matched {
-			addr = "127.0.0.1:" + addr
+			addr = ":" + addr
+		}
+		printUrl := func(name, url string) {
+			url = lo.Ternary(termlink.SupportsHyperlinks(), termlink.Link(url, url), url)
+			fmt.Fprintf(c.Stdout, "-- %s: %s\n", name, url)
 		}
 		if matched, _ := regexp.Match(`^:\d+$`, []byte(addr)); matched {
 			if ips, _ := getLocalIPs(); len(ips) > 0 {
-				fmt.Fprintf(c.Stdout, "-- Loopback IP: http://127.0.0.1%s%s\n", addr, urlPrefix)
-				fmt.Fprintf(c.Stdout, "-- Intranet IP: http://%s%s%s\n", ips[0], addr, urlPrefix)
+				printUrl("Loopback IP", fmt.Sprintf("http://127.0.0.1%s%s", addr, urlPrefix))
+				printUrl("Intranet IP", fmt.Sprintf("http://%s%s%s", ips[0], addr, urlPrefix))
+				if q, e := goqr.EncodeText(fmt.Sprintf("http://%s%s%s", ips[0], addr, urlPrefix), goqr.Low); e != nil {
+					c.RaiseRuntimeError("http: encode qr error %+v", e)
+				} else if im, e := q.ToImage(goqr.NewQrCodeImgConfig(1, 1)); e != nil {
+					c.RaiseRuntimeError("http: encode qr error %+v", e)
+				} else {
+					for y := 0; y < im.Bounds().Dy(); y++ {
+						for x := 0; x < im.Bounds().Dx(); x++ {
+							p := im.At(x, y)
+							darkness := color.GrayModel.Convert(p).(color.Gray).Y
+							if darkness < 128 {
+								fmt.Fprint(c.Stdout, "██")
+							} else {
+								fmt.Fprint(c.Stdout, "  ")
+							}
+						}
+						fmt.Fprintln(c.Stdout)
+					}
+				}
 			}
+		} else {
+			printUrl("Address", fmt.Sprintf("http://%s%s", addr, urlPrefix))
 		}
 		fmt.Fprintf(c.Stdout, "zgg http fileserver is starting on %s\n", addr)
 		c.Invoke(lib.GetMember("serveFS", c), nil, Args(NewStr(addr), NewStr(dir), NewStr(urlPrefix)))
