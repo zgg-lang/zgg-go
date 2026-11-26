@@ -1,0 +1,93 @@
+// 标准库：json / yaml / file
+t := import('./framework')
+
+t.test('json: encode 键有序且带换行', () => {
+    s := @json.encode({b: 1, a: [1, 2]})
+    t.assertEq(s.trim(), '{"a":[1,2],"b":1}')
+    t.assertEq(s.endsWith('\n'), true)
+})
+
+t.test('json: encode 缩进', () => {
+    s := @json.encode({a: 1}, 2)
+    t.assertContains(s, '\n  "a": 1\n')
+})
+
+t.test('json: decode 类型还原', () => {
+    v := @json.decode('{"i": 1, "f": 1.5, "b": true, "n": null, "a": [1, 2], "o": {"x": "y"}}')
+    t.assertEq(v.i, 1)
+    t.assertEq(typeName(v.i), '<type Int>')
+    t.assertEq(v.f, 1.5)
+    t.assertEq(typeName(v.f), '<type Float>')
+    t.assertEq(v.b, true)
+    t.assertEq(v.n, nil)
+    t.assertEq(v.a, [1, 2])
+    t.assertEq(v.o, {x: 'y'})
+})
+
+t.test('json: decode 接受 Bytes', () => {
+    v := @json.decode(bytes('{"x": 3}'))
+    t.assertEq(v.x, 3)
+})
+
+t.test('json: decode 非法输入抛错', () => {
+    t.assertThrows(() => {
+        v := @json.decode('not json')
+    }, 'json.decode')
+})
+
+t.test('json: format 美化', () => {
+    s := @json.format('{"a":1,"b":[1,2]}', 2)
+    t.assertContains(s, '"a": 1')
+    t.assertContains(s, '"b": [')
+})
+
+t.test('json: find 使用 JSONPath（路径在前）', () => {
+    data := {a: {b: [10, 20]}}
+    t.assertEq(@json.find(r'$.a.b[1]', data), 20)
+    t.assertEq(@json.find(r'$.a.b', data), [10, 20])
+})
+
+t.test('yaml: 编解码往返', () => {
+    s := @yaml.encode({name: 'zgg', list: [1, 2]})
+    t.assertContains(s, 'name: zgg')
+    v := @yaml.decode(s)
+    t.assertEq(v.name, 'zgg')
+    t.assertEq(v.list, [1, 2])
+})
+
+t.test('file: 读写文本与行', () => {
+    p := '/tmp/zgg_unittest_file.txt'
+    @file.rewrite(p, 'a\nb\n')
+    t.assertTrue(@file.exists(p))
+    t.assertTrue(@file.isFile(p))
+    t.assertFalse(@file.isDir(p))
+    t.assertEq(@file.readString(p), 'a\nb\n')
+    t.assertEq(@file.readLines(p), ['a\n', 'b\n', ''])
+})
+
+t.test('file: 读写字节', () => {
+    p := '/tmp/zgg_unittest_file.bin'
+    @file.rewrite(p, bytes('xyz'))
+    t.assertEq(@file.readBytes(p).hex(), '78797a')
+    t.assertEq(len(@file.readBytes(p)), 3)
+})
+
+t.test('file: 目录判断', () => {
+    t.assertTrue(@file.isDir('/tmp'))
+    t.assertFalse(@file.isFile('/tmp'))
+})
+
+t.test('file: 不存在的文件读会抛错', () => {
+    t.assertThrows(() => {
+        s := @file.readString('/no/such/file-for-unittest')
+    }, 'read file error')
+})
+
+t.test('file: 覆盖写返回写入字节数', () => {
+    n := @file.rewrite('/tmp/zgg_unittest_file2.txt', 'hello')
+    t.assertEq(n, 5)
+})
+
+if isMain {
+    t.run()
+}

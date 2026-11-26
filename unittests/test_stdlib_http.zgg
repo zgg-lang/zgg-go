@@ -1,0 +1,84 @@
+// 标准库：http 客户端 / 服务端 / WebSocket
+t := import('./framework')
+
+addr := '127.0.0.1:19180'
+srv := @http.createServer()
+srv.route('/hello', ctx => {
+    name := ctx.query('name') ?? 'world'
+    ctx.write(200, 'hello ' + name)
+})
+srv.route('/json', ctx => {
+    ctx.setHeader('X-Server', 'zgg')
+    ctx.writeJson(200, {ok: true, q: ctx.querystr})
+})
+srv.route('/echo', ctx => {
+    ctx.writeJson(200, {method: ctx.method, path: ctx.path, body: ctx.getBodyStr()})
+})
+srv.route('/form', ctx => {
+    ctx.writeJson(200, {a: ctx.form('a'), b: ctx.form('b')})
+})
+srv.route('/header', ctx => {
+    ctx.write(200, ctx.getHeader('X-Test') ?? '')
+})
+srv.route('/status', ctx => {
+    ctx.write(404, 'nope')
+})
+srv.routeWebsocket('/ws', ws => {
+    msg := ws.read()
+    ws.write('echo:' + msg)
+})
+job := @concurrent.start(() => srv.serve(addr))
+@time.sleep('300ms')
+
+t.test('http: GET 文本与查询参数', () => {
+    t.assertEq(@http.getText('http://' + addr + '/hello'), 'hello world')
+    t.assertEq(@http.getText('http://' + addr + '/hello?name=zgg'), 'hello zgg')
+})
+
+t.test('http: getJson 返回解析后的对象', () => {
+    v := @http.getJson('http://' + addr + '/json?x=1')
+    t.assertEq(v.ok, true)
+    t.assertEq(v.q, 'x=1')
+})
+
+t.test('http: postJson 发送 JSON', () => {
+    body := @http.postJson('http://' + addr + '/echo', {a: 1})
+    v := @json.decode(str(body))
+    t.assertEq(v.method, 'POST')
+    t.assertEq(v.path, '/echo')
+    t.assertContains(v.body, '"a":1')
+})
+
+t.test('http: postForm 发送表单', () => {
+    body := @http.postForm('http://' + addr + '/form', {a: 1, b: 'two'})
+    v := @json.decode(str(body))
+    t.assertEq(v.a, '1')
+    t.assertEq(v.b, 'two')
+})
+
+t.test('http: Request 自定义头与 Response', () => {
+    req := @http.Request('GET', 'http://' + addr + '/header')
+    req.header('X-Test', 'yes')
+    t.assertEq(req.call().text(), 'yes')
+})
+
+t.test('http: 响应头可读取', () => {
+    rsp := @http.Request('GET', 'http://' + addr + '/json').call()
+    t.assertEq(rsp.header('X-Server'), 'zgg')
+    t.assertEq(rsp.json().ok, true)
+})
+
+t.test('http: 非 200 状态码仍可读到 body', () => {
+    t.assertEq(@http.getText('http://' + addr + '/status'), 'nope')
+})
+
+t.test('http: WebSocket 回显', () => {
+    c := @http.connectWebsocket('ws://' + addr + '/ws')
+    c.write('hi')
+    t.assertEq(c.read(), 'echo:hi')
+    c.close()
+})
+
+if isMain {
+    t.run()
+}

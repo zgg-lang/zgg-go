@@ -1,0 +1,87 @@
+// 并发：future、all/map、Mutex、Chan、Limiter
+t := import('./framework')
+
+t.test('concurrent: start 返回 future 并可通过 await 取值', () => {
+    job := @concurrent.start(() => 1 + 2)
+    t.assertEq(job.await(), 3)
+})
+
+t.test('concurrent: join 等价于 await', () => {
+    job := @concurrent.start(() => {
+        @time.sleep('10ms')
+        return 'done'
+    })
+    t.assertEq(job.join(), 'done')
+})
+
+t.test('concurrent: 多个 future 独立返回', () => {
+    a := @concurrent.start(() => 1)
+    b := @concurrent.start(() => 2)
+    c := @concurrent.start(() => 3)
+    t.assertEq([a.await(), b.await(), c.await()], [1, 2, 3])
+})
+
+t.test('concurrent: all 按顺序收集结果', () => {
+    t.assertEq(@concurrent.all(() => 1, () => 2, () => 3), [1, 2, 3])
+})
+
+t.test('concurrent: map 并发映射', () => {
+    t.assertEq(@concurrent.map([() => 1, () => 2, () => 3]), [1, 2, 3])
+    t.assertEq(@concurrent.map([() => 'a', () => 'b'], 2), ['a', 'b'])
+})
+
+t.test('concurrent: Mutex.run 返回结果', () => {
+    m := @concurrent.Mutex()
+    t.assertEq(m.run(() => 42), 42)
+})
+
+t.test('concurrent: Mutex 保护共享计数', () => {
+    m := @concurrent.Mutex()
+    shared := {n: 0}
+    workers := range(4).map(_ => @concurrent.start(() => {
+        for i in 10000 {
+            m.run(() => {
+                shared.n += 1
+            })
+        }
+    }))
+    for w in workers {
+        w.await()
+    }
+    t.assertEq(shared.n, 40000)
+})
+
+t.test('concurrent: Chan 发送与接收', () => {
+    ch := @concurrent.Chan(1)
+    ch.send('hello')
+    t.assertEq(ch.recv(), 'hello')
+})
+
+t.test('concurrent: 生产者/消费者', () => {
+    ch := @concurrent.Chan(2)
+    producer := @concurrent.start(() => {
+        for i in 1..3 {
+            ch.send(i)
+        }
+    })
+    consumer := @concurrent.start(() => {
+        sum := 0
+        for i in 3 {
+            sum += ch.recv()
+        }
+        return sum
+    })
+    producer.await()
+    t.assertEq(consumer.await(), 6)
+})
+
+t.test('concurrent: Limiter 限制并发并可等待', () => {
+    limiter := @concurrent.Limiter(2)
+    futures := range(4).map(v => limiter.run(() => v * 2))
+    t.assertEq(futures.map(f => f.await()), [0, 2, 4, 6])
+    limiter.wait()
+})
+
+if isMain {
+    t.run()
+}

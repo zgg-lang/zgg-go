@@ -1,0 +1,184 @@
+// 标准库：redis
+// 仅当 127.0.0.1:6379 存在无密码可用的 Redis 实例时执行；否则全部用例标记为 skip。
+t := import('./framework')
+
+redisAddr := '127.0.0.1:6379'
+redisAvailable := false
+redisReason := ''
+
+try {
+    probe := @redis.open(redisAddr, {connTimeout: 1, readTimeout: 2, writeTimeout: 2})
+    pong := probe.PING()
+    probe.close()
+    if pong == 'PONG' {
+        redisAvailable = true
+    } else {
+        redisReason = redisAddr + ' 的 PING 未返回 PONG'
+    }
+} catch (e) {
+    redisReason = redisAddr + ' 无可用无密码 Redis 实例：' + e.message
+}
+
+func redisTest(name, fn) {
+    if redisAvailable {
+        t.test(name, fn)
+    } else {
+        t.skip(name, redisReason)
+    }
+}
+
+func withClient(fn) {
+    c := @redis.open(redisAddr)
+    try {
+        fn(c)
+    } finally {
+        c.close()
+    }
+}
+
+prefix := 'zgg:unittest:'
+func key(name) {
+    return prefix + name
+}
+
+redisTest('redis: 连接与 PING', () => {
+    withClient(c => {
+        t.assertEq(c.PING(), 'PONG')
+    })
+})
+
+redisTest('redis: 字符串 SET / GET / EXISTS / DEL', () => {
+    k := key('str')
+    withClient(c => {
+        c.DEL(k)
+        t.assertEq(c.SET(k, 'hello'), 'OK')
+        t.assertEq(str(c.GET(k)), 'hello')
+        t.assertEq(c.EXISTS(k), 1)
+        t.assertEq(c.DEL(k), 1)
+        t.assertEq(c.EXISTS(k), 0)
+        t.assertNil(c.GET(k))
+    })
+})
+
+redisTest('redis: INCR / DECR', () => {
+    k := key('counter')
+    withClient(c => {
+        c.DEL(k)
+        t.assertEq(c.INCR(k), 1)
+        t.assertEq(c.INCR(k), 2)
+        t.assertEq(c.INCR(k), 3)
+        t.assertEq(c.DECR(k), 2)
+        c.DEL(k)
+    })
+})
+
+redisTest('redis: EXPIRE 与 TTL', () => {
+    k := key('ttl')
+    withClient(c => {
+        c.SET(k, 'x')
+        t.assertEq(c.EXPIRE(k, 100), 1)
+        ttl := c.TTL(k)
+        t.assertTrue(ttl > 0 && ttl <= 100, 'ttl out of range: ' + str(ttl))
+        c.DEL(k)
+    })
+})
+
+redisTest('redis: Hash HSET / HGET / HGETALL / HDEL', () => {
+    k := key('hash')
+    withClient(c => {
+        c.DEL(k)
+        t.assertEq(c.HSET(k, 'f1', 'v1', 'f2', 'v2'), 2)
+        t.assertEq(str(c.HGET(k, 'f1')), 'v1')
+        all := c.HGETALL(k).map(v => str(v))
+        t.assertEq(len(all), 4)
+        t.assertContains(all, 'f1')
+        t.assertContains(all, 'v1')
+        t.assertContains(all, 'f2')
+        t.assertContains(all, 'v2')
+        t.assertEq(c.HDEL(k, 'f1'), 1)
+        t.assertNil(c.HGET(k, 'f1'))
+        c.DEL(k)
+    })
+})
+
+redisTest('redis: List LPUSH / LRANGE / LLEN', () => {
+    k := key('list')
+    withClient(c => {
+        c.DEL(k)
+        t.assertEq(c.LPUSH(k, 'a', 'b'), 2)
+        t.assertEq(c.LRANGE(k, 0, -1).map(v => str(v)), ['b', 'a'])
+        t.assertEq(c.LLEN(k), 2)
+        c.DEL(k)
+    })
+})
+
+redisTest('redis: Set SADD / SMEMBERS / SISMEMBER', () => {
+    k := key('set')
+    withClient(c => {
+        c.DEL(k)
+        t.assertEq(c.SADD(k, 'a', 'b'), 2)
+        members := c.SMEMBERS(k).map(v => str(v))
+        t.assertEq(members.sort(v => v), ['a', 'b'])
+        t.assertEq(c.SISMEMBER(k, 'a'), 1)
+        t.assertEq(c.SISMEMBER(k, 'z'), 0)
+        c.DEL(k)
+    })
+})
+
+redisTest('redis: pipe 批量命令按顺序返回', () => {
+    k1 := key('pipe1')
+    k2 := key('pipe2')
+    withClient(c => {
+        c.DEL(k1, k2)
+        res := c.pipe(s => {
+            s.SET(k1, '1')
+            s.SET(k2, '2')
+            s.GET(k1)
+        })
+        t.assertEq(len(res), 3)
+        t.assertEq(res[0], 'OK')
+        t.assertEq(res[1], 'OK')
+        t.assertEq(str(res[2]), '1')
+        c.DEL(k1, k2)
+    })
+})
+
+redisTest('redis: exec 数组形式批量执行', () => {
+    k := key('exec')
+    withClient(c => {
+        c.DEL(k)
+        res := c.exec([['SET', k, '9'], ['GET', k], ['DEL', k]])
+        t.assertEq(len(res), 3)
+        t.assertEq(res[0], 'OK')
+        t.assertEq(str(res[1]), '9')
+        t.assertEq(res[2], 1)
+    })
+})
+
+redisTest('redis: exec 单命令形式', () => {
+    k := key('exec1')
+    withClient(c => {
+        t.assertEq(c.exec('SET', k, 'v'), 'OK')
+        t.assertEq(str(c.exec('GET', k)), 'v')
+        t.assertEq(c.exec('DEL', k), 1)
+    })
+})
+
+
+redisTest('redis: kv 模块的 redis 适配器', () => {
+    redisKey := 'zgg:unittest:kv:k'
+    withClient(c => {
+        m := @kv.Manager('redis://127.0.0.1:6379?prefix=zgg:unittest:kv:')
+        try {
+            m.set('k', 'v')
+            t.assertEq(str(m.get('k')), 'v')
+        } finally {
+            m.close()
+            c.DEL(redisKey)
+        }
+    })
+})
+
+if isMain {
+    t.run()
+}

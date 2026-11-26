@@ -1,0 +1,145 @@
+// 内置类型方法：Str / Array / Object / Bytes
+t := import('./framework')
+
+t.test('Str: 基础方法', () => {
+    t.assertEq('aBc'.upper(), 'ABC')
+    t.assertEq('aBc'.lower(), 'abc')
+    t.assertEq('  x  '.trim(), 'x')
+    t.assertEq('Hello'.substr(0, 4), 'Hell')
+    t.assertEq('Hello'.substr(-3), 'llo')
+})
+
+t.test('Str: 分割与行', () => {
+    t.assertEq('a,b'.split(','), ['a', 'b'])
+    t.assertEq('a,b,c'.split(',', 2), ['a', 'b,c'])
+    t.assertEq('a  b c'.splitr(), ['a', 'b', 'c'])
+    t.assertEq('a1b2c'.splitr(r'\d'), ['a', 'b', 'c'])
+    t.assertEq('l1
+l2'.lines(), ['l1', 'l2'])
+})
+
+t.test('Str: 查找', () => {
+    t.assertEq('abcabc'.indexOf('bc'), 1)
+    t.assertEq('abcabc'.indexOf('zz'), -1)
+    t.assertEq('abcabc'.lastIndexOf('bc'), 4)
+    t.assertEq('a1b22'.find(r'\d+'), '1')
+    t.assertEq('abc'.find(r'\d+'), '')
+})
+
+t.test('Str: 替换', () => {
+    t.assertEq('aXa'.replaceOne('a', 'b'), 'bXa')
+    t.assertEq('aXa'.replaceAll('a', 'b'), 'bXb')
+    t.assertEq('a1b22'.replace(r'\d+', m => '[' + m + ']'), 'a[1]b[22]')
+    t.assertEq('a1b22'.replace(r'\d+', '#'), 'a#b#')
+})
+
+t.test('Str: 前缀/后缀/包含（多候选）', () => {
+    t.assertTrue('abc'.startsWith('x', 'a'))
+    t.assertFalse('abc'.startsWith('x', 'y'))
+    t.assertTrue('abc'.endsWith('x', 'c'))
+    t.assertFalse('abc'.endsWith('x', 'y'))
+    t.assertTrue('abc'.contains('x', 'b'))
+    t.assertFalse('abc'.contains('x', 'y'))
+})
+
+t.test('Str: 哈希与字符码', () => {
+    t.assertEq('abc'.hash(), 'abc'.hash())
+    t.assertNe('abc'.hash(), 'abd'.hash())
+    t.assertEq('abc'.code(0), 97)
+    t.assertEq('abc'.codes(), [97, 98, 99])
+})
+
+t.test('Str: 宽度与空白判断', () => {
+    t.assertEq('abc'.width(), 3)
+    t.assertEq('中文'.width(), 4)
+    t.assertTrue('  '.isBlank())
+    t.assertFalse(' x '.isBlank())
+    t.assertTrue(' x '.notBlank())
+})
+
+t.test('Str: 解码与静态构造', () => {
+    t.assertEq('616263'.decodeHex().hex(), '616263')
+    t.assertEq('YWJj'.decodeBase64().hex(), '616263')
+    t.assertEq(Str.fromCodes(97, 98, 99), 'abc')
+})
+
+t.test('Array: 转换类方法', () => {
+    t.assertEq([1, 2].map(v => v + 1), [2, 3])
+    t.assertEq([1, 2].filter(v => v > 1), [2])
+    t.assertEq([[1], [2]].flatMap(v => v), [1, 2])
+    t.assertEq([1, 2].filterMap(v => [v, v > 1]), [2])
+    t.assertEq([1, 2, 3].reduce((a, v) => a + v, 0), 6)
+    t.assertEq([1, 2, 3].sum(), 6)
+})
+
+t.test('Array: 切片与拼接', () => {
+    a := [1, 2, 3, 4]
+    t.assertEq(a.slice(1, 3), [2, 3])
+    t.assertEq(a.slice(-2), [3, 4])
+    t.assertEq(a[1:3], [2, 3])
+    t.assertEq([1] + [2], [1, 2])
+})
+
+t.test('Array: 排序、反转与连接', () => {
+    t.assertEq([3, 1, 2].sort(v => v), [1, 2, 3])
+    t.assertEq([3, 1, 2].sort(v => v, true), [3, 2, 1])
+    t.assertEq([1, 2, 3].reverse(), [3, 2, 1])
+    t.assertEq([1, 2, 3].join('-'), '1-2-3')
+})
+
+t.test('Array: toMap / count / countIf', () => {
+    t.assertEq(['a', 'b'].toMap((v, i) => i), {'0': 'a', '1': 'b'})
+    t.assertEq(['a', 'b'].toMap((v, i) => i, v => v.upper()), {'0': 'A', '1': 'B'})
+    t.assertEq([1, 2, 3].count(), {'1': 1, '2': 1, '3': 1})
+    t.assertEq([1, 2, 3].countIf(v => v > 1), 2)
+})
+
+t.test('Array: 分组、去重与切块', () => {
+    t.assertEq([1, 2, 3].toGroup(v => v % 2), {'0': [2], '1': [1, 3]})
+    t.assertEq([1, 2, 3].groupBy(v => v % 2), [[1, 3], [2]])
+    t.assertEq([1, 2, 2, 3].uniq(), [1, 2, 3])
+    t.assertEq([{k: 1}, {k: 1}, {k: 2}].uniq(x => x.k), [1, 2])
+    t.assertEq([1, 2, 3, 4, 5].chunk(2), [[1, 2], [3, 4], [5]])
+})
+
+t.test('Array: find / findIndex / each', () => {
+    t.assertEq([1, 2, 3].find(v => v > 1), 2)
+    t.assertEq([1, 2, 3].findIndex(v => v > 1), 1)
+    seen := []
+    [1, 2].each(v => seen.push(v))
+    t.assertEq(seen, [1, 2])
+})
+
+t.test('Object: keys / values / pairs / each', () => {
+    o := {b: 2, a: 1}
+    t.assertEq(o.keys().sort(k => k), ['a', 'b'])
+    t.assertEq(o.values().sort(v => v), [1, 2])
+    t.assertEq(o.pairs().sort(p => p.key).map(p => p.value), [1, 2])
+    got := []
+    o.each((k, v) => got.push(k + '=' + str(v)))
+    t.assertEq(got.sort(s => s), ['a=1', 'b=2'])
+})
+
+t.test('Object: 下标读写与成员判断', () => {
+    o := {a: 1}
+    t.assertEq(o['a'], 1)
+    o['b'] = 2
+    t.assertEq(o.b, 2)
+    t.assertTrue('a' in o)
+    t.assertFalse('z' in o)
+    t.assertEq(len(o), 2)
+})
+
+t.test('Bytes: 编码、长度与切片', () => {
+    b := bytes('ABC')
+    t.assertEq(len(b), 3)
+    t.assertEq(b.hex(), '414243')
+    t.assertEq(b.base64(), 'QUJD')
+    t.assertEq(b.slice(0, 2).hex(), '4142')
+    t.assertEq(b.toArray(), [65, 66, 67])
+    t.assertContains(b.dumpHex(), '41 42 43')
+})
+
+if isMain {
+    t.run()
+}

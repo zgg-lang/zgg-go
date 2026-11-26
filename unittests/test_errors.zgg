@@ -1,0 +1,151 @@
+// 错误处理：try/catch/finally、assert、! 与 ?? 兜底
+t := import('./framework')
+
+t.test('error: try/catch 捕获运行时错误', () => {
+    caught := ''
+    try {
+        x := 1 / 0
+    } catch (e) {
+        caught = e.message
+    }
+    t.assertContains(caught, 'division by zero')
+})
+
+t.test('error: 错误对象包含 message 与 stack', () => {
+    try {
+        x := [1][9].foo()
+    } catch (e) {
+        t.assertContains(e.message, 'callable')
+        t.assertTrue(e.stack is Array)
+        t.assertTrue(len(e.stack) > 0)
+    }
+})
+
+t.test('error: finally 一定执行', () => {
+    out := []
+    try {
+        out.push('try')
+        x := 1 / 0
+    } catch (e) {
+        out.push('catch')
+    } finally {
+        out.push('finally')
+    }
+    t.assertEq(out, ['try', 'catch', 'finally'])
+})
+
+t.test('error: finally 不改变返回值', () => {
+    func f() {
+        try {
+            return 'try'
+        } finally {
+            # 这里不能改变返回值
+        }
+    }
+    t.assertEq(f(), 'try')
+})
+
+t.test('error: try 中 return，finally 仍执行', () => {
+    out := []
+    func f() {
+        try {
+            out.push('body')
+            return 1
+        } finally {
+            out.push('cleanup')
+        }
+    }
+    t.assertEq(f(), 1)
+    t.assertEq(out, ['body', 'cleanup'])
+})
+
+t.test('error: 嵌套 try/catch 只捕获最近的', () => {
+    out := []
+    try {
+        try {
+            x := 1 / 0
+        } catch (e) {
+            out.push('inner')
+        }
+        out.push('after-inner')
+    } catch (e) {
+        out.push('outer')
+    }
+    t.assertEq(out, ['inner', 'after-inner'])
+})
+
+t.test('error: 异常可跨函数传播', () => {
+    func boom() {
+        x := 1 / 0
+    }
+    caught := false
+    try {
+        boom()
+    } catch (e) {
+        caught = true
+    }
+    t.assertTrue(caught)
+})
+
+t.test('error: assert 通过时无副作用', () => {
+    assert 1 == 1
+    assert true
+    t.assertTrue(true)
+})
+
+t.test('error: assert 失败消息', () => {
+    caught := ''
+    try {
+        assert 1 == 2, '必须相等'
+    } catch (e) {
+        caught = e.message
+    }
+    t.assertContains(caught, '必须相等')
+})
+
+t.test('error: ! 解包成功与失败', () => {
+    t.assertEq([10, 20]!, 10)
+    os := import('gostd/os')
+    t.assertThrows(() => {
+        f := os.Open('/no/such/file-for-unittest')!
+    }, 'assert error fail')
+})
+
+t.test('error: ?? 只对 nil/undefined 生效', () => {
+    t.assertEq(nil ?? 'd', 'd')
+    t.assertEq(undefined ?? 'd', 'd')
+    t.assertEq(0 ?? 5, 0)
+    t.assertEq('' ?? 'd', '')
+    t.assertEq(false ?? true, false)
+})
+
+t.test('error: ?? {} 调用失败兜底', () => {
+    out := []
+    @file.readBytes('/no/such/file-for-unittest') ?? {
+        out.push('fallback')
+    }
+    out.push('after')
+    t.assertEq(out, ['fallback', 'after'])
+})
+
+t.test('error: ?? {} 调用成功则不执行兜底', () => {
+    out := []
+    @file.readBytes('/etc/hosts') ?? {
+        out.push('fallback')
+    }
+    out.push('after')
+    t.assertEq(out, ['after'])
+})
+
+t.test('error: assertThrows 校验消息子串', () => {
+    t.assertThrows(() => {
+        x := 1 / 0
+    }, 'division')
+    t.assertThrows(() => {
+        x := 1 / 0
+    })
+})
+
+if isMain {
+    t.run()
+}

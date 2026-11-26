@@ -1,0 +1,266 @@
+// 控制流：条件、when、switch、循环、defer 与资源清理
+t := import('./framework')
+
+t.test('if: if / else if / else', () => {
+    mark := ''
+    score := 85
+    if score >= 90 {
+        mark = 'A'
+    } else if score >= 60 {
+        mark = 'B'
+    } else {
+        mark = 'C'
+    }
+    t.assertEq(mark, 'B')
+})
+
+t.test('if: 条件内赋值只在该分支可见', () => {
+    got := 0
+    if v := 10; v > 5 {
+        got = v
+    }
+    t.assertEq(got, 10)
+})
+
+t.test('when: 条件分支表达式', () => {
+    x := 75
+    grade := when {
+        x >= 90 -> 'A'
+        x >= 60 -> 'B'
+        else -> 'C'
+    }
+    t.assertEq(grade, 'B')
+})
+
+t.test('when: 值匹配（列表 / 区间 / 类型）', () => {
+    t.assertEq(when 2 { 1, 2 -> 'low' else -> 'other' }, 'low')
+    t.assertEq(when 5 { 3..6 -> 'mid' else -> 'other' }, 'mid')
+    t.assertEq(when 7 { 3..<6 -> 'mid' else -> 'other' }, 'other')
+    t.assertEq(when 3.14 { is Float -> 'float' else -> 'other' }, 'float')
+    t.assertEq(when 'x' { is Int -> 'int' else -> 'str' }, 'str')
+})
+
+t.test('switch: 列表、区间与 default', () => {
+    pick := ''
+    switch 5 {
+        case 1, 2:
+            pick = 'low'
+        case 3..6:
+            pick = 'mid'
+        default:
+            pick = 'other'
+    }
+    t.assertEq(pick, 'mid')
+})
+
+t.test('switch: fallthrough 只继续检查后续 case', () => {
+    out := []
+    switch 2 {
+        case 1:
+            out.push('one')
+        case 2:
+            out.push('two')
+            fallthrough
+        case 3:
+            out.push('three')
+        default:
+            out.push('def')
+    }
+    t.assertEq(out, ['two', 'def'])
+})
+
+t.test('for: 三段式循环', () => {
+    sum := 0
+    for i := 0; i < 4; i++ {
+        sum += i
+    }
+    t.assertEq(sum, 6)
+})
+
+t.test('for-in: 整数与区间', () => {
+    out := []
+    for i in 3 {
+        out.push(i)
+    }
+    t.assertEq(out, [0, 1, 2])
+
+    out = []
+    for i in 1..3 {
+        out.push(i)
+    }
+    t.assertEq(out, [1, 2, 3])
+
+    out = []
+    for i in 1..<3 {
+        out.push(i)
+    }
+    t.assertEq(out, [1, 2])
+})
+
+t.test('for-in: 数组值 / 下标与值', () => {
+    vals := []
+    for v in ['a', 'b'] {
+        vals.push(v)
+    }
+    t.assertEq(vals, ['a', 'b'])
+
+    idx := []
+    for i, v in ['a', 'b'] {
+        idx.push([i, v])
+    }
+    t.assertEq(idx, [[0, 'a'], [1, 'b']])
+})
+
+t.test('for-in: 字符串按字符迭代', () => {
+    chars := []
+    for ch in 'abc' {
+        chars.push(ch)
+    }
+    t.assertEq(chars, ['a', 'b', 'c'])
+})
+
+t.test('for-in: 对象迭代值与键值', () => {
+    vals := []
+    for v in {a: 1, b: 2} {
+        vals.push(v)
+    }
+    t.assertEq(vals.sort(v => v), [1, 2])
+
+    pairs := []
+    for k, v in {a: 1, b: 2} {
+        pairs.push([k, v])
+    }
+    t.assertEq(pairs.sort(p => p[0]), [['a', 1], ['b', 2]])
+})
+
+t.test('for-in: if 过滤', () => {
+    evens := []
+    for i in 1..10 if i % 2 == 0 {
+        evens.push(i)
+    }
+    t.assertEq(evens, [2, 4, 6, 8, 10])
+})
+
+t.test('while 与 do-while', () => {
+    i := 0
+    while i < 3 {
+        i++
+    }
+    t.assertEq(i, 3)
+
+    j := 0
+    do {
+        j++
+    } while j < 2
+    t.assertEq(j, 2)
+})
+
+t.test('break / continue', () => {
+    out := []
+    for i in 5 {
+        if i == 1 {
+            continue
+        }
+        if i == 3 {
+            break
+        }
+        out.push(i)
+    }
+    t.assertEq(out, [0, 2])
+})
+
+t.test('带标签的 break / continue', () => {
+    out := []
+    outer: for i in 3 {
+        for j in 3 {
+            if j == 1 {
+                continue outer
+            }
+            if i == 2 {
+                break outer
+            }
+            out.push([i, j])
+        }
+    }
+    t.assertEq(out, [[0, 0], [1, 0]])
+})
+
+t.test('defer: 后进先出且参数在注册时求值', () => {
+    out := []
+    func demo() {
+        a := 1
+        defer out.push('d1:' + str(a))
+        a = 2
+        defer out.push('d2:' + str(a))
+        out.push('body:' + str(a))
+    }
+    demo()
+    t.assertEq(out, ['body:2', 'd2:2', 'd1:1'])
+})
+
+t.test('blockDefer: 在代码块结束时执行', () => {
+    out := []
+    func demo() {
+        {
+            blockDefer out.push('block-end')
+            out.push('in-block')
+        }
+        out.push('after-block')
+    }
+    demo()
+    t.assertEq(out, ['in-block', 'block-end', 'after-block'])
+})
+
+t.test('defer 代码块', () => {
+    out := []
+    func demo() {
+        defer {
+            out.push('cleanup')
+        }
+        out.push('work')
+    }
+    demo()
+    t.assertEq(out, ['work', 'cleanup'])
+})
+
+t.test('use: 离开作用域自动调用 close', () => {
+    out := []
+    {
+        res := {
+            close() {
+                out.push('closed')
+            },
+        }
+        x := use res
+        out.push('using')
+    }
+    t.assertEq(out, ['using', 'closed'])
+})
+
+t.test('use@method: 指定关闭方法', () => {
+    out := []
+    {
+        res := {
+            shutdown() {
+                out.push('shutdown')
+            },
+        }
+        x := use@shutdown(res)
+        out.push('body')
+    }
+    t.assertEq(out, ['body', 'shutdown'])
+})
+
+t.test('use@{}: 自定义清理逻辑', () => {
+    out := []
+    {
+        res := {name: 'r1'}
+        x := use@{ out.push('cleanup:' + it.name) } res
+        out.push('body')
+    }
+    t.assertEq(out, ['body', 'cleanup:r1'])
+})
+
+if isMain {
+    t.run()
+}

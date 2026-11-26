@@ -1,0 +1,221 @@
+// 类、继承、魔术方法、extend
+t := import('./framework')
+
+t.test('class: 定义、构造与方法', () => {
+    class Point {
+        __init__(x, y) {
+            this.x = x
+            this.y = y
+        }
+        sum() {
+            return this.x + this.y
+        }
+    }
+    p := Point(1, 2)
+    t.assertEq(p.x, 1)
+    t.assertEq(p.y, 2)
+    t.assertEq(p.sum(), 3)
+})
+
+t.test('class: 动态字段', () => {
+    class Box {}
+    b := Box()
+    b.name = 'box'
+    b.count = 1
+    b.count += 1
+    t.assertEq(b.name, 'box')
+    t.assertEq(b.count, 2)
+})
+
+t.test('class: 继承、super 方法与 super.__init__', () => {
+    class Animal {
+        __init__(name) {
+            this.name = name
+        }
+        speak() {
+            return this.name + ' makes a sound'
+        }
+    }
+    class Dog(Animal) {
+        __init__(name, breed) {
+            super.__init__(name)
+            this.breed = breed
+        }
+        speak() {
+            return super.speak() + ' woof'
+        }
+    }
+    d := Dog('wang', 'corgi')
+    t.assertEq(d.name, 'wang')
+    t.assertEq(d.breed, 'corgi')
+    t.assertEq(d.speak(), 'wang makes a sound woof')
+    t.assertTrue(d is Dog)
+    t.assertTrue(d is Animal)
+    class Cat {}
+    t.assertTrue(d is Dog)
+    t.assertFalse(d is Cat)
+})
+
+t.test('class: 多基类按声明顺序查找', () => {
+    class A { who() { return 'A' } }
+    class B { who() { return 'B' } }
+    class C(A, B) {}
+    t.assertEq(C().who(), 'A')
+})
+
+t.test('class: 静态字段与静态方法', () => {
+    class Counter {
+        static total: 0
+        static create() {
+            return Counter()
+        }
+        __init__() {
+            Counter.total += 1
+        }
+    }
+    Counter.create()
+    Counter.create()
+    t.assertEq(Counter.total, 2)
+})
+
+t.test('class: __str__ 与 str()/println', () => {
+    class Money {
+        __init__(amount) {
+            this.amount = amount
+        }
+        __str__() {
+            return '¥' + str(this.amount)
+        }
+    }
+    t.assertEq(str(Money(3)), '¥3')
+    t.assertEq('' + Money(5), '¥5')
+})
+
+t.test('class: 比较魔术方法', () => {
+    class N {
+        __init__(v) {
+            this.v = v
+        }
+        __eq__(o) { return this.v == o.v }
+        __lt__(o) { return this.v < o.v }
+        __gt__(o) { return this.v > o.v }
+        __le__(o) { return this.v <= o.v }
+        __ge__(o) { return this.v >= o.v }
+    }
+    t.assertTrue(N(1) == N(1))
+    t.assertTrue(N(1) != N(2))
+    t.assertTrue(N(1) < N(2))
+    t.assertTrue(N(2) > N(1))
+    t.assertTrue(N(1) <= N(1))
+    t.assertTrue(N(2) >= N(2))
+})
+
+t.test('class: 算术与一元负号重载', () => {
+    class N {
+        __init__(v) { this.v = v }
+        __add__(o) { return N(this.v + o.v) }
+        __sub__(o) { return N(this.v - o.v) }
+        __mul__(o) { return N(this.v * o.v) }
+        __div__(o) { return N(this.v / o.v) }
+        __mod__(o) { return N(this.v % o.v) }
+        __pow__(o) { return N(this.v ** o.v) }
+        __neg__() { return N(-this.v) }
+    }
+    t.assertEq((N(3) + N(4)).v, 7)
+    t.assertEq((N(3) - N(4)).v, -1)
+    t.assertEq((N(3) * N(4)).v, 12)
+    t.assertEq((N(8) / N(2)).v, 4)
+    t.assertEq((N(7) % N(3)).v, 1)
+    t.assertEq((N(2) ** N(3)).v, 8)
+    t.assertEq((-N(5)).v, -5)
+})
+
+t.test('class: 反向运算 __r<op>__（对象之间）', () => {
+    class A { __init__() {} }
+    class B {
+        __init__(v) { this.v = v }
+        __radd__(o) { return 'B+' + type(o).__name__ }
+    }
+    t.assertEq(A() + B(5), 'B+A')
+})
+
+t.test('class: __contains__ / __true__ / __call__', () => {
+    class Box {
+        __init__(v) { this.v = v }
+        __contains__(x) { return x == this.v }
+        __true__() { return false }
+        __call__(x) { return this.v + x }
+    }
+    t.assertTrue(3 in Box(3))
+    t.assertFalse(4 in Box(3))
+    t.assertEq(when Box(1) { true -> 'truthy' else -> 'falsy' }, 'falsy')
+    t.assertEq(Box(10)(5), 15)
+})
+
+t.test('class: __getAttr__ 与 __getItem__', () => {
+    class Config {
+        __getAttr__(name) {
+            return 'default-' + name
+        }
+        __getItem__(i) {
+            return i * 10
+        }
+    }
+    c := Config()
+    t.assertEq(c.timeout, 'default-timeout')
+    t.assertEq(c[3], 30)
+})
+
+t.test('class: 取出的方法保持绑定', () => {
+    class Adder {
+        __init__(base) { this.base = base }
+        add(x) { return this.base + x }
+    }
+    f := Adder(10).add
+    t.assertEq(f(5), 15)
+})
+
+t.test('class: extend 给内置类型加方法', () => {
+    extend Str {
+        shout() {
+            return this.upper() + '!'
+        }
+    }
+    t.assertEq('hi'.shout(), 'HI!')
+})
+
+t.test('class: extend 给用户类加方法', () => {
+    class N {
+        __init__(v) { this.v = v }
+    }
+    extend N {
+        double() {
+            return N(this.v * 2)
+        }
+    }
+    t.assertEq(N(3).double().v, 6)
+})
+
+t.test('class: extend 作用域限于声明块', () => {
+    func addTempMethod() {
+        extend Str {
+            tempMethod() {
+                return 'temp'
+            }
+        }
+        t.assertEq('x'.tempMethod(), 'temp')
+    }
+    addTempMethod()
+    t.assertUndefined('x'.tempMethod)
+})
+
+t.test('class: 类型名与类型对象', () => {
+    class A {}
+    a := A()
+    t.assertEq(type(a).__name__, 'A')
+    t.assertEq(type(a) == A, true)
+})
+
+if isMain {
+    t.run()
+}

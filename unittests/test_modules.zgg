@@ -1,0 +1,134 @@
+// 模块：import/export、导入类型、热重载、isMain
+t := import('./framework')
+
+base := '/tmp/zgg_unittest_modules'
+os := import('gostd/os')
+os.MkdirAll(base, 0755)
+
+t.test('module: 导出常量与函数', () => {
+    @file.rewrite(base + '/mathx.zgg', '''export pi := 3.14159
+export func square(x) { return x * x }
+func hidden() { return 1 }
+''')
+    m := import(base + '/mathx.zgg')
+    t.assertEq(m.pi, 3.14159)
+    t.assertEq(m.square(3), 9)
+    t.assertUndefined(m.hidden)
+})
+
+t.test('module: export 函数可直接调用', () => {
+    @file.rewrite(base + '/greet.zgg', '''export func hello(name) { return 'hi ' + name }
+''')
+    g := import(base + '/greet.zgg')
+    t.assertEq(g.hello('zgg'), 'hi zgg')
+})
+
+t.test('module: 未 export 的内容不可见', () => {
+    @file.rewrite(base + '/priv.zgg', '''secret := 42
+export public := 1
+''')
+    p := import(base + '/priv.zgg')
+    t.assertEq(p.public, 1)
+    t.assertUndefined(p.secret)
+})
+
+t.test('module: 相对路径导入（模块内再导入）', () => {
+    @file.rewrite(base + '/dep.zgg', '''export value := 7
+''')
+    @file.rewrite(base + '/nest.zgg', '''d := import('./dep')
+export nested := d.value + 1
+''')
+    n := import(base + '/nest.zgg')
+    t.assertEq(n.nested, 8)
+})
+
+t.test('module: 目录导入自动找 index.zgg', () => {
+    os.MkdirAll(base + '/pkg', 0755)
+    @file.rewrite(base + '/pkg/index.zgg', '''export name := 'pkg'
+''')
+    p := import(base + '/pkg')
+    t.assertEq(p.name, 'pkg')
+})
+
+t.test('module: text / json / csv / bytes 导入', () => {
+    @file.rewrite(base + '/note.txt', 'hello')
+    @file.rewrite(base + '/conf.json', '{"x": 1, "list": [1, 2]}')
+    @file.rewrite(base + '/data.csv', 'a,b\n1,2\n')
+
+    txt := import(base + '/note.txt', false, 'text')
+    t.assertEq(txt, 'hello')
+
+    conf := import(base + '/conf.json', false, 'json')
+    t.assertEq(conf.x, 1)
+    t.assertEq(conf.list, [1, 2])
+
+    rows := import(base + '/data.csv', false, 'csv')
+    t.assertEq(rows, [['a', 'b'], ['1', '2']])
+
+    @file.rewrite(base + '/note.bin', 'hello')
+    bs := import(base + '/note.bin', false, 'bytes')
+    t.assertEq(bs.hex(), '68656c6c6f')
+})
+
+t.test('module: 修改后可按 mtime 热重载', () => {
+    @file.rewrite(base + '/reload.zgg', '''export v := 1
+''')
+    m1 := import(base + '/reload.zgg')
+    t.assertEq(m1.v, 1)
+
+    @time.sleep('20ms')
+    @file.rewrite(base + '/reload.zgg', '''export v := 2
+''')
+    m2 := import(base + '/reload.zgg', true)
+    t.assertEq(m2.v, 2)
+})
+
+t.test('module: 相同路径命中缓存', () => {
+    @file.rewrite(base + '/same.zgg', '''export v := 1
+''')
+    a := import(base + '/same.zgg')
+    b := import(base + '/same.zgg')
+    t.assertEq(a.v, b.v)
+    t.assertTrue(a == b, '同一模块应返回同一个导出对象')
+})
+
+t.test('module: isMain 在模块内为 false', () => {
+    @file.rewrite(base + '/mainflag.zgg', '''export flag := isMain
+''')
+    m := import(base + '/mainflag.zgg')
+    t.assertEq(m.flag, false)
+    t.assertTrue(isMain)
+})
+
+t.test('module: 导入不存在的模块会抛错', () => {
+    t.assertThrows(() => {
+        m := import(base + '/no_such_module_xyz')
+    }, 'cannot find module')
+})
+
+t.test('module: gostd 标准库导入', () => {
+    strings := import('gostd/strings')
+    t.assertEq(strings.ToUpper('abc'), 'ABC')
+    fmt := import('gostd/fmt')
+    t.assertEq(fmt.Sprintf('%v', 42), '42')
+})
+
+t.test('module: 短导入 @mod 与 @@mod', () => {
+    t.assertTrue(@time.now().year > 2000)
+    t.assertEq(@@strings.ToUpper('x'), 'X')
+})
+
+t.test('module: 模块顶层变量互不污染', () => {
+    @file.rewrite(base + '/a.zgg', '''export name := 'A'
+''')
+    @file.rewrite(base + '/b.zgg', '''export name := 'B'
+''')
+    a := import(base + '/a.zgg')
+    b := import(base + '/b.zgg')
+    t.assertEq(a.name, 'A')
+    t.assertEq(b.name, 'B')
+})
+
+if isMain {
+    t.run()
+}

@@ -1,0 +1,132 @@
+// 标准库：sys / sh / flag / path / math / random / psutil
+t := import('./framework')
+
+t.test('sys: args 与 env', () => {
+    t.assertTrue(@sys.args is Array)
+    t.assertTrue(@sys.env('HOME') != '')
+    t.assertEq(@sys.env('NO_SUCH_VAR_FOR_UNITTEST'), '')
+})
+
+t.test('sys: shellResult 执行命令', () => {
+    out := @sys.shellResult('echo hi')
+    t.assertContains(out, 'hi')
+})
+
+t.test('sys: createTempFile 与 drop', () => {
+    tmp := @sys.createTempFile()
+    t.assertTrue(@file.exists(tmp.name))
+    tmp.drop()
+    t.assertFalse(@file.exists(tmp.name))
+})
+
+t.test('sys: Command.waitOutput', () => {
+    out := @sys.Command('echo').waitOutput()
+    t.assertEq(typeName(out), '<type Bytes>')
+    t.assertContains(str(out), '\n')
+})
+
+t.test('sh: 文本、行与 JSON 输出', () => {
+    t.assertEq(@sh.echo('hello').text().trim(), 'hello')
+    lines := @sh.printf('a\nb\n').lines()
+    t.assertEq(lines, ['a', 'b'])
+    v := @sh.echo('{"a": 1}').json()
+    t.assertEq(v.a, 1)
+})
+
+t.test('flag: 声明、解析与默认值', () => {
+    p := @flag.Parser('unittest')
+    p.str('host', 'host')
+    p.int('port', 'port')
+    p.bool('verbose', 'verbose')
+    [help, opts, rest] := p.parse('-host', '0.0.0.0', '-port', '8080', '-verbose')
+    t.assertEq(help, false)
+    t.assertEq(opts.host, '0.0.0.0')
+    t.assertEq(opts.port, 8080)
+    t.assertEq(opts.verbose, true)
+    t.assertEq(rest, [])
+
+    p2 := @flag.Parser('unittest2')
+    p2.str('name', 'name')
+    [_, opts2, rest2] := p2.parse(...['-name', 'zgg', 'extra'])
+    t.assertEq(opts2.name, 'zgg')
+    t.assertEq(rest2, ['extra'])
+})
+
+t.test('flag: 未传参数时使用零值', () => {
+    p := @flag.Parser('unittest3')
+    p.str('s', '')
+    p.int('i', '')
+    p.bool('b', '')
+    [_, opts, _] := p.parse()
+    t.assertEq(opts.s, '')
+    t.assertEq(opts.i, 0)
+    t.assertEq(opts.b, false)
+})
+
+t.test('path: join / glob / walk', () => {
+    t.assertEq(@path.join('/tmp', 'a', 'b.txt'), '/tmp/a/b.txt')
+    os := import('gostd/os')
+    os.MkdirAll('/tmp/zgg_unittest_walk', 0755)
+    @file.rewrite('/tmp/zgg_unittest_walk/a.txt', 'a')
+    @file.rewrite('/tmp/zgg_unittest_walk/b.txt', 'b')
+    @file.rewrite('/tmp/zgg_up_1.txt', '1')
+    @file.rewrite('/tmp/zgg_up_2.txt', '2')
+    t.assertEq(len(@path.glob('/tmp/zgg_up_*.txt')), 2)
+
+    names := []
+    for item in @path.walk('/tmp/zgg_unittest_walk') {
+        if !item.isDir {
+            names.push(item.name)
+        }
+    }
+    t.assertEq(names.sort(n => n), ['a.txt', 'b.txt'])
+})
+
+t.test('math: 基础函数', () => {
+    m := @math
+    t.assertEq(m.abs(-3), 3)
+    t.assertEq(m.sqrt(9), 3.0)
+    t.assertEq(m.floor(1.7), 1.0)
+    t.assertEq(m.ceil(1.2), 2.0)
+    t.assertEq(m.round(1.5), 2.0)
+    t.assertEq(m.round(-1.5), -2.0)
+    t.assertEq(m.pow(2, 10), 1024.0)
+    t.assertClose(m.PI, 3.14159265, 0.0001)
+    t.assertClose(m.E, 2.71828182, 0.0001)
+})
+
+t.test('math: 整数与组合数学', () => {
+    m := @math
+    t.assertEq(m.gcd(12, 18), 6)
+    t.assertEq(m.lcm(4, 6), 12)
+    t.assertEq(m.P(5, 2), 20)
+    t.assertEq(m.C(5, 2), 10)
+    t.assertEq(m.reduction(4, 6), [2, 3])
+})
+
+t.test('random: 范围与选择', () => {
+    for i in 100 {
+        v := @random.random()
+        t.assertTrue(v >= 0.0 && v < 1.0)
+    }
+    for i in 100 {
+        v := @random.choice([1, 2, 3])
+        t.assertContains([1, 2, 3], v)
+    }
+})
+
+t.test('random: shuffle 保留元素', () => {
+    arr := [1, 2, 3, 4, 5]
+    out := @random.shuffle(arr)
+    t.assertEq(len(out), 5)
+    t.assertEq(out.sort(v => v), [1, 2, 3, 4, 5])
+})
+
+t.test('psutil: CPU 计数', () => {
+    t.assertTrue(@psutil.cpu.logicalCount > 0)
+    t.assertTrue(@psutil.cpu.physicalCount > 0)
+})
+
+if isMain {
+    t.run()
+}

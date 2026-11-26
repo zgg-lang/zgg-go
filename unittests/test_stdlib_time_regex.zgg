@@ -1,0 +1,143 @@
+// 标准库：time / regex / regex2
+t := import('./framework')
+
+t.test('time: 解析与格式化（Go layout 与 % 占位）', () => {
+    tm := @time.parse('2026-11-25 10:30:45')
+    t.assertEq(tm.format('2006-01-02'), '2026-11-25')
+    t.assertEq(tm.format('%Y-%m-%d'), '2026-11-25')
+    t.assertEq(tm.format('%H:%M:%S'), '10:30:45')
+
+    tm2 := @time.parse('2026/11/25', '2006/01/02')
+    t.assertEq(tm2.format('%Y-%m-%d'), '2026-11-25')
+})
+
+t.test('time: 字段与 timetuple', () => {
+    tm := @time.parse('2026-11-25 10:30:45')
+    t.assertEq(tm.year, 2026)
+    t.assertEq(tm.month, 11)
+    t.assertEq(tm.day, 25)
+    t.assertEq(tm.hour, 10)
+    t.assertEq(tm.minute, 30)
+    t.assertEq(tm.second, 45)
+    t.assertEq(tm.timetuple()[0], 2026)
+    t.assertEq(tm.timetuple()[5], 45)
+})
+
+t.test('time: Unix 时间戳往返', () => {
+    tm := @time.parse('2026-11-25 10:30:45')
+    t.assertEq(@time.fromUnix(tm.unix).format('%Y-%m-%d %H:%M:%S'), '2026-11-25 10:30:45')
+    t.assertEq(@time.fromUnixMs(tm.unix * 1000).format('%Y-%m-%d %H:%M:%S'), '2026-11-25 10:30:45')
+})
+
+t.test('time: 加减与周期起点', () => {
+    tm := @time.parse('2026-11-25 10:30:45')
+    t.assertEq(tm.addDays(1).format('%Y-%m-%d'), '2026-11-26')
+    t.assertEq(tm.addDays(-1).format('%Y-%m-%d'), '2026-11-24')
+    t.assertEq(tm.addHours(2).format('%H:%M'), '12:30')
+    t.assertEq(tm.add(@time.Duration('30m')).format('%H:%M'), '11:00')
+    t.assertEq(tm.dayBegin().format('%H:%M:%S'), '00:00:00')
+    t.assertEq(tm.monthBegin().format('%Y-%m-%d'), '2026-11-01')
+    t.assertEq(tm.yearBegin().format('%Y-%m-%d'), '2026-01-01')
+    t.assertEq(tm.weekBegin().format('%Y-%m-%d'), '2026-11-22')
+})
+
+t.test('time: 时区转换', () => {
+    tm := @time.parse('2026-11-25 10:30:45')
+    t.assertEq(tm.loc('UTC').format('%H:%M'), '02:30')
+})
+
+t.test('time: 比较运算', () => {
+    a := @time.parse('2026-01-01')
+    b := @time.parse('2026-12-31')
+    t.assertTrue(a < b)
+    t.assertTrue(b > a)
+    t.assertTrue(a <= a)
+    t.assertTrue(a == @time.parse('2026-01-01'))
+})
+
+t.test('time: Duration 构造与运算', () => {
+    d := @time.Duration('1h30m')
+    t.assertEq(str(d), '1h30m0s')
+    t.assertEq(str(d + @time.Duration('30m')), '2h0m0s')
+    t.assertEq(str(d * 2), '3h0m0s')
+    t.assertTrue(d > @time.Duration('1h'))
+})
+
+t.test('time: 间隔计算与列表', () => {
+    a := @time.parse('2026-11-01')
+    b := @time.parse('2026-11-25')
+    t.assertEq(int(b.unix - a.unix) / 86400, 24)
+
+    days := []
+    for d in @time.iter(a, a.addDays(3)) {
+        days.push(d.format('%d'))
+    }
+    t.assertEq(days, ['01', '02', '03'])
+
+    t.assertEq(@time.list(a, a.addDays(2)).map(d => d.format('%d')), ['01', '02'])
+})
+
+t.test('time: sleep 与 timeit', () => {
+    @time.sleep('1ms')
+    d := @time.timeit(() => {
+        s := 0
+        for i in 100 {
+            s += i
+        }
+    })
+    t.assertEq(typeName(d), '<type Duration>')
+})
+
+t.test('regex: find 返回分组数组', () => {
+    m := @regex.find(r'(\w+)@(\w+)', 'mail: a@b')
+    t.assertEq(m[0][0], 'a@b')
+    t.assertEq(m[1][0], 'a')
+    t.assertEq(m[2][0], 'b')
+    t.assertEq(m[0][1], 6)
+    t.assertEq(m[0][2], 9)
+})
+
+t.test('regex: findAll 返回所有匹配', () => {
+    all := @regex.findAll(r'\d+', 'a1b22')
+    t.assertEq(len(all), 2)
+    t.assertEq(all[0][0][0], '1')
+    t.assertEq(all[1][0][0], '22')
+})
+
+t.test('regex2: 匹配结果是对象', () => {
+    m := @regex2.find(r'(\w+)@(\w+)', 'mail: a@b')
+    t.assertEq(m[0].text, 'a@b')
+    t.assertEq(m[1].text, 'a')
+    t.assertEq(m[1].begin, 6)
+    t.assertEq(m[1].end, 7)
+})
+
+t.test('regex: split 与 replaceAll', () => {
+    t.assertEq(@regex.split(r',', 'a,b,c'), ['a', 'b', 'c'])
+    t.assertEq(@regex.replaceAll(r'\d+', 'a1b22', '#'), 'a#b#')
+    t.assertEq(@regex.replaceAll(r'\d+', 'a1b22', m => '[' + m + ']'), 'a[1]b[22]')
+})
+
+t.test('regex: 编译复用 Regexp', () => {
+    re := @regex.Regexp(r'\d+')
+    t.assertEq(re.find('x9y')[0][0], '9')
+    t.assertEq(len(re.findAll('x9y8')), 2)
+    t.assertEq(re.split('a1b2c'), ['a', 'b', 'c'])
+    t.assertEq(re.replaceAll('a1b22', '#'), 'a#b#')
+})
+
+t.test('regex: 下标按字符计算', () => {
+    m := @regex.find(r'\d+', '中1')
+    t.assertEq(m[0][1], 1)
+    t.assertEq(m[0][2], 2)
+})
+
+t.test('regex: 非法表达式抛错', () => {
+    t.assertThrows(() => {
+        re := @regex.Regexp('(')
+    }, 'compile regexp')
+})
+
+if isMain {
+    t.run()
+}

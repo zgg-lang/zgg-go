@@ -1,0 +1,114 @@
+// 字符串：字面量、索引、方法与字节转换
+t := import('./framework')
+
+t.test('string: 长度、索引与切片', () => {
+    s := 'abcdef'
+    t.assertEq(len(s), 6)
+    t.assertEq(s[0], 'a')
+    t.assertUndefined(s[-1], '字符串不支持负下标')
+    t.assertEq(s[1:3], 'bc')
+    t.assertEq(s[:2], 'ab')
+    t.assertEq(s[3:], 'def')
+})
+
+t.test('string: 中文按字符处理', () => {
+    s := '你好'
+    t.assertEq(len(s), 2)
+    t.assertEq(s[0], '你')
+    t.assertEq(s[1], '好')
+})
+
+t.test('string: 大小写与去空白', () => {
+    t.assertEq('aBc'.upper(), 'ABC')
+    t.assertEq('aBc'.lower(), 'abc')
+    t.assertEq('  x  '.trim(), 'x')
+})
+
+t.test('string: substr 支持负下标', () => {
+    s := 'Hello, World'
+    t.assertEq(s.substr(0, 5), 'Hello')
+    t.assertEq(s.substr(-5), 'World')
+    t.assertEq(s.substr(1, -1), 'ello, Worl')
+})
+
+t.test('string: split / splitr / lines', () => {
+    t.assertEq('a,b,c'.split(','), ['a', 'b', 'c'])
+    t.assertEq('a,b,c'.split(',', 2), ['a', 'b,c'])
+    t.assertEq('a  b   c'.splitr(), ['a', 'b', 'c'])
+    t.assertEq('l1
+l2'.lines(), ['l1', 'l2'])
+})
+
+t.test('string: indexOf / lastIndexOf', () => {
+    s := 'abcabcabc'
+    t.assertEq(s.indexOf('ca'), 2)
+    t.assertEq(s.indexOf('zz'), -1)
+    t.assertEq(s.lastIndexOf('ca'), 5)
+})
+
+t.test('string: find 使用正则并返回匹配文本', () => {
+    t.assertEq('Hello, World'.find('[A-Z]+'), 'H')
+    t.assertEq('a1b22'.find('[0-9]+'), '1')
+    t.assertEq('abc'.find('[0-9]+'), '')
+})
+
+t.test('string: replaceOne / replaceAll', () => {
+    t.assertEq('aXa'.replaceOne('a', 'b'), 'bXa')
+    t.assertEq('aXa'.replaceAll('a', 'b'), 'bXb')
+})
+
+t.test('string: replace 支持回调', () => {
+    got := 'a1b22'.replace('[0-9]+', m => '<' + m + '>')
+    t.assertEq(got, 'a<1>b<22>')
+})
+
+t.test('string: startsWith / endsWith / contains 支持多候选', () => {
+    t.assertTrue('abc'.startsWith('x', 'a'))
+    t.assertFalse('abc'.startsWith('x', 'y'))
+    t.assertTrue('abc'.endsWith('x', 'c'))
+    t.assertTrue('abc'.contains('x', 'b'))
+    t.assertFalse('abc'.contains('x', 'y'))
+})
+
+t.test('string: hash 对相同内容稳定', () => {
+    t.assertEq('abc'.hash(), 'abc'.hash())
+    t.assertNe('abc'.hash(), 'abd'.hash())
+})
+
+t.test('string: code / codes', () => {
+    t.assertEq('abc'.code(0), 97)
+    t.assertEq('abc'.code(1), 98)
+    t.assertEq('abc'.codes(), [97, 98, 99])
+})
+
+t.test('string: 终端宽度', () => {
+    t.assertEq('abc'.width(), 3)
+    t.assertEq('中文'.width(), 4)
+})
+
+t.test('string: isBlank / notBlank', () => {
+    t.assertTrue(''.isBlank())
+    t.assertTrue('   '.isBlank())
+    t.assertFalse('x'.isBlank())
+    t.assertTrue('x'.notBlank())
+})
+
+t.test('string: decodeHex / decodeBase64 返回 Bytes', () => {
+    t.assertEq('616263'.decodeHex().hex(), '616263')
+    t.assertEq('YWJj'.decodeBase64().hex(), '616263')
+    t.assertEq(str('616263'.decodeHex()), 'abc')
+})
+
+t.test('string: Str.fromCodes 静态构造', () => {
+    t.assertEq(Str.fromCodes(97, 98, 99), 'abc')
+})
+
+t.test('string: 与其它类型拼接', () => {
+    t.assertEq('x=' + 1, 'x=1')
+    t.assertEq('x=' + [1, 2], 'x=[1, 2]')
+    t.assertEq('x=' + {a: 1}, 'x={a: 1}')
+})
+
+if isMain {
+    t.run()
+}

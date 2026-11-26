@@ -1,0 +1,157 @@
+// 函数、闭包、参数与偏应用
+t := import('./framework')
+
+t.test('function: 命名函数与递归', () => {
+    func fib(n) {
+        if n < 2 {
+            return n
+        }
+        return fib(n - 1) + fib(n - 2)
+    }
+    t.assertEq(fib(10), 55)
+})
+
+t.test('function: 匿名函数与箭头函数', () => {
+    f := func(x) { return x * 2 }
+    g := x => x + 1
+    h := (a, b) => a - b
+    k := (a, b) => { return a * b }
+    t.assertEq(f(3), 6)
+    t.assertEq(g(1), 2)
+    t.assertEq(h(5, 2), 3)
+    t.assertEq(k(2, 3), 6)
+})
+
+t.test('function: 可变参数', () => {
+    func sum(first, ...rest) {
+        total := first
+        for v in rest {
+            total += v
+        }
+        return total
+    }
+    t.assertEq(sum(1, 2, 3, 4), 10)
+    t.assertEq(sum(1), 1)
+})
+
+t.test('function: 调用时展开数组', () => {
+    func add(a, b, c) { return a + b + c }
+    args := [1, 2, 3]
+    t.assertEq(add(...args), 6)
+})
+
+t.test('function: 具名参数与顺序无关', () => {
+    func r(begin, end, step) { return [begin, end, step] }
+    t.assertEq(r(end: 10, begin: 1, step: 2), [1, 10, 2])
+})
+
+t.test('function: 闭包捕获变量本身', () => {
+    func counter() {
+        n := 0
+        return () => {
+            n += 1
+            return n
+        }
+    }
+    c := counter()
+    t.assertEq(c(), 1)
+    t.assertEq(c(), 2)
+    t.assertEq(c(), 3)
+})
+
+t.test('function: 循环变量共享的闭包陷阱', () => {
+    func makeAdders() {
+        result := []
+        for i in 1..3 {
+            result.push(x => x + i)
+        }
+        return result
+    }
+    t.assertEq(makeAdders().map(f => f(10)), [13, 13, 13])
+
+    func makeAddersFixed() {
+        result := []
+        for i in 1..3 {
+            cur := i
+            result.push(x => x + cur)
+        }
+        return result
+    }
+    t.assertEq(makeAddersFixed().map(f => f(10)), [11, 12, 13])
+})
+
+t.test('function: arguments 获取实参', () => {
+    func collect() {
+        return arguments
+    }
+    t.assertEq(collect(1, 2, 3), [1, 2, 3])
+})
+
+t.test('function: 隐式返回与显式返回', () => {
+    func implicit() {
+        x := 42
+    }
+    t.assertEq(implicit(), 42)
+
+    func lastCall() {
+        [1, 2].map(v => v * 10)
+    }
+    t.assertEq(lastCall(), [10, 20])
+
+    func bare() { return }
+    t.assertUndefined(bare())
+
+    func empty() {}
+    t.assertEq(typeName(empty()), '<type Func>')
+})
+
+t.test('function: 代码块作为回调时使用 it', () => {
+    t.assertEq([1, 2, 3].map({ it * 10 }), [10, 20, 30])
+    t.assertEq(['a', 'b'].map({ .upper() }), ['A', 'B'])
+})
+
+t.test('function: bind 与 % 偏应用', () => {
+    func add(a, b) { return a + b }
+    t.assertEq(bind(add, 1)(2), 3)
+    t.assertEq(add(%, 1)(10), 11)
+})
+
+t.test('function: 高阶函数', () => {
+    func apply(f, x) { return f(x) }
+    t.assertEq(apply(x => x * x, 6), 36)
+    t.assertEq([1, 2].map(v => apply(x => x + 10, v)), [11, 12])
+})
+
+t.test('function: return 可以跳出循环', () => {
+    func firstEven() {
+        for i in 10 {
+            if i % 2 == 0 && i > 0 {
+                return i
+            }
+        }
+        return -1
+    }
+    t.assertEq(firstEven(), 2)
+})
+
+t.test('function: 没有默认参数，用 ?? 兜底', () => {
+    func greet(name) {
+        name = name ?? 'world'
+        return 'hello, ' + name
+    }
+    t.assertEq(greet(), 'hello, world')
+    t.assertEq(greet('zgg'), 'hello, zgg')
+})
+
+t.test('function: 函数是一等值', () => {
+    ops := {
+        inc: x => x + 1,
+        dec: x => x - 1,
+    }
+    t.assertEq(ops.inc(1), 2)
+    t.assertEq(ops.dec(1), 0)
+})
+
+if isMain {
+    t.run()
+}

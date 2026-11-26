@@ -1,0 +1,127 @@
+// 标准库：db（SQLite）
+t := import('./framework')
+
+dbfile := '/tmp/zgg_unittest.db'
+db := @db.open('sqlite', 'file:' + dbfile)
+
+func resetTable(name) {
+    db.execute('drop table if exists ' + name)
+    db.execute('create table ' + name + '(id integer primary key autoincrement, name text, age int)')
+}
+
+t.test('db: execute 返回 affected / lastInsertID', () => {
+    resetTable('t_exec')
+    res := db.execute('insert into t_exec(name, age) values(?, ?)', 'alice', 30)
+    t.assertEq(res.affected, 1)
+    t.assertEq(res.lastInsertID, 1)
+})
+
+t.test('db: query 的 all / allArray / allOne', () => {
+    resetTable('t_query')
+    db.execute('insert into t_query(name, age) values(?, ?)', 'a', 1)
+    db.execute('insert into t_query(name, age) values(?, ?)', 'b', 2)
+
+    rows := db.query('select id, name from t_query order by id').all()
+    t.assertEq(len(rows), 2)
+    t.assertEq(rows[0].name, 'a')
+
+    arr := db.query('select id, name from t_query order by id').allArray()
+    t.assertEq(arr[0], [1, 'a'])
+
+    one := db.query('select count(1) from t_query').allOne()
+    t.assertEq(int(one[0]), 2)
+})
+
+t.test('db: query next 逐行读取', () => {
+    resetTable('t_next')
+    db.execute('insert into t_next(name) values(?)', 'x')
+    db.execute('insert into t_next(name) values(?)', 'y')
+    r := db.query('select name from t_next order by id')
+    t.assertEq(r.next().name, 'x')
+    t.assertEq(r.next().name, 'y')
+    t.assertEq(r.next(), nil)
+})
+
+t.test('db: ActiveRecord add / all', () => {
+    resetTable('t_ar')
+    db.m('t_ar').add({name: 'alice', age: 30}, {name: 'bob', age: 20})
+    rows := db.m('t_ar').all()
+    t.assertEq(len(rows), 2)
+    t.assertEq(rows[0].name, 'alice')
+})
+
+t.test('db: ActiveRecord and / one / findOne / find', () => {
+    resetTable('t_ar2')
+    db.m('t_ar2').add({name: 'alice', age: 30}, {name: 'bob', age: 20})
+    t.assertEq(db.m('t_ar2').and({name: 'alice'}).one().age, 30)
+    t.assertEq(db.m('t_ar2').and({name: 'bob'}).findOne().age, 20)
+    t.assertEq(db.m('t_ar2').find('name').sort(r => r.name)[0], {name: 'alice'})
+})
+
+t.test('db: ActiveRecord update 返回受影响行数', () => {
+    resetTable('t_upd')
+    db.m('t_upd').add({name: 'alice', age: 30}, {name: 'bob', age: 20})
+    n := db.m('t_upd').and({name: 'bob'}).update({age: 21})
+    t.assertEq(n, 1)
+    t.assertEq(db.m('t_upd').and({name: 'bob'}).one().age, 21)
+})
+
+t.test('db: ActiveRecord 排序与分页', () => {
+    resetTable('t_page')
+    db.m('t_page').add({name: 'a', age: 3}, {name: 'b', age: 1}, {name: 'c', age: 2})
+    t.assertEq(db.m('t_page').asc('age').all().map(r => r.name), ['b', 'c', 'a'])
+    t.assertEq(db.m('t_page').desc('age').all().map(r => r.name), ['a', 'c', 'b'])
+    t.assertEq(db.m('t_page').asc('age').limit(2).all().map(r => r.name), ['b', 'c'])
+})
+
+t.test('db: count 聚合与 toTable', () => {
+    resetTable('t_cnt')
+    db.m('t_cnt').add({name: 'a', age: 1}, {name: 'b', age: 2})
+    t.assertEq(int(db.m('t_cnt').count('count(1)')), 2)
+    t.assertEq(db.m('t_cnt').toTable().toArray(true), [['id', 'name', 'age'], [1, 'a', 1], [2, 'b', 2]])
+})
+
+t.test('db: atom 事务提交与回滚', () => {
+    resetTable('t_atom')
+    db.atom(s => {
+        s.m('t_atom').add({name: 'a', age: 1})
+        s.m('t_atom').add({name: 'b', age: 2})
+        return true
+    })
+    t.assertEq(int(db.m('t_atom').count('count(1)')), 2)
+
+    try {
+        db.atom(s => {
+            s.m('t_atom').add({name: 'c', age: 3})
+            x := 1 / 0
+        })
+    } catch (e) {
+        # 期望回滚
+    }
+    t.assertEq(int(db.m('t_atom').count('count(1)')), 2)
+})
+
+t.test('db: newSession 手动 commit / rollback', () => {
+    resetTable('t_sess')
+    s := db.newSession()
+    s.m('t_sess').add({name: 'a'})
+    s.commit()
+    t.assertEq(int(db.m('t_sess').count('count(1)')), 1)
+
+    s2 := db.newSession()
+    s2.m('t_sess').add({name: 'b'})
+    s2.rollback()
+    t.assertEq(int(db.m('t_sess').count('count(1)')), 1)
+})
+
+t.test('db: 参数绑定可防止注入拼接', () => {
+    resetTable('t_bind')
+    injected := '''a' OR '1'='1'''
+    db.execute('insert into t_bind(name, age) values(?, ?)', injected, 1)
+    t.assertEq(int(db.m('t_bind').count('count(1)')), 1)
+    t.assertEq(db.m('t_bind').one().name, injected)
+})
+
+if isMain {
+    t.run()
+}

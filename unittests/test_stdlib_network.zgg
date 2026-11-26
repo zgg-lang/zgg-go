@@ -1,0 +1,53 @@
+// 标准库：tcp / udp / kv（redis/nsq/ip2region 无外部依赖时跳过）
+t := import('./framework')
+
+t.test('tcp: 服务端回显与客户端收发', () => {
+    srv := @tcp.listen('127.0.0.1:19200')
+    job := @concurrent.start(() => srv.acceptLoop(conn => {
+        msg := conn.recv(1024)
+        conn.send('echo:' + str(msg))
+        conn.close()
+    }))
+    @time.sleep('150ms')
+
+    c := @tcp.connect('127.0.0.1:19200')
+    t.assertTrue(c.addr().remote != '')
+    t.assertEq(c.send('hi'), 2)
+    t.assertEq(str(c.recv(1024)), 'echo:hi')
+    c.close()
+})
+
+t.test('udp: sendTo / recvFrom', () => {
+    srv := @udp.Conn('127.0.0.1:19201')
+    job := @concurrent.start(() => {
+        [data, addr] := srv.recvFrom(1024)
+        srv.sendTo('echo:' + str(data), addr)
+    })
+    @time.sleep('150ms')
+
+    c := @udp.Conn('127.0.0.1:19202')
+    c.sendTo('hi', '127.0.0.1:19201')
+    [d, a] := c.recvFrom(1024)
+    t.assertEq(str(d), 'echo:hi')
+    c.close()
+})
+
+t.test('kv: fs 适配器的 set / get', () => {
+    os := import('gostd/os')
+    os.MkdirAll('/tmp/zgg_unittest_kv', 0755)
+
+    m := @kv.Manager('fs:///tmp/zgg_unittest_kv?prefix=unit')
+    m.set('k', 'v')
+    t.assertEq(str(m.get('k')), 'v')
+    t.assertNil(m.get('missing'))
+    m.set('n', '2')
+    t.assertEq(str(m.get('n')), '2')
+    m.close()
+})
+
+t.skip('nsq: 生产/消费（需要本地 NSQ）', '无外部 NSQ 服务')
+t.skip('ip2region: IP 归属地（需要 xdb 数据文件）', '缺少 ip2region.xdb')
+
+if isMain {
+    t.run()
+}

@@ -1,0 +1,149 @@
+// 标准库：ptable / xlsx / template / url / base64 / hash / compress / binary / msgpack
+t := import('./framework')
+
+t.test('ptable: 构造、追加与列名', () => {
+    tb := @ptable('name', 'age')
+    tb.add('alice', 30)
+    tb.addArray([['bob', 20]])
+    tb.addObject({name: 'carol', age: 40})
+    t.assertEq(tb.columns(), ['name', 'age'])
+    t.assertEq(tb.toArray(true), [['name', 'age'], ['alice', 30], ['bob', 20], ['carol', 40]])
+})
+
+t.test('ptable: 多种输出格式', () => {
+    tb := @ptable('name', 'age')
+    tb.add('alice', 30)
+    t.assertContains(tb.txt(), 'alice')
+    t.assertContains(tb.txt(), '+---')
+    t.assertContains(tb.markdown(), '| name')
+    t.assertContains(tb.html(), '<TABLE>')
+    t.assertContains(tb.csv(), 'name,age')
+})
+
+t.test('ptable: slice 截取行', () => {
+    tb := @ptable('n')
+    tb.addArray([['a'], ['b'], ['c']])
+    t.assertEq(tb.slice(1, 2).toArray(true), [['n'], ['b']])
+})
+
+t.test('xlsx: 从 ptable 生成并读回', () => {
+    tb := @ptable('name', 'age', 'ok')
+    tb.add('alice', 30, true)
+    tb.add('bob', 20, false)
+
+    p := '/tmp/zgg_unittest.xlsx'
+    f := @xlsx.File(tb)
+    t.assertEq(f.sheetCount(), 1)
+    t.assertEq(f.sheetNames(), ['Sheet1'])
+    f.save(p)
+
+    f2 := @xlsx.open(p)
+    strs := f2.sheetStrs(0)
+    t.assertEq(strs[0], ['name', 'age', 'ok'])
+    t.assertEq(strs[1], ['alice', '30', 'TRUE'])
+
+    vals := f2.sheetValues('Sheet1')
+    t.assertEq(vals[1][0], 'alice')
+    t.assertEq(vals[1][2], true)
+    t.assertEq(vals[2][2], false)
+})
+
+t.test('template: 文本模板与循环', () => {
+    t.assertEq(@template.renderText('hello {{.name}}', {name: 'zgg'}), 'hello zgg')
+    t.assertEq(@template.renderText('{{range .items}}[{{.}}]{{end}}', {items: [1, 2, 3]}), '[1][2][3]')
+})
+
+t.test('template: HTML 模板转义', () => {
+    out := @template.renderHtml('<p>{{.x}}</p>', {x: '<b>'})
+    t.assertContains(out, '&lt;b&gt;')
+})
+
+t.test('url: 组件与表单编解码', () => {
+    t.assertEq(@url.encodeURIComponent('a b&c'), 'a+b%26c')
+    t.assertEq(@url.decodeURIComponent('a%20b%26c'), 'a b&c')
+    t.assertEq(@url.encodeForm({a: 1, b: 'x y'}), 'a=1&b=x+y')
+    t.assertEq(@url.decodeForm('a=1&b=x+y'), {a: ['1'], b: ['x y']})
+})
+
+t.test('base64: 编解码与自定义字符表', () => {
+    t.assertEq(@base64.encode('hello'), 'aGVsbG8=')
+    t.assertEq(str(@base64.decode('aGVsbG8=')), 'hello')
+    alpha := 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    t.assertEq(@base64.encodeN('hello', alpha), 'aGVsbG8=')
+    t.assertEq(str(@base64.decodeN('aGVsbG8=', alpha)), 'hello')
+})
+
+t.test('hash: 摘要与 HMAC', () => {
+    h := @hash
+    t.assertEq(h.md5('hello').hex(), '5d41402abc4b2a76b9719d911017c592')
+    t.assertEq(h.sha1('hello').hex(), 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d')
+    t.assertEq(h.sha256('hello').hex(), '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824')
+    t.assertEq(typeName(h.crc32('hello')), '<type Int>')
+    t.assertEq(len(h.hmac.sha256('key', 'msg').hex()), 64)
+})
+
+t.test('compress: GZIP / ZLIB / FLATE 往返', () => {
+    raw := 'hello ' * 200
+    for algo in [@compress.GZIP, @compress.ZLIB, @compress.FLATE] {
+        packed := algo.compress(raw)
+        t.assertEq(typeName(packed), '<type Bytes>')
+        t.assertTrue(packed.len() < len(raw))
+        t.assertEq(str(algo.decompress(packed)), raw)
+    }
+    packed := @compress.GZIP.compress(raw, 9)
+    t.assertEq(str(@compress.GZIP.decompress(packed)), raw)
+})
+
+t.test('binary: Writer / Reader 往返', () => {
+    w := @binary.Writer()
+    w.i32(42)
+    w.u8(7)
+    w.bytes(bytes('ab'))
+    bs := w.toBytes()
+    t.assertEq(bs.hex(), '2a000000076162')
+
+    r := @binary.Reader(bs)
+    t.assertEq(r.i32(), 42)
+    t.assertEq(r.u8(), 7)
+    t.assertEq(r.bytes(2).hex(), '6162')
+})
+
+t.test('binary: varint 往返', () => {
+    for v in [-3, 0, 300] {
+        w := @binary.Writer()
+        w.varint(v)
+        r := @binary.Reader(w.toBytes())
+        t.assertEq(r.varint(), v)
+    }
+})
+
+t.test('binary: uvarint 往返与边界', () => {
+    for v in [0, 1, 2, 127, 128, 300, 16383, 16384, 9223372036854775807] {
+        w := @binary.Writer()
+        w.uvarint(v)
+        r := @binary.Reader(w.toBytes())
+        t.assertEq(r.uvarint(), v, 'uvarint roundtrip ' + str(v))
+    }
+})
+
+t.test('binary: uvarint 与其他字段混排保持对齐', () => {
+    w := @binary.Writer()
+    w.uvarint(300)
+    w.uvarint(1)
+    w.i32(7)
+    r := @binary.Reader(w.toBytes())
+    t.assertEq(r.uvarint(), 300)
+    t.assertEq(r.uvarint(), 1)
+    t.assertEq(r.i32(), 7)
+})
+
+t.test('msgpack: 编解码往返', () => {
+    data := {a: 1, b: [2, 3], c: 'x'}
+    packed := @msgpack.encode(data)
+    t.assertEq(typeName(packed), '<type Bytes>')
+    t.assertEq(@msgpack.decode(packed), data)
+})
+
+if isMain {
+    t.run()
+}

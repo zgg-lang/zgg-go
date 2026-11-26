@@ -1,0 +1,164 @@
+// 内置函数
+t := import('./framework')
+
+t.test('builtin: 输出函数返回 0', () => {
+    t.assertEq(printf(''), 0)
+    t.assertEq(sprintf('%s', 'x'), 'x')
+})
+
+t.test('builtin: sprintf 使用 Go 格式化', () => {
+    t.assertEq(sprintf('%05d', 42), '00042')
+    t.assertEq(sprintf('%x', 255), 'ff')
+    t.assertEq(sprintf('%.2f', 3.14159), '3.14')
+    t.assertEq(sprintf('%v', [1, 2]), '[1 2]')
+    t.assertEq(sprintf('%s-%d', 'a', 1), 'a-1')
+})
+
+t.test('builtin: int 转换与进制', () => {
+    t.assertEq(int('42'), 42)
+    t.assertEq(int('0x10'), 16)
+    t.assertEq(int('0b101'), 5)
+    t.assertEq(int('010'), 8)
+    t.assertEq(int('ff', 16), 255)
+    t.assertEq(int('101', 2), 5)
+    t.assertEq(int(1.9), 1)
+    t.assertEq(int(true), 1)
+    t.assertEq(int(false), 0)
+    t.assertEq(int('not-a-number'), 0)
+})
+
+t.test('builtin: float 转换', () => {
+    t.assertEq(float(1), 1.0)
+    t.assertEq(float('1.5'), 1.5)
+    t.assertEq(float(true), 1.0)
+    t.assertEq(float('bad'), 0.0)
+})
+
+t.test('builtin: str 转换与进制输出', () => {
+    t.assertEq(str(1), '1')
+    t.assertEq(str(1.5), '1.5')
+    t.assertEq(str(255, 16), 'ff')
+    t.assertEq(str([1, 2]), '[1, 2]')
+    t.assertEq(str(nil), 'nil')
+})
+
+t.test('builtin: bytes 与 len', () => {
+    b := bytes('abc')
+    t.assertEq(typeName(b), '<type Bytes>')
+    t.assertEq(len(b), 3)
+    t.assertEq(len('abc'), 3)
+    t.assertEq(len([1, 2]), 2)
+    t.assertEq(len({a: 1}), 1)
+    t.assertThrows(() => {
+        x := len(1)
+    }, 'len function')
+})
+
+t.test('builtin: typeName / type', () => {
+    t.assertEq(typeName(1), '<type Int>')
+    t.assertEq(typeName('x'), '<type Str>')
+    t.assertEq(type(1).__name__, 'Int')
+    t.assertEq(type(1) == Int, true)
+})
+
+t.test('builtin: range 生成序列', () => {
+    t.assertEq(range(3), [0, 1, 2])
+    t.assertEq(range(2, 5), [2, 3, 4])
+    t.assertEq(range(1, 10, 3), [1, 4, 7])
+    t.assertEq(range(5, 10, 2), [5, 7, 9])
+})
+
+t.test('builtin: range 参数错误', () => {
+    t.assertThrows(() => {
+        x := range(0)
+    }, 'range')
+    t.assertThrows(() => {
+        x := range(1, 1)
+    }, 'range')
+    t.assertThrows(() => {
+        x := range(1, 5, 0)
+    }, 'step')
+})
+
+t.test('builtin: seq 按 __next__ 生成', () => {
+    t.assertEq(seq(1, 5), [1, 2, 3, 4, 5])
+    t.assertEq(seq('a', 'c'), ['a', 'b', 'c'])
+})
+
+t.test('builtin: 摘要函数返回十六进制字符串', () => {
+    t.assertEq(md5('hello'), '5d41402abc4b2a76b9719d911017c592')
+    t.assertEq(sha1('hello'), 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d')
+    t.assertEq(sha256('hello'), '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824')
+})
+
+t.test('builtin: 类型判断辅助函数', () => {
+    t.assertTrue(isUndefined(undefined))
+    t.assertFalse(isUndefined(nil))
+    t.assertTrue(isCallable(println))
+    t.assertFalse(isCallable(1))
+    t.assertTrue(isArray([]))
+    t.assertFalse(isArray({}))
+    t.assertTrue(isObject({}))
+    t.assertFalse(isObject([]))
+})
+
+t.test('builtin: assertError 解包', () => {
+    t.assertEq(assertError([1, 2]), 1)
+    os := import('gostd/os')
+    t.assertThrows(() => {
+        x := assertError(os.Open('/no/such/file-for-unittest'))
+    }, 'assertError failed')
+})
+
+t.test('builtin: rand 范围', () => {
+    v := rand()
+    t.assertTrue(v >= 0.0 && v < 1.0)
+    for i in 100 {
+        n := rand(10)
+        t.assertTrue(n >= 0 && n < 10)
+    }
+    for i in 100 {
+        n := rand(5, 10)
+        t.assertTrue(n >= 5 && n < 10)
+    }
+    t.assertThrows(() => {
+        x := rand(0)
+    }, 'expected n > 0')
+    t.assertThrows(() => {
+        x := rand(5, 5)
+    }, 'expected n > m')
+})
+
+t.test('builtin: bind 预绑定参数', () => {
+    func add(a, b) { return a + b }
+    t.assertEq(bind(add, 1)(2), 3)
+})
+
+t.test('builtin: max / min', () => {
+    t.assertEq(max(1, 5, 3), 5)
+    t.assertEq(min(1, 5, 3), 1)
+    t.assertEq(max('a', 'b'), 'b')
+    t.assertEq(min('a', 'b'), 'a')
+})
+
+t.test('builtin: lookup 按 JSONPath 取值', () => {
+    t.assertEq(lookup({a: {b: 2}}, r'$.a.b'), 2)
+    t.assertEq(lookup({list: [10, 20]}, r'$.list[1]'), 20)
+})
+
+if @sys.env('CAN_EVAL') != '' {
+    t.test('builtin: eval 执行代码字符串', () => {
+        t.assertEq(eval('1 + 2'), 3)
+    })
+
+    t.test('builtin: eval 支持沙箱变量', () => {
+        t.assertEq(eval('x + 1', {x: 5}), 6)
+    })
+} else {
+    t.skip('builtin: eval 执行代码字符串', 'CAN_EVAL 未设置')
+    t.skip('builtin: eval 支持沙箱变量', 'CAN_EVAL 未设置')
+}
+
+if isMain {
+    t.run()
+}

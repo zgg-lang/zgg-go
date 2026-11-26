@@ -1,0 +1,137 @@
+// 数组与对象：构造、遍历与方法
+t := import('./framework')
+
+t.test('array: 字面量、索引、负下标与长度', () => {
+    a := [1, 2, 3]
+    t.assertEq(a[0], 1)
+    t.assertEq(a[1], 2)
+    t.assertEq(a[-1], 3)
+    t.assertEq(len(a), 3)
+})
+
+t.test('array: push 原地追加并返回数量', () => {
+    a := [1]
+    n := a.push(2, 3)
+    t.assertEq(n, 2)
+    t.assertEq(a, [1, 2, 3])
+})
+
+t.test('array: slice 与字面量切片', () => {
+    a := [1, 2, 3, 4, 5]
+    t.assertEq(a.slice(1, 3), [2, 3])
+    t.assertEq(a.slice(-2), [4, 5])
+    t.assertEq(a[1:3], [2, 3])
+})
+
+t.test('array: 拼接、重复与展开', () => {
+    t.assertEq([1] + [2], [1, 2])
+    t.assertEq([1, 2] * 2, [1, 2, 1, 2])
+    t.assertEq([0, ...[1, 2], 3], [0, 1, 2, 3])
+})
+
+t.test('array: 推导式', () => {
+    t.assertEq([x * 2 for x in 1..5 if x % 2 == 1], [2, 6, 10])
+    t.assertEq([x for x in ['a', 'b']], ['a', 'b'])
+})
+
+t.test('array: map 支持函数与字段/下标简写', () => {
+    t.assertEq([1, 2, 3].map(v => v * 2), [2, 4, 6])
+    t.assertEq([10, 20].map((v, i) => [v, i]), [[10, 0], [20, 1]])
+    t.assertEq([{x: 1}, {x: 2}].map('x'), [1, 2])
+    t.assertEq([[1, 2], [3, 4]].map(0), [1, 3])
+})
+
+t.test('array: filter / flatMap / filterMap', () => {
+    t.assertEq([1, 2, 3].filter(v => v > 1), [2, 3])
+    t.assertEq([[1], [2, 3]].flatMap(v => v), [1, 2, 3])
+    t.assertEq([1, 2, 3].filterMap(v => [v * 10, v > 1]), [20, 30])
+})
+
+t.test('array: reduce 与 sum', () => {
+    t.assertEq([1, 2, 3].reduce((acc, v) => acc + v, 10), 16)
+    t.assertEq([1, 2, 3].reduce((acc, v) => acc + v), 6)
+    t.assertEq([1, 2, 3].sum(), 6)
+    t.assertEq([1, 2, 3].sum(v => v * 2), 12)
+})
+
+t.test('array: each 遍历所有元素', () => {
+    seen := []
+    [1, 2, 3].each(v => seen.push(v))
+    t.assertEq(seen, [1, 2, 3])
+})
+
+t.test('array: sort 使用取键函数', () => {
+    a := [3, 1, 2]
+    t.assertEq(a.sort(v => v), [1, 2, 3])
+    t.assertEq(a.sort(v => v, true), [3, 2, 1])
+    people := [{n: 2}, {n: 1}]
+    t.assertEq(people.sort(p => p.n).map(p => p.n), [1, 2])
+})
+
+t.test('array: join', () => {
+    t.assertEq([1, 2, 3].join('-'), '1-2-3')
+    t.assertEq([1, 2].join(), '1 2')
+})
+
+t.test('array: toMap', () => {
+    t.assertEq(['a', 'b'].toMap((v, i) => i), {'0': 'a', '1': 'b'})
+})
+
+t.test('array: count / countIf', () => {
+    t.assertEq([1, 2, 3].count(), {'1': 1, '2': 1, '3': 1})
+    t.assertEq([1, 2, 3].count(v => v % 2), {'1': 2, '0': 1})
+    t.assertEq([1, 2, 3].countIf(v => v > 1), 2)
+})
+
+t.test('array: toGroup / groupBy / uniq / chunk', () => {
+    t.assertEq([1, 2, 3].toGroup(v => v % 2), {'0': [2], '1': [1, 3]})
+    t.assertEq([1, 2, 3].groupBy(v => v % 2), [[1, 3], [2]])
+    t.assertEq([1, 2, 2, 3].uniq(), [1, 2, 3])
+    t.assertEq([1, 2, 3, 4, 5].chunk(2), [[1, 2], [3, 4], [5]])
+})
+
+t.test('array: find / findIndex / reverse', () => {
+    t.assertEq([1, 2, 3].find(v => v > 1), 2)
+    t.assertEq([1, 2, 3].findIndex(v => v > 1), 1)
+    t.assertEq([1, 2, 3].reverse(), [3, 2, 1])
+})
+
+t.test('object: 键值访问与长度', () => {
+    o := {a: 1, b: 2}
+    t.assertEq(o.a, 1)
+    t.assertEq(o['a'], 1)
+    o['c'] = 3
+    t.assertEq(o.c, 3)
+    o.c += 1
+    t.assertEq(o.c, 4)
+    t.assertEq(len(o), 3)
+    t.assertTrue('a' in o)
+    t.assertFalse('z' in o)
+})
+
+t.test('object: keys / values / pairs / each', () => {
+    o := {b: 2, a: 1}
+    t.assertEq(o.keys().sort(k => k), ['a', 'b'])
+    t.assertEq(o.values().sort(v => v), [1, 2])
+    pairs := o.pairs()
+    t.assertEq(pairs.sort(p => p.key).map(p => [p.key, p.value]), [['a', 1], ['b', 2]])
+    seen := []
+    o.each((k, v) => seen.push(k))
+    t.assertEq(seen.sort(k => k), ['a', 'b'])
+})
+
+t.test('object: 方法中的 this 与展开合并', () => {
+    o := {n: 1, get() { return this.n }}
+    t.assertEq(o.get(), 1)
+    merged := {...{a: 1, b: 2}, b: 3}
+    t.assertEq(merged, {a: 1, b: 3})
+})
+
+t.test('object: 结构相等', () => {
+    t.assertEq({a: 1, b: {c: 2}} == {a: 1, b: {c: 2}}, true)
+    t.assertEq({a: 1} == {a: 2}, false)
+})
+
+if isMain {
+    t.run()
+}
