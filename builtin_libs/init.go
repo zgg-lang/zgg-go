@@ -59,6 +59,7 @@ var (
 		"time":       LibInfo{name: "time", getter: libTime},
 		"udp":        LibInfo{name: "udp", getter: libUdp},
 		"url":        LibInfo{name: "url", getter: libUrl},
+		"xlsx":       LibInfo{name: "xlsx", getter: libXlsx},
 		"yaml":       LibInfo{name: "yaml", getter: libYaml},
 	}
 )

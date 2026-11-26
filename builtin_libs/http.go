@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/NYTimes/gziphandler"
 	"github.com/samber/lo"
 	"github.com/savioxavier/termlink"
 	. "github.com/zgg-lang/zgg-go/runtime"
@@ -152,7 +153,7 @@ func libHttp(*Context) ValueObject {
 			ArgRuleOptional("dir", TypeStr, &dir, NewStr(".")),
 			ArgRuleOptional("url", TypeStr, &urlPrefix, NewStr("/")),
 		)
-		fs := http.FileServer(http.Dir(dir.Value()))
+		fs := gziphandler.GzipHandler(http.FileServer(http.Dir(dir.Value())))
 		http.Handle(urlPrefix.Value(), fs)
 		var listen string
 		switch addrBy {

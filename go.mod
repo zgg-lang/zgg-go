@@ -1,8 +1,6 @@
 module github.com/zgg-lang/zgg-go
 
-go 1.22
-
-toolchain go1.22.5
+go 1.24.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
@@ -27,11 +25,12 @@ require (
 	github.com/urfave/cli v1.22.5
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/ziipin-server/zplog v0.0.0-20180816075932-82160e4259b8
-	golang.org/x/image v0.0.0-20220601225756-64ec528b34cd
+	golang.org/x/image v0.25.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
+	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -44,16 +43,24 @@ require (
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	github.com/piglig/go-qr v1.1.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/richardlehane/mscfb v1.0.6 // indirect
+	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/savioxavier/termlink v1.4.3 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
+	github.com/xuri/efp v0.0.1 // indirect
+	github.com/xuri/excelize/v2 v2.10.1 // indirect
+	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	modernc.org/libc v1.22.3 // indirect
 	modernc.org/mathutil v1.5.0 // indirect

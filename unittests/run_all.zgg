@@ -1,0 +1,39 @@
+// 运行全部单元测试
+// 用法：
+//   zgg unittests/run_all.zgg
+//   CAN_EVAL=1 zgg unittests/run_all.zgg
+// 或使用 ./run.sh（会检查结果并返回正确的退出码）
+
+f := import('./framework')
+
+println('ZGG unit tests')
+println('==============')
+println('')
+
+// 语法
+import('./test_syntax_basics')
+import('./test_operators')
+import('./test_strings')
+import('./test_collections')
+import('./test_control_flow')
+import('./test_functions')
+import('./test_classes')
+import('./test_errors')
+import('./test_modules')
+import('./test_concurrency')
+
+// 内置函数与类型方法
+import('./test_builtins')
+import('./test_type_methods')
+
+// 标准库
+import('./test_stdlib_json_file')
+import('./test_stdlib_time_regex')
+import('./test_stdlib_http')
+import('./test_stdlib_db')
+import('./test_stdlib_redis')
+import('./test_stdlib_data')
+import('./test_stdlib_cli')
+import('./test_stdlib_network')
+
+f.run()

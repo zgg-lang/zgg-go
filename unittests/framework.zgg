@@ -1,0 +1,142 @@
+// 极简单元测试框架
+// 用法：
+//   t := import('./framework')
+//   t.test('name', () => { ... t.assertEq(a, b) ... })
+//   t.run()
+//
+// 失败通过 assert 抛出运行时异常，由 run() 捕获并记录。
+
+tests := []
+
+export func test(name, fn) {
+    tests.push({name: name, fn: fn, skipReason: nil})
+}
+
+export func skip(name, reason) {
+    tests.push({name: name, fn: nil, skipReason: reason ?? 'skipped'})
+}
+
+export func fail(msg) {
+    assert false, msg
+}
+
+export func assertTrue(v, msg) {
+    if !v {
+        fail((msg ?? 'expected truthy') + ', got ' + str(v))
+    }
+}
+
+export func assertFalse(v, msg) {
+    if v {
+        fail((msg ?? 'expected falsy') + ', got ' + str(v))
+    }
+}
+
+export func assertEq(actual, expected, msg) {
+    if actual != expected {
+        fail((msg ?? 'values differ') + ': expected <' + str(expected) + '>, got <' + str(actual) + '>')
+    }
+}
+
+export func assertNe(actual, unexpected, msg) {
+    if actual == unexpected {
+        fail((msg ?? 'values should differ') + ': got <' + str(actual) + '>')
+    }
+}
+
+export func assertNil(v, msg) {
+    if v != nil {
+        fail((msg ?? 'expected nil') + ', got ' + str(v))
+    }
+}
+
+export func assertNotNil(v, msg) {
+    if v == nil {
+        fail((msg ?? 'expected non-nil'))
+    }
+}
+
+export func assertUndefined(v, msg) {
+    if !isUndefined(v) {
+        fail((msg ?? 'expected undefined') + ', got ' + str(v))
+    }
+}
+
+export func assertClose(actual, expected, eps, msg) {
+    diff := @math.abs(actual - expected)
+    if diff > eps {
+        fail((msg ?? 'values not close') + ': expected <' + str(expected) + '>, got <' + str(actual) + '>')
+    }
+}
+
+export func assertContains(haystack, needle, msg) {
+    if haystack is Str {
+        if !haystack.contains(needle) {
+            fail((msg ?? 'string does not contain') + ' <' + str(needle) + '> in <' + str(haystack) + '>')
+        }
+        return
+    }
+    if haystack is Array {
+        for v in haystack {
+            if v == needle {
+                return
+            }
+        }
+        fail((msg ?? 'array does not contain') + ' <' + str(needle) + '> in <' + str(haystack) + '>')
+    }
+    fail((msg ?? 'assertContains expects Str or Array') + ', got ' + typeName(haystack))
+}
+
+export func assertLen(v, expected, msg) {
+    actual := len(v)
+    if actual != expected {
+        fail((msg ?? 'unexpected length') + ': expected ' + str(expected) + ', got ' + str(actual))
+    }
+}
+
+// 断言 fn 抛出异常；substr 为空时不校验消息内容
+export func assertThrows(fn, substr, msg) {
+    want := substr ?? ''
+    thrown := false
+    try {
+        fn()
+    } catch (e) {
+        thrown = true
+        if want != '' && !e.message.contains(want) {
+            fail((msg ?? 'exception message mismatch') + ': expected to contain <' + want + '>, got <' + e.message + '>')
+        }
+    }
+    if !thrown {
+        fail(msg ?? 'expected an exception, but none was thrown')
+    }
+}
+
+export func run() {
+    passed := 0
+    failed := 0
+    skipped := 0
+    for t in tests {
+        if t.fn == nil {
+            skipped += 1
+            println('[SKIP] ' + t.name + ' (' + t.skipReason + ')')
+            continue
+        }
+        try {
+            t.fn()
+            passed += 1
+            println('[PASS] ' + t.name)
+        } catch (e) {
+            failed += 1
+            println('[FAIL] ' + t.name)
+            println('       ' + e.message)
+        }
+    }
+    println('')
+    println('==== ' + str(passed) + ' passed, ' + str(failed) + ' failed, ' + str(skipped) + ' skipped, ' + str(len(tests)) + ' total ====')
+    if failed > 0 {
+        println('FAILED')
+        assert false, str(failed) + ' test(s) failed'
+    } else {
+        println('ALL PASSED')
+    }
+}

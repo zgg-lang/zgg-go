@@ -162,7 +162,7 @@ func binaryInitReaderClass() ValueType {
 		}).
 		Method("uvarint", func(c *Context, this ValueObject, args []Value) Value {
 			info := this.Reserved.(*binaryReaderInfo)
-			if v, err := binary.ReadVarint(info.rd); err != nil {
+			if v, err := binary.ReadUvarint(info.rd); err != nil {
 				c.RaiseRuntimeError("read uvarint error %+v", err)
 				return nil
 			} else {
